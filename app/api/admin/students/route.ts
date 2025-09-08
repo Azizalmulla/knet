@@ -13,6 +13,8 @@ export async function GET() {
         area_of_interest,
         cv_type,
         cv_url,
+        suggested_vacancies,
+        suggested_vacancies_list,
         submitted_at
       FROM students 
       ORDER BY submitted_at DESC

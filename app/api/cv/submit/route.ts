@@ -2,10 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { put } from '@vercel/blob';
 import { CVData } from '@/lib/cv-schemas';
+import { findRowForAudit } from '@/lib/career-map';
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
     const cvData: CVData & { fieldOfStudy?: string; areaOfInterest?: string; suggestedVacancies?: string | null } = await request.json();
+
+    // Audit logging
+    if (cvData.fieldOfStudy && cvData.areaOfInterest) {
+      const auditRow = findRowForAudit(cvData.fieldOfStudy, cvData.areaOfInterest);
+      const rawHash = cvData.suggestedVacancies ? crypto.createHash('sha256').update(cvData.suggestedVacancies).digest('hex') : null;
+      console.log('AI_CV_SUBMIT_AUDIT:', {
+        timestamp: new Date().toISOString(),
+        field: cvData.fieldOfStudy,
+        area: cvData.areaOfInterest,
+        rawRow: auditRow,
+        suggestedVacanciesHash: rawHash,
+        userEmail: cvData.email
+      });
+    }
 
     // Generate HTML content for the CV
     const htmlContent = generateCVHTML(cvData);
@@ -28,7 +44,8 @@ export async function POST(request: NextRequest) {
         area_of_interest, 
         cv_type, 
         cv_url,
-        suggested_vacancies
+        suggested_vacancies,
+        suggested_vacancies_list
       ) VALUES (
         ${cvData.fullName},
         ${cvData.email},
@@ -37,7 +54,8 @@ export async function POST(request: NextRequest) {
         ${cvData.areaOfInterest || cvData.skills?.technical?.[0] || 'Not specified'},
         'ai',
         ${blob.url},
-        ${cvData.suggestedVacancies || null}
+        ${cvData.suggestedVacancies || null},
+        ${cvData.suggestedVacancies ? JSON.stringify(cvData.suggestedVacancies.split('/')) : null}
       )
       RETURNING id
     `;

@@ -145,3 +145,7 @@ export function matchSuggestedVacancies(field: string, area: string): string | n
   const row = careerMapRows.find(r => r["Field of Study"] === field && r["Area of Interest"] === area);
   return row ? row["Suggested Vacancies"] : null;
 }
+
+export function findRowForAudit(field: string, area: string): typeof careerMapRows[0] | null {
+  return careerMapRows.find(r => r["Field of Study"] === field && r["Area of Interest"] === area) || null;
+}

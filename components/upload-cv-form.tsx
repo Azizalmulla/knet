@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const uploadSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
@@ -29,6 +30,7 @@ export default function UploadCVForm() {
   const [suggestedVacancies, setSuggestedVacancies] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showInvalidComboToast, setShowInvalidComboToast] = useState(false);
 
   const {
     register,
@@ -47,15 +49,39 @@ export default function UploadCVForm() {
   useEffect(() => {
     if (fieldOfStudy && areaOfInterest) {
       const match = matchSuggestedVacancies(fieldOfStudy, areaOfInterest);
-      setSuggestedVacancies(match || null);
-      setVacancies(match ? match.split('/') : []);
+      if (match) {
+        setSuggestedVacancies(match);
+        setVacancies(match.split('/'));
+        setShowInvalidComboToast(false);
+        // Telemetry tracking
+        fetch('/api/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ field: fieldOfStudy, area: areaOfInterest, action: 'selection' })
+        }).catch(() => {}); // Silent fail
+      } else {
+        setSuggestedVacancies(null);
+        setVacancies([]);
+        if (!showInvalidComboToast) {
+          toast.error('Invalid combination: No suggested vacancies found for this Field of Study and Area of Interest.');
+          setShowInvalidComboToast(true);
+        }
+      }
     } else {
       setSuggestedVacancies(null);
       setVacancies([]);
+      setShowInvalidComboToast(false);
     }
-  }, [fieldOfStudy, areaOfInterest]);
+  }, [fieldOfStudy, areaOfInterest, showInvalidComboToast]);
+
+  const isSubmitDisabled = isSubmitting || !fieldOfStudy || !areaOfInterest || !suggestedVacancies;
 
   const onSubmit = async (data: UploadFormData) => {
+    if (!suggestedVacancies) {
+      toast.error('Please select both Field of Study and Area of Interest with valid suggested vacancies.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Upload CV to blob
@@ -247,9 +273,9 @@ export default function UploadCVForm() {
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isSubmitting}
+            disabled={isSubmitDisabled}
           >
-            {isSubmitting ? 'Uploading...' : 'Submit CV'}
+            {isSubmitting ? 'Uploading...' : isSubmitDisabled && !isSubmitting ? 'Complete all fields with valid suggestions' : 'Submit CV'}
           </Button>
         </form>
       </CardContent>

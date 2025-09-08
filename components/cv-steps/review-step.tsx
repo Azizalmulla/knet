@@ -10,6 +10,7 @@ import { ModernTemplate } from '@/components/cv-templates/modern-template';
 import { CreativeTemplate } from '@/components/cv-templates/creative-template';
 import { Download, FileText } from 'lucide-react';
 import { getFields, getAreasForField, matchSuggestedVacancies } from '@/lib/career-map';
+import { toast } from 'sonner';
 
 interface ReviewStepProps {
   cvData: CVData;
@@ -22,6 +23,7 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
   const [fieldOfStudy, setFieldOfStudy] = useState<string>('');
   const [areaOfInterest, setAreaOfInterest] = useState<string>('');
   const [suggestedVacancies, setSuggestedVacancies] = useState<string | null>(null);
+  const [showInvalidComboToast, setShowInvalidComboToast] = useState(false);
 
   const renderTemplate = () => {
     const templateData = { ...cvData, template: selectedTemplate, language: selectedLanguage };
@@ -67,7 +69,14 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
     }
   };
 
+  const isSubmitDisabled = !fieldOfStudy || !areaOfInterest || !suggestedVacancies;
+
   const submitCV = async () => {
+    if (!suggestedVacancies) {
+      toast.error('Please select both Field of Study and Area of Interest with valid suggested vacancies.');
+      return;
+    }
+
     try {
       const vac = suggestedVacancies || (fieldOfStudy && areaOfInterest ? matchSuggestedVacancies(fieldOfStudy, areaOfInterest) : null);
       const response = await fetch('/api/cv/submit', {
@@ -145,7 +154,20 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
               <label className="text-sm font-medium mb-2 block">Area of Interest</label>
               <Select 
                 value={areaOfInterest}
-                onValueChange={(v) => { setAreaOfInterest(v); setSuggestedVacancies(matchSuggestedVacancies(fieldOfStudy, v)); }}
+                onValueChange={(v) => { 
+                  setAreaOfInterest(v); 
+                  const match = matchSuggestedVacancies(fieldOfStudy, v);
+                  if (match) {
+                    setSuggestedVacancies(match);
+                    setShowInvalidComboToast(false);
+                  } else {
+                    setSuggestedVacancies(null);
+                    if (!showInvalidComboToast) {
+                      toast.error('Invalid combination: No suggested vacancies found for this Field of Study and Area of Interest.');
+                      setShowInvalidComboToast(true);
+                    }
+                  }
+                }}
                 disabled={!fieldOfStudy}
               >
                 <SelectTrigger>
@@ -179,8 +201,8 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
               <Download className="h-4 w-4 mr-2" />
               {isExporting ? 'Exporting...' : 'Export DOCX'}
             </Button>
-            <Button onClick={submitCV} className="ml-auto">
-              Submit to KNET
+            <Button onClick={submitCV} className="ml-auto" disabled={isSubmitDisabled}>
+              {isSubmitDisabled ? 'Complete field selection' : 'Submit to KNET'}
             </Button>
           </div>
         </CardContent>

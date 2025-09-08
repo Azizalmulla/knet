@@ -16,6 +16,8 @@ interface Student {
   area_of_interest: string;
   cv_type: string;
   cv_url: string;
+  suggested_vacancies?: string | null;
+  suggested_vacancies_list?: string[];
   submitted_at: string;
 }
 
@@ -27,6 +29,7 @@ export default function AdminDashboard() {
   const [fieldFilter, setFieldFilter] = useState('');
   const [interestFilter, setInterestFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [vacancyFilter, setVacancyFilter] = useState('');
 
   useEffect(() => {
     fetchStudents();
@@ -34,7 +37,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     filterStudents();
-  }, [students, searchTerm, fieldFilter, interestFilter, typeFilter]);
+  }, [students, searchTerm, fieldFilter, interestFilter, typeFilter, vacancyFilter]);
 
   const fetchStudents = async () => {
     try {
@@ -72,6 +75,16 @@ export default function AdminDashboard() {
       filtered = filtered.filter(student => student.cv_type === typeFilter);
     }
 
+    if (vacancyFilter) {
+      filtered = filtered.filter(student => {
+        if (!student.suggested_vacancies) return false;
+        return student.suggested_vacancies.toLowerCase().includes(vacancyFilter.toLowerCase()) ||
+               (student.suggested_vacancies_list && student.suggested_vacancies_list.some(v => 
+                 v.toLowerCase().includes(vacancyFilter.toLowerCase())
+               ));
+      });
+    }
+
     setFilteredStudents(filtered);
   };
 
@@ -87,6 +100,35 @@ export default function AdminDashboard() {
 
   const uniqueFields = [...new Set(students.map(s => s.field_of_study))];
   const uniqueInterests = [...new Set(students.map(s => s.area_of_interest))];
+  const uniqueVacancies = [...new Set(students.flatMap(s => s.suggested_vacancies_list || []))];
+
+  const exportToCSV = () => {
+    const headers = ['Name', 'Email', 'Phone', 'Field of Study', 'Area of Interest', 'Suggested Vacancies', 'CV Type', 'Submitted Date'];
+    const csvData = filteredStudents.map(student => [
+      student.full_name,
+      student.email,
+      student.phone,
+      student.field_of_study,
+      student.area_of_interest,
+      student.suggested_vacancies || '',
+      student.cv_type,
+      new Date(student.submitted_at).toLocaleDateString()
+    ]);
+    
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `knet_students_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (loading) {
     return (
@@ -113,7 +155,7 @@ export default function AdminDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
               <Input
                 placeholder="Search by name or email..."
@@ -161,6 +203,14 @@ export default function AdminDashboard() {
               </Select>
             </div>
             <div>
+              <Input
+                placeholder="Filter by suggested vacancy..."
+                value={vacancyFilter}
+                onChange={(e) => setVacancyFilter(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -168,6 +218,7 @@ export default function AdminDashboard() {
                   setFieldFilter('');
                   setInterestFilter('');
                   setTypeFilter('');
+                  setVacancyFilter('');
                 }}
                 className="w-full"
               >
@@ -177,6 +228,14 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Export */}
+      <div className="mb-4">
+        <Button onClick={exportToCSV} variant="outline" className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV ({filteredStudents.length} rows)
+        </Button>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -226,6 +285,7 @@ export default function AdminDashboard() {
                     <th className="text-left py-3 px-4">Phone</th>
                     <th className="text-left py-3 px-4">Field</th>
                     <th className="text-left py-3 px-4">Interest</th>
+                    <th className="text-left py-3 px-4">Suggested Vacancies</th>
                     <th className="text-left py-3 px-4">CV Type</th>
                     <th className="text-left py-3 px-4">Submitted</th>
                     <th className="text-left py-3 px-4">Actions</th>
@@ -239,6 +299,27 @@ export default function AdminDashboard() {
                       <td className="py-3 px-4">{student.phone}</td>
                       <td className="py-3 px-4">{student.field_of_study}</td>
                       <td className="py-3 px-4">{student.area_of_interest}</td>
+                      <td className="py-3 px-4">
+                        {student.suggested_vacancies ? (
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap gap-1">
+                              {student.suggested_vacancies.split('/').map((item) => (
+                                <span
+                                  key={item}
+                                  className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700"
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="text-xs text-zinc-500">
+                              <span className="font-medium">Raw:</span> {student.suggested_vacancies}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-zinc-400">—</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           student.cv_type === 'ai' 
