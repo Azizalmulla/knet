@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased font-sans`} suppressHydrationWarning>
         <V0Provider isV0={isV0}>
           {children}
           {isV0 && <V0Setup />}
