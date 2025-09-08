@@ -13,6 +13,7 @@ const isV0 = process.env["VERCEL_URL"]?.includes("vusercontent.net") ?? false
 const interSans = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 })
 
 const jetBrainsMono = JetBrains_Mono({
@@ -33,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" style={{backgroundColor: '#000000', color: '#ffffff'}}>
-      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased font-sans`} style={{backgroundColor: '#000000', color: '#ffffff', fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}} suppressHydrationWarning>
+      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased font-sans font-medium`} style={{backgroundColor: '#000000', color: '#ffffff', fontFamily: 'var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: '500'}} suppressHydrationWarning>
         <V0Provider isV0={isV0}>
           {children}
           {isV0 && <V0Setup />}

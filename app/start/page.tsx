@@ -20,7 +20,7 @@ export default function Start() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-4 pt-10 pb-6">
         <div className="flex flex-col gap-3">
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Build a standout CV with KNET</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Build a standout CV with KNET</h1>
           <p className="text-muted-foreground max-w-2xl">Choose an option below to upload your existing CV or let AI help you craft an ATS-friendly one. You can always manage submissions from the admin dashboard.</p>
         </div>
       </section>
@@ -30,7 +30,7 @@ export default function Start() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card className="min-h-[220px]">
             <CardHeader>
-              <CardTitle>Upload CV</CardTitle>
+              <CardTitle className="font-bold">Upload CV</CardTitle>
               <CardDescription>Upload a PDF CV. We'll store it securely and suggest vacancies.</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
@@ -42,7 +42,7 @@ export default function Start() {
 
           <Card className="min-h-[220px]">
             <CardHeader>
-              <CardTitle>AI CV Builder</CardTitle>
+              <CardTitle className="font-bold">AI CV Builder</CardTitle>
               <CardDescription>Use our multi-step wizard and AI to create an ATS-friendly CV.</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
@@ -54,7 +54,7 @@ export default function Start() {
 
           <Card className="min-h-[220px]">
             <CardHeader>
-              <CardTitle>Admin Dashboard</CardTitle>
+              <CardTitle className="font-bold">Admin Dashboard</CardTitle>
               <CardDescription>Review submissions, filter by field/interest, and download CVs.</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
