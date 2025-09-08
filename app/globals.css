@@ -245,3 +245,65 @@
     transform: translate(0, 0) scale(1.05) rotate(-540deg);
   }
 }
+
+/* Print styles for CV export */
+@media print {
+  @page {
+    margin: 0.5in;
+    size: A4;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .cv-preview {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Hide non-essential elements during print */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .page-break-before {
+    page-break-before: always;
+  }
+  
+  .page-break-after {
+    page-break-after: always;
+  }
+  
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+}
+
+/* RTL support for Arabic */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl .cv-preview {
+  direction: rtl;
+}
+
+.rtl h1, .rtl h2, .rtl h3, .rtl h4, .rtl h5, .rtl h6 {
+  text-align: right;
+}
+
+.rtl ul, .rtl ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+.rtl .flex {
+  flex-direction: row-reverse;
+}

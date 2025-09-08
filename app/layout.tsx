@@ -32,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased`} suppressHydrationWarning>
         <V0Provider isV0={isV0}>
           {children}
