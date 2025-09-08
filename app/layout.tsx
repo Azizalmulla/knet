@@ -32,8 +32,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased font-sans`} suppressHydrationWarning>
+    <html lang="en" className="dark" style={{backgroundColor: '#000000', color: '#ffffff'}}>
+      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased font-sans`} style={{backgroundColor: '#000000', color: '#ffffff', fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}} suppressHydrationWarning>
         <V0Provider isV0={isV0}>
           {children}
           {isV0 && <V0Setup />}
