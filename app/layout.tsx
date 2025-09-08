@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import { FORM_TITLE, FORM_DESCRIPTION, COMPANY_NAME } from "@/lib/constants"
 import "./globals.css"
 import { V0Provider } from "@/lib/context"
@@ -10,12 +10,12 @@ const V0Setup = dynamic(() => import("@/components/v0-setup"))
 
 const isV0 = process.env["VERCEL_URL"]?.includes("vusercontent.net") ?? false
 
-const geistSans = Geist({
+const interSans = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 })
 
-const geistMono = Geist_Mono({
+const jetBrainsMono = JetBrains_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 })
@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased`} suppressHydrationWarning>
         <V0Provider isV0={isV0}>
           {children}
           {isV0 && <V0Setup />}
