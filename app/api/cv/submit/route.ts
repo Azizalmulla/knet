@@ -5,7 +5,7 @@ import { CVData } from '@/lib/cv-schemas';
 
 export async function POST(request: NextRequest) {
   try {
-    const cvData: CVData = await request.json();
+    const cvData: CVData & { fieldOfStudy?: string; areaOfInterest?: string; suggestedVacancies?: string | null } = await request.json();
 
     // Generate HTML content for the CV
     const htmlContent = generateCVHTML(cvData);
@@ -27,15 +27,17 @@ export async function POST(request: NextRequest) {
         field_of_study, 
         area_of_interest, 
         cv_type, 
-        cv_url
+        cv_url,
+        suggested_vacancies
       ) VALUES (
         ${cvData.fullName},
         ${cvData.email},
         ${cvData.phone},
-        ${cvData.education?.[0]?.field || 'Not specified'},
-        ${cvData.skills?.technical?.[0] || 'Not specified'},
+        ${cvData.fieldOfStudy || cvData.education?.[0]?.field || 'Not specified'},
+        ${cvData.areaOfInterest || cvData.skills?.technical?.[0] || 'Not specified'},
         'ai',
-        ${blob.url}
+        ${blob.url},
+        ${cvData.suggestedVacancies || null}
       )
       RETURNING id
     `;

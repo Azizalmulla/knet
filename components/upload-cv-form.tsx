@@ -3,8 +3,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
-import { careerMap } from '@/lib/career-map';
+import { useEffect, useState } from 'react';
+import { getFields, getAreasForField, matchSuggestedVacancies } from '@/lib/career-map';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,7 @@ type UploadFormData = z.infer<typeof uploadSchema>;
 
 export default function UploadCVForm() {
   const [vacancies, setVacancies] = useState<string[]>([]);
+  const [suggestedVacancies, setSuggestedVacancies] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -41,6 +42,18 @@ export default function UploadCVForm() {
 
   const fieldOfStudy = watch('fieldOfStudy');
   const areaOfInterest = watch('areaOfInterest');
+
+  // Recompute suggestions when selection changes
+  useEffect(() => {
+    if (fieldOfStudy && areaOfInterest) {
+      const match = matchSuggestedVacancies(fieldOfStudy, areaOfInterest);
+      setSuggestedVacancies(match || null);
+      setVacancies(match ? match.split('/') : []);
+    } else {
+      setSuggestedVacancies(null);
+      setVacancies([]);
+    }
+  }, [fieldOfStudy, areaOfInterest]);
 
   const onSubmit = async (data: UploadFormData) => {
     setIsSubmitting(true);
@@ -67,6 +80,7 @@ export default function UploadCVForm() {
           phone: data.phone,
           fieldOfStudy: data.fieldOfStudy,
           areaOfInterest: data.areaOfInterest,
+          suggestedVacancies: suggestedVacancies || matchSuggestedVacancies(data.fieldOfStudy, data.areaOfInterest),
           cvUrl: url,
           cvType: 'uploaded',
         }),
@@ -75,13 +89,10 @@ export default function UploadCVForm() {
         throw new Error('Submission failed');
       }
 
-      // Match vacancies
-      const fieldData = careerMap[fieldOfStudy as keyof typeof careerMap];
-      if (fieldData && fieldData[areaOfInterest as keyof typeof fieldData]) {
-        setVacancies(fieldData[areaOfInterest as keyof typeof fieldData]);
-      } else {
-        setVacancies([]);
-      }
+      // Keep UI list populated after submission
+      const match = suggestedVacancies || matchSuggestedVacancies(fieldOfStudy, areaOfInterest);
+      setSuggestedVacancies(match || null);
+      setVacancies(match ? match.split('/') : []);
 
       setIsSuccess(true);
     } catch (error) {
@@ -173,12 +184,12 @@ export default function UploadCVForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="fieldOfStudy">Field of Study *</Label>
-              <Select onValueChange={(value) => setValue('fieldOfStudy', value)}>
+              <Select onValueChange={(value: string) => setValue('fieldOfStudy', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select field" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(careerMap).map(field => (
+                  {getFields().map(field => (
                     <SelectItem key={field} value={field}>{field}</SelectItem>
                   ))}
                 </SelectContent>
@@ -190,17 +201,16 @@ export default function UploadCVForm() {
             <div>
               <Label htmlFor="areaOfInterest">Area of Interest *</Label>
               <Select 
-                onValueChange={(value) => setValue('areaOfInterest', value)}
+                onValueChange={(value: string) => setValue('areaOfInterest', value)}
                 disabled={!fieldOfStudy}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select interest" />
                 </SelectTrigger>
                 <SelectContent>
-                  {fieldOfStudy && careerMap[fieldOfStudy as keyof typeof careerMap] &&
-                    Object.keys(careerMap[fieldOfStudy as keyof typeof careerMap]).map(area => (
-                      <SelectItem key={area} value={area}>{area}</SelectItem>
-                    ))}
+                  {fieldOfStudy && getAreasForField(fieldOfStudy).map(area => (
+                    <SelectItem key={area} value={area}>{area}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.areaOfInterest && (
@@ -208,6 +218,17 @@ export default function UploadCVForm() {
               )}
             </div>
           </div>
+
+          {suggestedVacancies && (
+            <div className="bg-zinc-50 border border-zinc-200 rounded-md p-4">
+              <h4 className="font-medium mb-2">Suggested Vacancies</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                {suggestedVacancies.split('/').map(item => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="cv">CV Upload (PDF) *</Label>

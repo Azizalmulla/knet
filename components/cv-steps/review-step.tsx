@@ -9,15 +9,19 @@ import { MinimalTemplate } from '@/components/cv-templates/minimal-template';
 import { ModernTemplate } from '@/components/cv-templates/modern-template';
 import { CreativeTemplate } from '@/components/cv-templates/creative-template';
 import { Download, FileText } from 'lucide-react';
+import { getFields, getAreasForField, matchSuggestedVacancies } from '@/lib/career-map';
 
 interface ReviewStepProps {
   cvData: CVData;
 }
 
 export function ReviewStep({ cvData }: ReviewStepProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState(cvData.template || 'minimal');
-  const [selectedLanguage, setSelectedLanguage] = useState(cvData.language || 'en');
+  const [selectedTemplate, setSelectedTemplate] = useState<'minimal' | 'modern' | 'creative'>(cvData.template || 'minimal');
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'ar'>(cvData.language || 'en');
   const [isExporting, setIsExporting] = useState(false);
+  const [fieldOfStudy, setFieldOfStudy] = useState<string>('');
+  const [areaOfInterest, setAreaOfInterest] = useState<string>('');
+  const [suggestedVacancies, setSuggestedVacancies] = useState<string | null>(null);
 
   const renderTemplate = () => {
     const templateData = { ...cvData, template: selectedTemplate, language: selectedLanguage };
@@ -65,10 +69,18 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
 
   const submitCV = async () => {
     try {
+      const vac = suggestedVacancies || (fieldOfStudy && areaOfInterest ? matchSuggestedVacancies(fieldOfStudy, areaOfInterest) : null);
       const response = await fetch('/api/cv/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...cvData, template: selectedTemplate, language: selectedLanguage }),
+        body: JSON.stringify({ 
+          ...cvData, 
+          template: selectedTemplate, 
+          language: selectedLanguage,
+          fieldOfStudy,
+          areaOfInterest,
+          suggestedVacancies: vac,
+        }),
       });
 
       if (response.ok) {
@@ -90,7 +102,7 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Template</label>
-              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+              <Select value={selectedTemplate} onValueChange={(v) => setSelectedTemplate(v as 'minimal' | 'modern' | 'creative')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -103,7 +115,7 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Language</label>
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <Select value={selectedLanguage} onValueChange={(v) => setSelectedLanguage(v as 'en' | 'ar')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -113,6 +125,49 @@ export function ReviewStep({ cvData }: ReviewStepProps) {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Field of Study</label>
+              <Select value={fieldOfStudy} onValueChange={(v) => { setFieldOfStudy(v); setAreaOfInterest(''); setSuggestedVacancies(null); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select field" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getFields().map(f => (
+                    <SelectItem key={f} value={f}>{f}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Area of Interest</label>
+              <Select 
+                value={areaOfInterest}
+                onValueChange={(v) => { setAreaOfInterest(v); setSuggestedVacancies(matchSuggestedVacancies(fieldOfStudy, v)); }}
+                disabled={!fieldOfStudy}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fieldOfStudy && getAreasForField(fieldOfStudy).map(a => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {suggestedVacancies && (
+              <div className="md:col-span-2 bg-zinc-50 border border-zinc-200 rounded-md p-3">
+                <div className="text-sm font-medium mb-1">Suggested Vacancies</div>
+                <ul className="list-disc pl-5 space-y-1">
+                  {suggestedVacancies.split('/').map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">

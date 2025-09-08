@@ -1,4 +1,12 @@
-import UploadCVForm from '@/components/upload-cv-form';
+'use client';
+
+import nextDynamic from 'next/dynamic';
+
+export const dynamic = 'force-dynamic';
+
+const UploadCVForm = nextDynamic(() => import('@/components/upload-cv-form'), {
+  ssr: false,
+});
 
 export default function UploadPage() {
   return (

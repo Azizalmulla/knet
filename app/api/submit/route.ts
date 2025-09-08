@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
         field_of_study, 
         area_of_interest, 
         cv_type, 
-        cv_url
+        cv_url,
+        suggested_vacancies
       ) VALUES (
         ${data.fullName},
         ${data.email},
@@ -22,7 +23,8 @@ export async function POST(request: NextRequest) {
         ${data.fieldOfStudy},
         ${data.areaOfInterest},
         ${data.cvType || 'uploaded'},
-        ${data.cvUrl}
+        ${data.cvUrl},
+        ${data.suggestedVacancies || null}
       )
       RETURNING id
     `;
