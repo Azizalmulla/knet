@@ -46,7 +46,8 @@ export function PersonalInfoStep({ form }: PersonalInfoStepProps) {
           <Input
             id="phone"
             {...register('phone')}
-            placeholder="+1 (555) 123-4567"
+            placeholder="+965 1234 5678"
+            defaultValue="+965 "
           />
           {errors.phone && (
             <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
@@ -57,7 +58,7 @@ export function PersonalInfoStep({ form }: PersonalInfoStepProps) {
           <Input
             id="location"
             {...register('location')}
-            placeholder="New York, NY"
+            placeholder="Kuwait City, Kuwait"
           />
           {errors.location && (
             <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>

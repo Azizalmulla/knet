@@ -201,6 +201,7 @@ export default function UploadCVForm() {
               id="phone"
               {...register('phone')}
               placeholder="+965 1234 5678"
+              defaultValue="+965 "
             />
             {errors.phone && (
               <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
