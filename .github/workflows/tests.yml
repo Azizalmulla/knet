@@ -1,0 +1,103 @@
+name: CI
+on: [push, pull_request]
+
+env:
+  PROD_URL: ${{ vars.PROD_URL }}
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Run Jest with JUnit
+        run: npm run test -- --ci --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT: ./test-results/junit-jest.xml
+      - name: Upload Jest JUnit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-jest
+          path: ./test-results/junit-jest.xml
+          if-no-files-found: warn
+      
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Resolve BASE_URL
+        run: |
+          if [ -n "${PROD_URL}" ]; then
+            echo "BASE_URL=${PROD_URL}" >> $GITHUB_ENV
+          else
+            echo "BASE_URL=http://localhost:3000" >> $GITHUB_ENV
+          fi
+      - name: Run Playwright E2E (full matrix)
+        run: npm run e2e:full
+      - name: Upload Playwright Reports and Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-artifacts
+          path: |
+            ./test-results/
+          if-no-files-found: warn
+
+  smoke-prod:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' && env.PROD_URL != '' }}
+    needs: [unit, e2e]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Production Smoke Tests
+        run: npm run e2e:smoke
+        env:
+          BASE_URL: ${{ env.PROD_URL }}
+          SMOKE_TEST: true
+        timeout-minutes: 10
+      - name: Upload Smoke Test Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-reports
+          path: |
+            ./test-results/
+            ./playwright-report/
+          if-no-files-found: warn
+      - name: Notify on Smoke Test Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Production Smoke Tests Failed - ${context.sha.substring(0, 7)}`,
+              body: `Production smoke tests failed after deployment.
+              
+              **Commit:** ${context.sha}
+              **Branch:** ${context.ref}
+              **Workflow:** ${context.workflow}
+              **Run URL:** ${context.payload.repository.html_url}/actions/runs/${context.runId}
+              
+              Please investigate immediately.`,
+              labels: ['bug', 'production', 'urgent']
+            })

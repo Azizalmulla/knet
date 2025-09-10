@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Check admin authorization
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${process.env.ADMIN_KEY}`) {
+    return new Response("Unauthorized", { status: 401 });
+  }
   try {
     const result = await sql`
       SELECT 

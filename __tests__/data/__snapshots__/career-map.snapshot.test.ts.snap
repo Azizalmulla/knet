@@ -1,0 +1,131 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Career Map Data Integrity career map is unchanged shape 1`] = `
+[
+  {
+    "Area of Interest": "Operations",
+    "Field of Study": "Business Management",
+    "Suggested Vacancies": "Bank Operations",
+  },
+  {
+    "Area of Interest": "Operations",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Payment Operations/Core Operations",
+  },
+  {
+    "Area of Interest": "Customer Care",
+    "Field of Study": "Business Management",
+    "Suggested Vacancies": "Customer Care/Disputes Management/Customer Experience Management",
+  },
+  {
+    "Area of Interest": "Business Development",
+    "Field of Study": "Business Management",
+    "Suggested Vacancies": "Business Relationship",
+  },
+  {
+    "Area of Interest": "Marketing",
+    "Field of Study": "Media/Marketing/PR",
+    "Suggested Vacancies": "Marketing",
+  },
+  {
+    "Area of Interest": "Digital Transformation & Innovation",
+    "Field of Study": "Finance and Accounting",
+    "Suggested Vacancies": "Business Intellegence",
+  },
+  {
+    "Area of Interest": "Digital Transformation & Innovation",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Innovation/Digital Transformation",
+  },
+  {
+    "Area of Interest": "Digital Transformation & Innovation",
+    "Field of Study": "Business Management",
+    "Suggested Vacancies": "Innovation/Digital Transformation/Business Intellegence",
+  },
+  {
+    "Area of Interest": "Finance ",
+    "Field of Study": "Finance and Accounting",
+    "Suggested Vacancies": "Finance/Accounting",
+  },
+  {
+    "Area of Interest": "Supply Chain",
+    "Field of Study": "Finance and Accounting",
+    "Suggested Vacancies": "Procurement and Inventory Management",
+  },
+  {
+    "Area of Interest": "Supply Chain",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Vendor Management",
+  },
+  {
+    "Area of Interest": "HR",
+    "Field of Study": "Business Management",
+    "Suggested Vacancies": "Human Resources",
+  },
+  {
+    "Area of Interest": "HR",
+    "Field of Study": "Finance and Accounting",
+    "Suggested Vacancies": "Human Resources",
+  },
+  {
+    "Area of Interest": "Project Management ",
+    "Field of Study": "Business Management",
+    "Suggested Vacancies": "Project Development",
+  },
+  {
+    "Area of Interest": "Project Management ",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Project Development",
+  },
+  {
+    "Area of Interest": "Strategy",
+    "Field of Study": "Finance and Accounting",
+    "Suggested Vacancies": "Strategy",
+  },
+  {
+    "Area of Interest": "Strategy",
+    "Field of Study": "Business Management",
+    "Suggested Vacancies": "Strategy",
+  },
+  {
+    "Area of Interest": "Audit",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "IT Aduit",
+  },
+  {
+    "Area of Interest": "Audit",
+    "Field of Study": "Finance and Accounting",
+    "Suggested Vacancies": "Finance Audit",
+  },
+  {
+    "Area of Interest": "Risk Management",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Operational Risk/technology Risk/Business Continuity",
+  },
+  {
+    "Area of Interest": "Information Security",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Information Security/Cyber Security",
+  },
+  {
+    "Area of Interest": "Fraud Management ",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Transaction Fraud/Enterprise Fraud",
+  },
+  {
+    "Area of Interest": "IT",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Development/System Excellence/Application Support/Network Management/Data & Server Management/IT Support Center",
+  },
+  {
+    "Area of Interest": "Security Operations ",
+    "Field of Study": "Computer Engineering/Computer Science/Technology",
+    "Suggested Vacancies": "Network Security/Application Security",
+  },
+  {
+    "Area of Interest": "(as per the ebove)",
+    "Field of Study": "Others ",
+    "Suggested Vacancies": "(to be as er the area of interest and suggested vacancy)",
+  },
+]
+`;

@@ -149,3 +149,16 @@ export function matchSuggestedVacancies(field: string, area: string): string | n
 export function findRowForAudit(field: string, area: string): typeof careerMapRows[0] | null {
   return careerMapRows.find(r => r["Field of Study"] === field && r["Area of Interest"] === area) || null;
 }
+
+// Export careerMap as a structured object for AI agent
+export const careerMap: Record<string, Record<string, string[]>> = careerMapRows.reduce((acc, row) => {
+  const field = row["Field of Study"];
+  const area = row["Area of Interest"];
+  const vacancies = row["Suggested Vacancies"].split('/');
+  
+  if (!acc[field]) acc[field] = {};
+  if (!acc[field][area]) acc[field][area] = [];
+  acc[field][area] = vacancies;
+  
+  return acc;
+}, {} as Record<string, Record<string, string[]>>);

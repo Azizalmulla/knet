@@ -1,10 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, JetBrains_Mono } from "next/font/google"
+import { Inter, JetBrains_Mono, IBM_Plex_Sans_Arabic } from "next/font/google"
 import { FORM_TITLE, FORM_DESCRIPTION, COMPANY_NAME } from "@/lib/constants"
 import "./globals.css"
 import { V0Provider } from "@/lib/context"
 import dynamic from "next/dynamic"
+import { LanguageProvider } from "@/lib/language"
+import LanguageToggle from "@/components/language-toggle"
 
 const V0Setup = dynamic(() => import("@/components/v0-setup"))
 
@@ -21,6 +23,12 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 })
 
+const ibmArabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-arabic",
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"]
+})
+
 export const metadata: Metadata = {
   title: COMPANY_NAME + " | " + FORM_TITLE,
   description: FORM_DESCRIPTION,
@@ -34,9 +42,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" style={{backgroundColor: '#000000', color: '#ffffff'}}>
-      <body className={`${interSans.variable} ${jetBrainsMono.variable} antialiased font-sans font-medium`} style={{backgroundColor: '#000000', color: '#ffffff', fontFamily: 'var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: '500'}} suppressHydrationWarning>
+      <body className={`${interSans.variable} ${jetBrainsMono.variable} ${ibmArabic.variable} antialiased font-sans font-medium`} style={{backgroundColor: '#000000', color: '#ffffff', fontFamily: 'var(--font-geist-sans), var(--font-arabic), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: '500'}} suppressHydrationWarning>
         <V0Provider isV0={isV0}>
-          {children}
+          <LanguageProvider>
+            {children}
+            <LanguageToggle />
+          </LanguageProvider>
           {isV0 && <V0Setup />}
         </V0Provider>
       </body>

@@ -1,22 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { UseFormReturn, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Wand2, X } from 'lucide-react';
-import { CVData } from '@/lib/cv-schemas';
-
-interface ProjectsStepProps {
-  form: UseFormReturn<any>;
-  cvData: Partial<CVData>;
-}
-
-export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
-  const { register, control, formState: { errors }, setValue, watch } = form;
+import { useLanguage } from '@/lib/language';
+ 
+export function ProjectsStep() {
+  const { register, control, formState: { errors }, setValue, watch } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'projects',
@@ -24,6 +19,17 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
 
   const [loadingAI, setLoadingAI] = useState<number | null>(null);
   const [newTech, setNewTech] = useState<{ [key: number]: string }>({});
+  const { t } = useLanguage();
+
+  const sendEvent = (event: string, value?: number, meta?: any) => {
+    try {
+      fetch('/api/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event, value, meta }),
+      }).catch(() => {});
+    } catch {}
+  };
 
   const addProject = () => {
     append({
@@ -33,6 +39,21 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
       url: '',
       bullets: [],
     });
+  };
+
+  const seedAcademicProject = () => {
+    const seed = {
+      name: 'AI CV Builder',
+      description: 'Built a Next.js app to generate ATS-ready CVs; added template previews and PDF export.',
+      technologies: ['Next.js', 'TypeScript', 'Tailwind CSS'],
+      url: '',
+      bullets: [
+        'Developed responsive React components and a wizard flow for CV steps.',
+        'Implemented AI-assisted content generation and export to PDF/DOCX.',
+      ],
+    };
+    append(seed as any);
+    sendEvent('project_seed_click', 1, { name: seed.name });
   };
 
   const addTechnology = (projectIndex: number) => {
@@ -55,6 +76,7 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
 
     setLoadingAI(index);
     try {
+      sendEvent('ai_bullets_clicks', 1, { feature: 'projects', index });
       const response = await fetch('/api/ai/rewrite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,10 +88,17 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
 
       if (response.ok) {
         const { bullets } = await response.json();
-        setValue(`projects.${index}.bullets`, bullets);
+        const tidyBullets = (list: string[]) => list
+          .map(b => b.trim().replace(/^[-•\s]*/, '').replace(/^(i['’]m|i am)\b/i, '').replace(/\s+/g, ' '))
+          .map(b => (b[0] ? b[0].toUpperCase() + b.slice(1) : b))
+          .map(b => /[.!?]$/.test(b) ? b : b + '.');
+        const cleaned = tidyBullets(Array.isArray(bullets) ? bullets : []).slice(0, 5);
+        setValue(`projects.${index}.bullets`, cleaned);
+        sendEvent('avg_bullets_generated_per_click', cleaned.length, { feature: 'projects', index });
       }
     } catch (error) {
       console.error('Failed to generate bullets:', error);
+      sendEvent('ai_bullets_fail', 1, { feature: 'projects' });
     } finally {
       setLoadingAI(null);
     }
@@ -77,10 +106,15 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={seedAcademicProject}>
+          Add an academic project idea
+        </Button>
+      </div>
       {fields.map((field, index) => (
         <Card key={field.id} className="relative">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-lg">Project {index + 1}</CardTitle>
+            <CardTitle className="text-lg">{t('step_projects')} {index + 1}</CardTitle>
             <Button
               type="button"
               variant="ghost"
@@ -94,36 +128,37 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor={`projects.${index}.name`}>Project Name *</Label>
+                <Label htmlFor={`projects.${index}.name`}>{t('proj_name')} *</Label>
                 <Input
                   {...register(`projects.${index}.name`)}
-                  placeholder="My Awesome Project"
+                  placeholder={t('proj_name_placeholder')}
                 />
-                {errors.projects?.[index]?.name && (
+                {(errors.projects as any)?.[index]?.name && (
                   <p className="text-sm text-red-500 mt-1">
-                    {errors.projects[index].name.message}
+                    {(errors.projects as any)[index].name.message}
                   </p>
                 )}
               </div>
               <div>
-                <Label htmlFor={`projects.${index}.url`}>URL (Optional)</Label>
+                <Label htmlFor={`projects.${index}.url`}>{t('proj_url')}</Label>
                 <Input
                   {...register(`projects.${index}.url`)}
-                  placeholder="https://github.com/user/project"
+                  placeholder={t('proj_url_placeholder')}
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor={`projects.${index}.description`}>Description *</Label>
+              <Label htmlFor={`projects.${index}.description`}>{t('proj_description')} *</Label>
               <Textarea
                 {...register(`projects.${index}.description`)}
-                placeholder="Describe what the project does and your role..."
+                placeholder="What was the goal, your part, and outcome? e.g., Dashboard for expenses using React + Node; added charts, monthly reports."
                 rows={3}
               />
-              {errors.projects?.[index]?.description && (
+              <p className="text-xs text-zinc-500 mt-1">1–2 lines describing what it does.</p>
+              {(errors.projects as any)?.[index]?.description && (
                 <p className="text-sm text-red-500 mt-1">
-                  {errors.projects[index].description.message}
+                  {(errors.projects as any)[index].description.message}
                 </p>
               )}
               <Button
@@ -135,12 +170,12 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
                 className="mt-2"
               >
                 <Wand2 className="h-4 w-4 mr-2" />
-                {loadingAI === index ? 'Generating...' : 'Generate ATS Bullets'}
+                {loadingAI === index ? t('proj_generating') : t('proj_generate_bullets')}
               </Button>
             </div>
 
             <div>
-              <Label>Technologies</Label>
+              <Label>{t('proj_technologies')}</Label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {watch(`projects.${index}.technologies`)?.map((tech: string, techIndex: number) => (
                   <span
@@ -162,7 +197,7 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
                 <Input
                   value={newTech[index] || ''}
                   onChange={(e) => setNewTech(prev => ({ ...prev, [index]: e.target.value }))}
-                  placeholder="Add technology"
+                  placeholder="React"
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTechnology(index))}
                 />
                 <Button
@@ -171,14 +206,14 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
                   size="sm"
                   onClick={() => addTechnology(index)}
                 >
-                  Add
+                  {t('proj_add')}
                 </Button>
               </div>
             </div>
 
             {watch(`projects.${index}.bullets`)?.length > 0 && (
               <div>
-                <Label>Generated Bullet Points</Label>
+                <Label>{t('proj_generated_bullets')}</Label>
                 <div className="space-y-2 mt-2">
                   {watch(`projects.${index}.bullets`).map((bullet: string, bulletIndex: number) => (
                     <div key={bulletIndex} className="flex items-start space-x-2">
@@ -208,7 +243,7 @@ export function ProjectsStep({ form, cvData }: ProjectsStepProps) {
         className="w-full"
       >
         <Plus className="h-4 w-4 mr-2" />
-        Add Project
+        {t('proj_add_project')}
       </Button>
     </div>
   );

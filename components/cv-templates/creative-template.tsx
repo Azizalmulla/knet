@@ -68,10 +68,10 @@ export function CreativeTemplate({ data }: CreativeTemplateProps) {
               {data.education.map((edu, index) => (
                 <div key={index} className="mb-4">
                   <h3 className="font-semibold text-sm">{edu.degree}</h3>
-                  <p className="text-sm opacity-90">{edu.field}</p>
+                  <p className="text-sm opacity-90">{(edu as any).fieldOfStudy || ''}</p>
                   <p className="text-xs opacity-75">{edu.institution}</p>
                   <p className="text-xs opacity-75">
-                    {edu.startDate} - {edu.endDate || 'Present'}
+                    {((edu as any).startDate || (edu as any).graduationDate || '')} - {edu.endDate || 'Present'}
                   </p>
                   {edu.gpa && <p className="text-xs opacity-75">GPA: {edu.gpa}</p>}
                 </div>

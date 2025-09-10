@@ -61,9 +61,9 @@ export function MinimalTemplate({ data }: MinimalTemplateProps) {
           {data.education.map((edu, index) => (
             <div key={index} className="mb-3">
               <div className="flex justify-between items-start mb-1">
-                <h3 className="font-medium text-gray-900">{edu.degree} in {edu.field}</h3>
+                <h3 className="font-medium text-gray-900">{edu.degree}{(edu as any).fieldOfStudy ? ` in ${(edu as any).fieldOfStudy}` : ''}</h3>
                 <span className="text-sm text-gray-600">
-                  {edu.startDate} - {edu.endDate || 'Present'}
+                  {(((edu as any).startDate) || (edu as any).graduationDate || '')} - {edu.endDate || 'Present'}
                 </span>
               </div>
               <p className="text-gray-700">{edu.institution}</p>

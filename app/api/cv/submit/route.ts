@@ -3,9 +3,16 @@ import { sql } from '@vercel/postgres';
 import { put } from '@vercel/blob';
 import { CVData } from '@/lib/cv-schemas';
 import { findRowForAudit } from '@/lib/career-map';
+import { checkRateLimit, createRateLimitResponse } from '@/lib/rateLimit';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
+  // Check rate limit
+  const rateLimitResult = checkRateLimit(request);
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
+  }
+
   try {
     const cvData: CVData & { fieldOfStudy?: string; areaOfInterest?: string; suggestedVacancies?: string | null } = await request.json();
 
@@ -25,45 +32,80 @@ export async function POST(request: NextRequest) {
 
     // Generate HTML content for the CV
     const htmlContent = generateCVHTML(cvData);
-    
-    // Convert HTML to blob and upload
-    const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-    const fileName = `${cvData.fullName?.replace(/\s+/g, '_')}_CV_${Date.now()}.html`;
-    
-    const blob = await put(fileName, htmlBlob, {
-      access: 'public',
-    });
+
+    // Convert HTML to blob and upload (tolerate missing blob token)
+    let blobUrl: string | null = null;
+    try {
+      const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+      const fileName = `${cvData.fullName?.replace(/\s+/g, '_') || 'cv'}_CV_${Date.now()}.html`;
+      const blob = await put(fileName, htmlBlob, { access: 'public' });
+      blobUrl = blob.url;
+    } catch (e) {
+      console.error('BLOB upload failed (continuing without cv_url):', (e as any)?.message || e);
+    }
 
     // Insert into database
-    const result = await sql`
-      INSERT INTO students (
-        full_name, 
-        email, 
-        phone, 
-        field_of_study, 
-        area_of_interest, 
-        cv_type, 
-        cv_url,
-        suggested_vacancies,
-        suggested_vacancies_list
-      ) VALUES (
-        ${cvData.fullName},
-        ${cvData.email},
-        ${cvData.phone},
-        ${cvData.fieldOfStudy || cvData.education?.[0]?.field || 'Not specified'},
-        ${cvData.areaOfInterest || cvData.skills?.technical?.[0] || 'Not specified'},
-        'ai',
-        ${blob.url},
-        ${cvData.suggestedVacancies || null},
-        ${cvData.suggestedVacancies ? JSON.stringify(cvData.suggestedVacancies.split('/')) : null}
-      )
-      RETURNING id
-    `;
+    const fieldOfStudy = cvData.fieldOfStudy || (cvData as any)?.education?.[0]?.fieldOfStudy || 'Not specified';
+    const areaOfInterest = cvData.areaOfInterest || ((cvData as any)?.skills?.technical?.[0]) || 'Not specified';
+    const suggested = cvData.suggestedVacancies || null;
+    const suggestedList = suggested ? JSON.stringify(suggested.split('/').map(s => s.trim()).filter(Boolean)) : null;
+
+    let result;
+    try {
+      result = await sql`
+        INSERT INTO students (
+          full_name, 
+          email, 
+          phone, 
+          field_of_study, 
+          area_of_interest, 
+          cv_type, 
+          cv_url,
+          suggested_vacancies,
+          suggested_vacancies_list
+        ) VALUES (
+          ${cvData.fullName},
+          ${cvData.email},
+          ${cvData.phone},
+          ${fieldOfStudy},
+          ${areaOfInterest},
+          'ai',
+          ${blobUrl},
+          ${suggested},
+          ${suggestedList}
+        )
+        RETURNING id
+      `;
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      console.error('Primary insert failed, retrying with minimal columns:', msg);
+      // Fallback for older schemas without suggested_vacancies columns
+      result = await sql`
+        INSERT INTO students (
+          full_name, 
+          email, 
+          phone, 
+          field_of_study, 
+          area_of_interest, 
+          cv_type, 
+          cv_url
+        ) VALUES (
+          ${cvData.fullName},
+          ${cvData.email},
+          ${cvData.phone},
+          ${fieldOfStudy},
+          ${areaOfInterest},
+          'ai',
+          ${blobUrl}
+        )
+        RETURNING id
+      `;
+    }
 
     return NextResponse.json({ 
       success: true, 
       id: result.rows[0].id,
-      cvUrl: blob.url 
+      cvUrl: blobUrl 
     });
   } catch (error) {
     console.error('CV submission error:', error);
@@ -130,9 +172,9 @@ function generateCVHTML(data: CVData): string {
           <h2>Education</h2>
           ${data.education.map(edu => `
             <div class="education-item">
-              <h3>${edu.degree} in ${edu.field}</h3>
+              <h3>${edu.degree}${(edu as any).fieldOfStudy ? ` in ${(edu as any).fieldOfStudy}` : ''}</h3>
               <p>${edu.institution}</p>
-              <p><em>${edu.startDate} - ${edu.endDate || 'Present'}</em></p>
+              <p><em>${(edu as any).startDate || ''} - ${edu.endDate || (edu as any).graduationDate || 'Present'}</em></p>
               ${edu.gpa ? `<p>GPA: ${edu.gpa}</p>` : ''}
             </div>
           `).join('')}

@@ -70,12 +70,12 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
                 <div className="flex justify-between items-start mb-1">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {edu.degree} in {edu.field}
+                      {edu.degree}{(edu as any).fieldOfStudy ? ` in ${(edu as any).fieldOfStudy}` : ''}
                     </h3>
                     <p className="text-gray-700">{edu.institution}</p>
                   </div>
                   <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded">
-                    {edu.startDate} - {edu.endDate || 'Present'}
+                    {(((edu as any).startDate) || (edu as any).graduationDate || '')} - {edu.endDate || 'Present'}
                   </span>
                 </div>
                 {edu.gpa && <p className="text-sm text-gray-600 ml-4">GPA: {edu.gpa}</p>}

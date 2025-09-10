@@ -1,81 +1,100 @@
 'use client';
 
-import { UseFormReturn } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useLanguage } from '@/lib/language';
 
-interface PersonalInfoStepProps {
-  form: UseFormReturn<any>;
-}
-
-export function PersonalInfoStep({ form }: PersonalInfoStepProps) {
-  const { register, formState: { errors } } = form;
+export function PersonalInfoStep() {
+  const { register, trigger, formState: { errors } } = useFormContext();
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="fullName">Full Name *</Label>
+          <Label htmlFor="fullName">{t('label_full_name')} *</Label>
           <Input
             id="fullName"
             {...register('fullName')}
-            placeholder="John Doe"
+            placeholder={t('placeholder_full_name')}
+            aria-invalid={!!errors.fullName ? 'true' : 'false'}
+            aria-describedby={errors.fullName ? 'fullName-error' : undefined}
+            data-testid="field-fullName"
+            onBlur={() => { void trigger('fullName' as any) }}
           />
           {errors.fullName && (
-            <p className="text-sm text-red-500 mt-1">{errors.fullName.message}</p>
+            <p id="fullName-error" role="alert" className="text-sm text-red-500 mt-1" data-testid="error-fullName">{errors.fullName.message as string}</p>
           )}
         </div>
         <div>
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="email">{t('label_email')} *</Label>
           <Input
             id="email"
             type="email"
             {...register('email')}
-            placeholder="john@example.com"
+            placeholder={t('placeholder_email')}
+            aria-invalid={!!errors.email ? 'true' : 'false'}
+            aria-describedby={errors.email ? 'email-error' : undefined}
+            data-testid="field-email"
+            onBlur={() => { void trigger('email' as any) }}
           />
           {errors.email && (
-            <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+            <p id="email-error" role="alert" className="text-sm text-red-500 mt-1" data-testid="error-email">{errors.email.message as string}</p>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="phone">Phone *</Label>
+          <Label htmlFor="phone">{t('label_phone')} *</Label>
           <Input
             id="phone"
             {...register('phone')}
-            placeholder="+965 1234 5678"
-            defaultValue="+965 "
+            placeholder="+965 5xxxxxxx"
+            aria-invalid={!!errors.phone ? 'true' : 'false'}
+            aria-describedby={errors.phone ? 'phone-error' : undefined}
+            data-testid="field-phone"
+            onBlur={() => { void trigger('phone' as any) }}
           />
           {errors.phone && (
-            <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
+            <p id="phone-error" role="alert" className="text-sm text-red-500 mt-1" data-testid="error-phone">{errors.phone.message as string}</p>
           )}
         </div>
         <div>
-          <Label htmlFor="location">Location *</Label>
+          <Label htmlFor="location">{t('label_location')} *</Label>
           <Input
             id="location"
             {...register('location')}
             placeholder="Kuwait City, Kuwait"
+            aria-invalid={!!errors.location ? 'true' : 'false'}
+            aria-describedby={errors.location ? 'location-error' : undefined}
+            data-testid="field-location"
+            onBlur={() => { void trigger('location' as any) }}
           />
           {errors.location && (
-            <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>
+            <p id="location-error" role="alert" className="text-sm text-red-500 mt-1" data-testid="error-location">{errors.location.message as string}</p>
           )}
         </div>
       </div>
 
       <div>
-        <Label htmlFor="summary">Professional Summary</Label>
+        <Label htmlFor="summary">{t('label_summary')}</Label>
         <Textarea
           id="summary"
           {...register('summary')}
-          placeholder="Brief overview of your professional background and career objectives..."
+          placeholder="Aspiring software engineer with strong problem-solving skills and passion for building user-friendly apps."
           rows={4}
+          aria-invalid={!!errors.summary ? 'true' : 'false'}
+          aria-describedby={errors.summary ? 'summary-error' : undefined}
+          data-testid="field-summary"
         />
+        <p className="text-xs text-zinc-500 mt-1">1–2 sentences about your goals. Keep it simple and professional.</p>
         {errors.summary && (
-          <p className="text-sm text-red-500 mt-1">{errors.summary.message}</p>
+          <p id="summary-error" role="alert" className="text-sm text-red-500 mt-1" data-testid="error-summary">
+            {String((errors as any).summary?.message || '')}
+          </p>
         )}
       </div>
     </div>

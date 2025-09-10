@@ -1,6 +1,8 @@
 'use client';
 
 import nextDynamic from 'next/dynamic';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { useLanguage } from '@/lib/language';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,15 +11,18 @@ const UploadCVForm = nextDynamic(() => import('@/components/upload-cv-form'), {
 });
 
 export default function UploadPage() {
+  const { t } = useLanguage();
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">Upload Your CV</h1>
-          <p className="text-gray-600">Upload your existing CV and we'll suggest relevant vacancies based on your field of study and interests.</p>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto max-w-4xl px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-semibold text-gray-900 mb-2">{t('upload_title')}</h1>
+            <p className="text-gray-600">{t('upload_subtitle')}</p>
+          </div>
+          <UploadCVForm />
         </div>
-        <UploadCVForm />
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

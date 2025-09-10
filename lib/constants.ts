@@ -110,7 +110,7 @@ export const getStepSchema = (step: FormStep) => {
           break
         case "select":
           const validValues = field.options.map((opt) => opt.value)
-          fieldSchema = z.enum(validValues as [string, ...string[]], "Select an option")
+          fieldSchema = z.enum(validValues as [string, ...string[]])
           break
         default:
           fieldSchema = z.string()

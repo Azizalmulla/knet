@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: `${edu.degree} in ${edu.field}`,
+                    text: `${edu.degree}${(edu as any).fieldOfStudy ? ` in ${(edu as any).fieldOfStudy}` : ''}`,
                     bold: true,
                     size: 22,
                   }),
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: `${edu.startDate} - ${edu.endDate || 'Present'}`,
+                    text: `${(edu as any).startDate || (edu as any).graduationDate || ''} - ${edu.endDate || 'Present'}`,
                     italics: true,
                     size: 18,
                   }),
@@ -291,8 +291,9 @@ export async function POST(request: NextRequest) {
     });
 
     const buffer = await Packer.toBuffer(doc);
+    const bytes = new Uint8Array(buffer);
     
-    return new NextResponse(buffer, {
+    return new NextResponse(bytes as any, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${cvData.fullName?.replace(/\s+/g, '_')}_CV.docx"`,
