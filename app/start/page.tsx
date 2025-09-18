@@ -44,6 +44,28 @@ export default function Start() {
               </Button>
             </CardContent>
           </Card>
+          <Card className="min-h-[220px]">
+            <CardHeader>
+              <CardTitle className="font-bold">{t('ai_cv_builder')}</CardTitle>
+              <CardDescription>Use our multi-step wizard and AI to create an ATS-friendly CV.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <Button asChild variant="secondary" className="w-full h-11 rounded-xl">
+                <Link href="/ai-builder">{t('start_building')}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          <Card className="min-h-[220px]">
+            <CardHeader>
+              <CardTitle className="font-bold">{t('admin_dashboard')}</CardTitle>
+              <CardDescription>{t('admin_dashboard_desc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <Button asChild variant="outline" className="w-full h-11 rounded-xl">
+                <Link href="/admin">Open Admin</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
         
         {/* Privacy Notice */}

@@ -11,7 +11,7 @@ export default function Home() {
           {/* Left: QR */}
           <div className="p-6 md:p-8 lg:p-10">
             <div className="rounded-2xl overflow-hidden border border-border shadow">
-              <QRCard targetPath="/upload" />
+              <QRCard targetPath="/start" />
             </div>
           </div>
 

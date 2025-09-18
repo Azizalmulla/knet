@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 
-export default function QRCard({ targetPath = '/upload', fallbackImageSrc }: { targetPath?: string; fallbackImageSrc?: string }) {
+export default function QRCard({ targetPath = '/start', fallbackImageSrc }: { targetPath?: string; fallbackImageSrc?: string }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
