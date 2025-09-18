@@ -43,7 +43,7 @@ export function EducationStep() {
                 variant="ghost"
                 size="sm"
                 onClick={() => remove(index)}
-                className="text-red-500 hover:text-red-700"
+                className="text-destructive hover:text-destructive/90"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -62,7 +62,7 @@ export function EducationStep() {
                   data-testid={`field-education-${index}-institution`}
                 />
                 {(errors.education as any)?.[index]?.institution && (
-                  <p id={`institution-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-education-${index}-institution`}>
+                  <p id={`institution-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-education-${index}-institution`}>
                     {(errors.education as any)[index]?.institution?.message}
                   </p>
                 )}
@@ -78,7 +78,7 @@ export function EducationStep() {
                   data-testid={`field-education-${index}-degree`}
                 />
                 {(errors.education as any)?.[index]?.degree && (
-                  <p id={`degree-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-education-${index}-degree`}>
+                  <p id={`degree-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-education-${index}-degree`}>
                     {(errors.education as any)[index]?.degree?.message}
                   </p>
                 )}
@@ -97,7 +97,7 @@ export function EducationStep() {
                   data-testid={`field-education-${index}-field`}
                 />
                 {(errors.education as any)?.[index]?.fieldOfStudy && (
-                  <p id={`field-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-education-${index}-field`}>
+                  <p id={`field-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-education-${index}-field`}>
                     {(errors.education as any)[index]?.fieldOfStudy?.message}
                   </p>
                 )}
@@ -114,11 +114,11 @@ export function EducationStep() {
                   data-testid={`field-education-${index}-startDate`}
                 />
                 {(errors.education as any)?.[index]?.graduationDate && (
-                  <p id={`startDate-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-education-${index}-startDate`}>
+                  <p id={`startDate-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-education-${index}-startDate`}>
                     {(errors.education as any)[index]?.graduationDate?.message}
                   </p>
                 )}
-                <p className="text-xs text-zinc-500 mt-1">Format: month/year</p>
+                <p className="text-xs text-muted-foreground mt-1">Format: month/year</p>
               </div>
               <div />
             </div>
@@ -153,18 +153,18 @@ export function EducationStep() {
                       data-testid={`field-education-${index}-endDate`}
                     />
                     {(errors.education as any)?.[index]?.endDate && (
-                      <p id={`endDate-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-education-${index}-endDate`}>
+                      <p id={`endDate-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-education-${index}-endDate`}>
                         {(errors.education as any)[index]?.endDate?.message}
                       </p>
                     )}
-                    <p className="text-xs text-zinc-500 mt-1">Format: month/year</p>
+                    <p className="text-xs text-muted-foreground mt-1">Format: month/year</p>
                   </>
                 )}
               </div>
             </div>
 
             <details className="mt-2">
-              <summary className="cursor-pointer text-sm text-zinc-700">Add GPA & Achievements (optional)</summary>
+              <summary className="cursor-pointer text-sm text-muted-foreground">Add GPA & Achievements (optional)</summary>
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor={`gpa-${index}`}>{t('edu_gpa')}</Label>
@@ -177,7 +177,7 @@ export function EducationStep() {
                     data-testid={`field-education-${index}-gpa`}
                   />
                   {(errors.education as any)?.[index]?.gpa && (
-                    <p id={`gpa-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-education-${index}-gpa`}>
+                    <p id={`gpa-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-education-${index}-gpa`}>
                       {(errors.education as any)[index]?.gpa?.message}
                     </p>
                   )}
@@ -205,7 +205,7 @@ export function EducationStep() {
         onClick={addEducation}
         className="w-full"
       >
-        <Plus className="h-4 w-4 mr-2" />
+        <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
         {t('edu_add_education')}
       </Button>
     </div>

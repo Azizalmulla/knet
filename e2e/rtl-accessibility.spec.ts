@@ -239,8 +239,8 @@ test.describe('RTL and Accessibility @rtl', () => {
       // Trigger validation error
       await page.getByTestId('next-btn').click();
       
-      // Check that error state would be announced
-      const errorMessages = await page.locator('.text-red-500').count();
+      // Check that error state would be announced (token-based error messages use role=alert)
+      const errorMessages = await page.locator('[role="alert"]').count();
       expect(errorMessages).toBeGreaterThan(0);
     });
   });

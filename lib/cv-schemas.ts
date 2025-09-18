@@ -23,7 +23,31 @@ export const educationSchema = z.object({
   })).min(1, 'At least one education entry is required'),
 });
 
-// Experience Step
+// Combined Experience & Projects Step
+export const experienceProjectsSchema = z.object({
+  experienceProjects: z.array(z.discriminatedUnion('type', [
+    z.object({
+      type: z.literal('experience'),
+      company: z.string().min(1, 'Required'),
+      position: z.string().min(1, 'Required'),
+      startDate: z.string().min(1, 'Required'),
+      endDate: z.string().optional(),
+      current: z.boolean().default(false),
+      description: z.string().optional(),
+      bullets: z.array(z.string()).default([]),
+    }),
+    z.object({
+      type: z.literal('project'),
+      name: z.string().min(1, 'Required'),
+      description: z.string().min(1, 'Required'),
+      technologies: z.array(z.string()).default([]),
+      url: z.string().optional(),
+      bullets: z.array(z.string()).default([]),
+    }),
+  ])).default([]),
+});
+
+// Legacy schemas for backwards compatibility
 export const experienceSchema = z.object({
   experience: z.array(z.object({
     company: z.string().min(1, 'Required'),
@@ -36,7 +60,6 @@ export const experienceSchema = z.object({
   })).default([]),
 });
 
-// Projects Step
 export const projectsSchema = z.object({
   projects: z.array(z.object({
     name: z.string().min(1, 'Required'),
@@ -60,8 +83,10 @@ export const skillsSchema = z.object({
 export const cvSchema = z.object({
   ...personalInfoSchema.shape,
   ...educationSchema.shape,
-  ...experienceSchema.shape,
-  ...projectsSchema.shape,
+  ...experienceProjectsSchema.shape,
+  // Keep legacy fields for backwards compatibility
+  experience: z.array(z.any()).default([]),
+  projects: z.array(z.any()).default([]),
   ...skillsSchema.shape,
   template: z.enum(['minimal', 'modern', 'creative']).default('minimal'),
   language: z.enum(['en', 'ar']).default('en'),
@@ -71,10 +96,9 @@ export const cvSchema = z.object({
 export const stepFields = {
   0: ['fullName', 'email', 'phone', 'location'] as const,
   1: ['education.0.institution', 'education.0.degree', 'education.0.fieldOfStudy', 'education.0.graduationDate'] as const,
-  2: ['experience.0.company', 'experience.0.position', 'experience.0.startDate'] as const,
-  3: ['projects.0.name', 'projects.0.description'] as const,
-  4: [] as const,
-  5: [] as const,
+  2: [] as const, // experienceProjects step - validation handled in component
+  3: [] as const, // skills step
+  4: [] as const, // review step
 };
 
 export type CVData = z.infer<typeof cvSchema>;
@@ -98,6 +122,8 @@ export const defaultCVValues: CVData = {
       description: '',
     },
   ],
+  experienceProjects: [],
+  // Legacy fields for backwards compatibility
   experience: [],
   projects: [],
   skills: {
@@ -138,6 +164,30 @@ export function createLocalizedCvSchema(t: (key: string) => string) {
     })).min(1, t('required')),
   });
 
+  const localizedExperienceProjects = z.object({
+    experienceProjects: z.array(z.discriminatedUnion('type', [
+      z.object({
+        type: z.literal('experience'),
+        company: z.string().min(1, t('required')),
+        position: z.string().min(1, t('required')),
+        startDate: z.string().min(1, t('required')),
+        endDate: z.string().optional(),
+        current: z.boolean().default(false),
+        description: z.string().optional(),
+        bullets: z.array(z.string()).default([]),
+      }),
+      z.object({
+        type: z.literal('project'),
+        name: z.string().min(1, t('required')),
+        description: z.string().min(1, t('required')),
+        technologies: z.array(z.string()).default([]),
+        url: z.string().optional(),
+        bullets: z.array(z.string()).default([]),
+      }),
+    ])).default([]),
+  });
+
+  // Legacy schemas for backwards compatibility  
   const localizedExperience = z.object({
     experience: z.array(z.object({
       company: z.string().min(1, t('required')),
@@ -165,8 +215,10 @@ export function createLocalizedCvSchema(t: (key: string) => string) {
   return z.object({
     ...localizedPersonal.shape,
     ...localizedEducation.shape,
-    ...localizedExperience.shape,
-    ...localizedProjects.shape,
+    ...localizedExperienceProjects.shape,
+    // Keep legacy fields for backwards compatibility
+    experience: z.array(z.any()).default([]),
+    projects: z.array(z.any()).default([]),
     ...localizedSkills.shape,
     template: z.enum(['minimal', 'modern', 'creative']).default('minimal'),
     language: z.enum(['en', 'ar']).default('en'),

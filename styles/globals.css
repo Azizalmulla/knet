@@ -4,25 +4,25 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 222.2 84% 4.9%;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -40,26 +40,26 @@
 }
 
 .dark {
-  /* True-black UI with high-contrast white text */
+  /* Neutral near-black UI */
   --background: 0 0% 0%; /* #000000 */
-  --foreground: 0 0% 100%; /* #ffffff */
-  --card: 0 0% 4%; /* #0a0a0a */
-  --card-foreground: 0 0% 100%; /* #ffffff */
-  --popover: 0 0% 4%; /* #0a0a0a */
-  --popover-foreground: 0 0% 100%; /* #ffffff */
-  --primary: 0 0% 100%; /* #ffffff */
-  --primary-foreground: 0 0% 6%; /* #0a0a0a */
-  --secondary: 0 0% 7%; /* #111111 */
-  --secondary-foreground: 0 0% 100%; /* #ffffff */
-  --muted: 0 0% 7%; /* #111111 */
-  --muted-foreground: 0 0% 64%; /* zinc-400 */
-  --accent: 0 0% 7%; /* #111111 */
-  --accent-foreground: 0 0% 100%; /* #ffffff */
-  --destructive: 0 84% 60%; /* red-500 */
-  --destructive-foreground: 0 0% 0%;
-  --border: 0 0% 100% / 0.08;
-  --input: 0 0% 100% / 0.08;
-  --ring: 0 0% 100% / 0.16;
+  --foreground: 0 0% 98%; /* #FAFAFA */
+  --card: 0 0% 6%; /* #0F0F0F */
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 6%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 6%;
+  --secondary: 0 0% 12%; /* #1F1F1F */
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 63.9%;
+  --accent: 0 0% 12%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 0 0% 45%;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -78,25 +78,25 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -118,24 +118,30 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
-  
-  html {
-    color-scheme: dark;
-    background: #000000 !important;
-  }
-  
   body {
-    @apply bg-background text-foreground antialiased;
-    background: #000000 !important;
-    color: #ffffff !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-weight: 500;
+    @apply bg-background text-foreground;
   }
-  
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600 !important;
+}
+
+.font-bold {
+  font-weight: 700 !important;
+}
+
+/* Allow #__next and main to inherit from CSS variables */
+
+::selection { 
+  background: rgba(255,255,255,0.2); 
+  color: #fff; 
   h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
   }
@@ -148,15 +154,7 @@
     font-weight: 700 !important;
   }
   
-  #__next {
-    background: #000000 !important;
-    color: #ffffff !important;
-  }
-  
-  main {
-    background: #000000 !important;
-    color: #ffffff !important;
-  }
+  /* Allow #__next and main to inherit from CSS variables */
   
   ::selection { 
     background: rgba(255,255,255,0.2); 
@@ -164,53 +162,33 @@
   }
 }
 
-/* Force dark mode on all elements */
-html.dark,
-html.dark body,
-html.dark #__next,
-html.dark main {
-  background: #000000 !important;
-  color: #ffffff !important;
-}
+/* Dark mode is applied via CSS variables defined under the `.dark` selector above. */
 
-/* Admin Dark Mode Toggle (Uiverse.io by vinodjangid07) */
-/* To hide the checkbox */
-#checkboxInput {
-  display: none;
-}
+/* Print-specific polish */
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+  html, body { background: #fff !important; }
+  .cv-root {
+    max-width: 794px; /* A4 width @96dpi */
+    margin: 0 auto;
+    color: #1f2937;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+  }
+  /* Remove app chrome (scoped by class) */
+  .no-print, .app-header, .app-footer, .site-nav { display: none !important; }
 
-.toggleSwitch {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 80px;
-  height: 40px;
-  background-color: rgb(199, 199, 199);
-  border-radius: 20px;
-  cursor: pointer;
-  transition-duration: .3s;
-}
+  /* Remove UI styling that looks odd in print */
+  .shadow, .shadow-sm, .shadow-md, .shadow-lg, .ring, .ring-1, .ring-2 { box-shadow: none !important; }
+  .card, .panel { border: 1px solid #E6EEF5 !important; }
+  a { color: #0A5D86; text-decoration: none; }
 
-.toggleSwitch::after {
-  content: "";
-  position: absolute;
-  height: 40px;
-  width: 40px;
-  left: 0px;
-  background: conic-gradient(rgb(104, 104, 104), white, rgb(104, 104, 104), white, rgb(104, 104, 104));
-  border-radius: 50%;
-  transition-duration: .3s;
-  box-shadow: 5px 2px 7px rgba(8, 8, 8, 0.308);
-}
+  /* Consistent hierarchy */
+  h1 { font-size: 24px; font-weight: 700; }
+  h2 { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color:#0A5D86; }
+  .muted { color:#6b7280; }
+  .rule { height:1px; background:#E6EEF5; margin: 12px 0; }
 
-#checkboxInput:checked + .toggleSwitch::after {
-  transform: translateX(100%);
-  transition-duration: .3s;
-}
-
-/* Switch background change */
-#checkboxInput:checked + .toggleSwitch {
-  background-color: rgb(153, 197, 151);
-  transition-duration: .3s;
+  /* Tight lists */
+  ul { margin: 6px 0; padding-left: 18px; }
+  li { margin: 3px 0; }
 }

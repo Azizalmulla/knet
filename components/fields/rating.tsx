@@ -40,7 +40,7 @@ export const RatingField = ({ field, controlProps }: RatingFieldProps) => {
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-      <div className="flex justify-between text-sm text-gray-500">
+      <div className="flex justify-between text-sm text-muted-foreground">
         <span>{field.rangeLabel[0]}</span>
         <span>{field.rangeLabel[1]}</span>
       </div>

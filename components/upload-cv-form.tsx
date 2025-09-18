@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+// Using server-side multipart upload via /api/blob/upload
 
 // Error budget monitoring
 const ERROR_BUDGET = {
@@ -44,14 +45,62 @@ const incrementErrorBudget = (type: 'upload' | 'ai') => {
   }
 };
 import { getFields, getAreasForField, matchSuggestedVacancies } from '@/lib/career-map';
+import { WatheeftiDegreeBuckets, WatheeftiYoEBuckets, WatheeftiAreas } from '@/lib/watheefti-taxonomy';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Upload, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/language';
+
+// Simple client-side image compression
+async function compressImage(file: File, targetMaxBytes = 2_000_000, maxDimension = 2000): Promise<File> {
+  try {
+    if (!file.type.startsWith('image/')) return file;
+    const bytes = file.size;
+    if (bytes <= targetMaxBytes) return file;
+
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = dataUrl;
+    });
+
+    const { width, height } = img;
+    const scale = Math.min(1, maxDimension / Math.max(width, height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const qualities = [0.8, 0.7, 0.6, 0.5, 0.4];
+    for (const q of qualities) {
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', q));
+      if (!blob) continue;
+      if (blob.size <= targetMaxBytes || q === qualities[qualities.length - 1]) {
+        // If compressed bigger than original, keep original
+        if (blob.size >= file.size) return file;
+        return new File([blob], file.name.replace(/\.(png|jpg|jpeg)$/i, '') + '-compressed.jpg', { type: 'image/jpeg' });
+      }
+    }
+    return file;
+  } catch {
+    return file;
+  }
+}
 
 const getUploadSchema = (t: (key: string) => string) => z.object({
   fullName: z.string().min(1, t('required')),
@@ -59,13 +108,36 @@ const getUploadSchema = (t: (key: string) => string) => z.object({
   phone: z.string().min(1, t('required')),
   fieldOfStudy: z.string().min(1, t('required')),
   areaOfInterest: z.string().min(1, t('required')),
+  // Watheefti taxonomy fields (required, no free text)
+  knetDegree: z.enum(WatheeftiDegreeBuckets),
+  knetYoE: z.enum(WatheeftiYoEBuckets),
+  knetArea: z.enum(WatheeftiAreas),
+  gpa: z.preprocess((val) => {
+    if (val === '' || val == null) return undefined;
+    const n = typeof val === 'number' ? val : parseFloat(String(val));
+    return isFinite(n) ? n : undefined;
+  }, z.number().min(0, t('gpa_min') || 'GPA must be at least 0.00').max(4, t('gpa_max') || 'GPA must be at most 4.00').optional()),
   cv: z
     .instanceof(FileList)
     .refine((files) => files.length > 0, t('cv_required'))
-    .refine((files) => files[0]?.type === 'application/pdf', t('pdf_only')),
+    .refine((files) => {
+      const type = files[0]?.type || '';
+      const allowed = new Set([
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png',
+        'image/jpg',
+      ]);
+      return allowed.has(type);
+    }, t('allowed_file_types')),
 });
 
-type UploadFormData = z.infer<ReturnType<typeof getUploadSchema>>;
+// IMPORTANT: react-hook-form's resolver expects the INPUT shape of the schema, not the transformed/output shape.
+// Because we use z.preprocess for `gpa`, the input can be string | number | undefined.
+// Using z.input<> here aligns the generics so the resolver type matches RHF's expectations.
+type UploadFormData = z.input<ReturnType<typeof getUploadSchema>>;
 
 export default function UploadCVForm() {
   const { t } = useLanguage();
@@ -88,6 +160,9 @@ export default function UploadCVForm() {
 
   const fieldOfStudy = watch('fieldOfStudy');
   const areaOfInterest = watch('areaOfInterest');
+  const knetDegree = watch('knetDegree');
+  const knetYoE = watch('knetYoE');
+  const knetArea = watch('knetArea');
 
   // Telemetry management
   const telemetryQueue = useRef<any[]>([]);
@@ -173,33 +248,52 @@ export default function UploadCVForm() {
 
     setIsSubmitting(true);
     try {
-      // Upload CV to blob
-      const formData = new FormData();
-      formData.append('file', data.cv[0]);
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!uploadRes.ok) {
-        incrementErrorBudget('upload');
-        throw new Error('Upload failed');
+      // Prepare file (with client-side compression for images) and upload via server endpoint (multipart)
+      let file = data.cv[0];
+      if (file.type.startsWith('image/')) {
+        file = await compressImage(file, 2_000_000, 2000); // ~2MB target
       }
-      const { url } = await uploadRes.json();
+      const form = new FormData();
+      form.append('file', file, file.name);
+      const uploadRes = await fetch('/api/blob/upload', {
+        method: 'POST',
+        body: form,
+      });
+      const uploadJson: any = await uploadRes.json().catch(() => ({}));
+      if (!uploadRes.ok || !uploadJson?.ok || !uploadJson?.url) {
+        throw new Error(uploadJson?.error || 'Upload failed');
+      }
+      const url = uploadJson.url as string;
 
       // Insert to DB
+      const payload: any = {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        fieldOfStudy: data.fieldOfStudy,
+        areaOfInterest: data.areaOfInterest,
+        suggestedVacancies: suggestedVacancies || matchSuggestedVacancies(data.fieldOfStudy, data.areaOfInterest),
+        cvUrl: url,
+        cvType: 'uploaded',
+      }
+      if (typeof data.gpa === 'number' && isFinite(data.gpa)) {
+        payload.gpa = Number(data.gpa.toFixed(2))
+      }
+      if (data.knetYoE) {
+        payload.yearsOfExperience = data.knetYoE
+      }
+      if (data.knetDegree && data.knetYoE && data.knetArea) {
+        payload.knetProfile = {
+          degreeBucket: data.knetDegree,
+          yearsOfExperienceBucket: data.knetYoE,
+          areaOfInterest: data.knetArea,
+        }
+      }
+
       const submitRes = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: data.fullName,
-          email: data.email,
-          phone: data.phone,
-          fieldOfStudy: data.fieldOfStudy,
-          areaOfInterest: data.areaOfInterest,
-          suggestedVacancies: suggestedVacancies || matchSuggestedVacancies(data.fieldOfStudy, data.areaOfInterest),
-          cvUrl: url,
-          cvType: 'uploaded',
-        }),
+        body: JSON.stringify(payload),
       });
       if (!submitRes.ok) {
         throw new Error('Submission failed');
@@ -225,7 +319,7 @@ export default function UploadCVForm() {
         <CardContent className="pt-6 text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">{t('success_title')}</h2>
-          <p className="text-gray-600 mb-6">{t('success_subtitle')}</p>
+          <p className="text-muted-foreground mb-6">{t('success_subtitle')}</p>
           
           {vacancies.length > 0 && (
             <div className="text-left">
@@ -233,7 +327,7 @@ export default function UploadCVForm() {
               <ul className="space-y-2">
                 {vacancies.map(vacancy => (
                   <li key={vacancy} className="flex items-center">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                    <span className="w-2 h-2 bg-primary rounded-full ltr:mr-3 rtl:ml-3"></span>
                     {vacancy}
                   </li>
                 ))}
@@ -268,7 +362,7 @@ export default function UploadCVForm() {
                 placeholder={t('placeholder_full_name')}
               />
               {errors.fullName && (
-                <p className="text-sm text-red-500 mt-1">{errors.fullName.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.fullName.message}</p>
               )}
             </div>
             <div>
@@ -280,7 +374,7 @@ export default function UploadCVForm() {
                 placeholder={t('placeholder_email')}
               />
               {errors.email && (
-                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
               )}
             </div>
           </div>
@@ -294,7 +388,7 @@ export default function UploadCVForm() {
               defaultValue="+965 "
             />
             {errors.phone && (
-              <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
+              <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>
             )}
           </div>
 
@@ -312,7 +406,7 @@ export default function UploadCVForm() {
                 </SelectContent>
               </Select>
               {errors.fieldOfStudy && (
-                <p className="text-sm text-red-500 mt-1">{errors.fieldOfStudy.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.fieldOfStudy.message}</p>
               )}
             </div>
             <div>
@@ -331,15 +425,86 @@ export default function UploadCVForm() {
                 </SelectContent>
               </Select>
               {errors.areaOfInterest && (
-                <p className="text-sm text-red-500 mt-1">{errors.areaOfInterest.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.areaOfInterest.message}</p>
               )}
             </div>
           </div>
 
+          {/* Experience and GPA */}
+          {/* Watheefti Taxonomy */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="knetDegree">Degree (Watheefti)</Label>
+              <Select onValueChange={(value: string) => setValue('knetDegree', value as any)}>
+                <SelectTrigger id="knetDegree" aria-label="Degree (Watheefti)">
+                  <SelectValue placeholder="Select degree" />
+                </SelectTrigger>
+                <SelectContent>
+                  {WatheeftiDegreeBuckets.map(opt => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors as any && (errors as any).knetDegree && (
+                <p className="text-sm text-destructive mt-1">{(errors as any).knetDegree.message as any}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="knetYoE">Years of Experience (Watheefti)</Label>
+              <Select onValueChange={(value: string) => setValue('knetYoE', value as any)}>
+                <SelectTrigger id="knetYoE" aria-label="Years of Experience (Watheefti)">
+                  <SelectValue placeholder="Select years of experience" />
+                </SelectTrigger>
+                <SelectContent>
+                  {WatheeftiYoEBuckets.map(opt => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors as any && (errors as any).knetYoE && (
+                <p className="text-sm text-destructive mt-1">{(errors as any).knetYoE.message as any}</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="knetArea">Area of Interest (Watheefti)</Label>
+            <Select onValueChange={(value: string) => setValue('knetArea', value as any)}>
+              <SelectTrigger id="knetArea" aria-label="Area of Interest (Watheefti)">
+                <SelectValue placeholder="Select area of interest" />
+              </SelectTrigger>
+              <SelectContent>
+                {WatheeftiAreas.map(opt => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors as any && (errors as any).knetArea && (
+              <p className="text-sm text-destructive mt-1">{(errors as any).knetArea.message as any}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="gpa">{t('label_gpa') || 'GPA'} <span className="text-xs text-muted-foreground">(0.00–4.00, optional)</span></Label>
+            <Input
+              id="gpa"
+              type="number"
+              step="0.01"
+              min={0}
+              max={4}
+              inputMode="decimal"
+              placeholder={t('placeholder_gpa') || 'e.g., 3.50'}
+              {...register('gpa')}
+            />
+            {errors.gpa && (
+              <p className="text-sm text-destructive mt-1">{String(errors.gpa.message)}</p>
+            )}
+          </div>
+
           {suggestedVacancies && (
-            <div className="bg-zinc-50 border border-zinc-200 rounded-md p-4">
+            <div className="bg-muted/30 border rounded-md p-4">
               <h4 className="font-medium mb-2">{t('suggested_vacancies_title')}</h4>
-              <ul className="list-disc pl-5 space-y-1">
+              <ul className="list-disc ltr:pl-5 rtl:pr-5 space-y-1">
                 {suggestedVacancies.split('/').map(item => (
                   <li key={item}>{item}</li>
                 ))}
@@ -352,26 +517,23 @@ export default function UploadCVForm() {
             <Input
               id="cv"
               type="file"
-              accept=".pdf"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               {...register('cv')}
               className="cursor-pointer"
             />
             {errors.cv && (
-              <p className="text-sm text-red-500 mt-1">{errors.cv.message}</p>
+              <p className="text-sm text-destructive mt-1">{errors.cv.message}</p>
             )}
           </div>
 
           {/* Privacy Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-sm">
-            <h4 className="font-medium text-blue-900 mb-2">{t('privacy_notice_upload_title')}</h4>
-            <p className="text-blue-800 mb-2">
-              {t('privacy_notice_upload_p1')}
-            </p>
-            <p className="text-blue-700">
-              {t('privacy_notice_upload_p2')}
-              {/* Contact support for privacy inquiries */}
-            </p>
-          </div>
+          <Alert>
+            <AlertTitle>{t('privacy_notice_upload_title')}</AlertTitle>
+            <AlertDescription>
+              <p>{t('privacy_notice_upload_p1')}</p>
+              <p className="mt-2">{t('privacy_notice_upload_p2')}</p>
+            </AlertDescription>
+          </Alert>
 
           <Button 
             type="submit" 

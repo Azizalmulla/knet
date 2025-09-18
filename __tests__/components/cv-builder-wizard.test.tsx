@@ -26,7 +26,7 @@ describe('CVBuilderWizard', () => {
     test('renders without errors initially', () => {
       renderWithForm(<CVBuilderWizard />)
       
-      expect(screen.getByText('Step 1 of 6')).toBeInTheDocument()
+      expect(screen.getByText('Step 1 of 5')).toBeInTheDocument()
       expect(screen.getByLabelText(/full name/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/phone/i)).toBeInTheDocument()
@@ -49,7 +49,7 @@ describe('CVBuilderWizard', () => {
       })
       
       // Should stay on Personal step
-      expect(screen.getByText('Step 1 of 6')).toBeInTheDocument()
+      expect(screen.getByText('Step 1 of 5')).toBeInTheDocument()
     })
 
     test('clears errors when valid data is entered', async () => {
@@ -112,7 +112,7 @@ describe('CVBuilderWizard', () => {
       
       await waitFor(() => {
         // Should stay on step 1 due to validation error
-        expect(screen.getByText('Step 1 of 6')).toBeInTheDocument()
+        expect(screen.getByText('Step 1 of 5')).toBeInTheDocument()
         
         // Email should be marked as invalid
         const emailInput = screen.getByLabelText(/email/i)
@@ -169,7 +169,7 @@ describe('CVBuilderWizard', () => {
       await user.click(screen.getByRole('button', { name: /previous/i }))
       
       await waitFor(() => {
-        expect(screen.getByText('Step 1 of 6')).toBeInTheDocument()
+        expect(screen.getByText('Step 1 of 5')).toBeInTheDocument()
       })
     })
   })
@@ -179,7 +179,7 @@ describe('CVBuilderWizard', () => {
       const user = userEvent.setup()
       renderWithForm(<CVBuilderWizard />)
       
-      expect(screen.getByText('Step 1 of 6')).toBeInTheDocument()
+      expect(screen.getByText('Step 1 of 5')).toBeInTheDocument()
       
       // Fill Personal and advance
       await user.type(screen.getByLabelText(/full name/i), 'John Doe')
@@ -195,7 +195,7 @@ describe('CVBuilderWizard', () => {
       
       // Should not advance due to validation errors - check that we stay on step 1
       await waitFor(() => {
-        expect(screen.getByText('Step 1 of 6')).toBeInTheDocument()
+        expect(screen.getByText('Step 1 of 5')).toBeInTheDocument()
       }, { timeout: 1000 })
     })
   })
@@ -205,10 +205,10 @@ describe('CVBuilderWizard', () => {
       // This tests that stepFields are correctly defined with numeric indices
       expect(stepFields[0]).toEqual(['fullName', 'email', 'phone', 'location'])
       expect(stepFields[1]).toEqual(['education.0.institution', 'education.0.degree', 'education.0.fieldOfStudy', 'education.0.graduationDate'])
-      expect(stepFields[2]).toEqual(['experience.0.company', 'experience.0.position', 'experience.0.startDate'])
-      expect(stepFields[3]).toEqual(['projects.0.name', 'projects.0.description'])
+      // After merging Experience & Projects into one step, stepFields for that step is managed in-component
+      expect(stepFields[2]).toEqual([])
+      expect(stepFields[3]).toEqual([])
       expect(stepFields[4]).toEqual([])
-      expect(stepFields[5]).toEqual([])
     })
   })
 })

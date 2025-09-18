@@ -120,7 +120,7 @@ export function ProjectsStep() {
               variant="ghost"
               size="sm"
               onClick={() => remove(index)}
-              className="text-red-500 hover:text-red-700"
+              className="text-destructive hover:text-destructive/90"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -134,7 +134,7 @@ export function ProjectsStep() {
                   placeholder={t('proj_name_placeholder')}
                 />
                 {(errors.projects as any)?.[index]?.name && (
-                  <p className="text-sm text-red-500 mt-1">
+                  <p className="text-sm text-destructive mt-1">
                     {(errors.projects as any)[index].name.message}
                   </p>
                 )}
@@ -155,9 +155,9 @@ export function ProjectsStep() {
                 placeholder="What was the goal, your part, and outcome? e.g., Dashboard for expenses using React + Node; added charts, monthly reports."
                 rows={3}
               />
-              <p className="text-xs text-zinc-500 mt-1">1–2 lines describing what it does.</p>
+              <p className="text-xs text-muted-foreground mt-1">1–2 lines describing what it does.</p>
               {(errors.projects as any)?.[index]?.description && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="text-sm text-destructive mt-1">
                   {(errors.projects as any)[index].description.message}
                 </p>
               )}
@@ -169,7 +169,7 @@ export function ProjectsStep() {
                 disabled={loadingAI === index}
                 className="mt-2"
               >
-                <Wand2 className="h-4 w-4 mr-2" />
+                <Wand2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
                 {loadingAI === index ? t('proj_generating') : t('proj_generate_bullets')}
               </Button>
             </div>
@@ -180,13 +180,13 @@ export function ProjectsStep() {
                 {watch(`projects.${index}.technologies`)?.map((tech: string, techIndex: number) => (
                   <span
                     key={techIndex}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-zinc-100 text-zinc-800"
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary text-secondary-foreground/90"
                   >
                     {tech}
                     <button
                       type="button"
                       onClick={() => removeTechnology(index, techIndex)}
-                      className="ml-1 text-zinc-500 hover:text-zinc-700"
+                      className="ltr:ml-1 rtl:mr-1 text-muted-foreground hover:text-foreground"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -217,7 +217,7 @@ export function ProjectsStep() {
                 <div className="space-y-2 mt-2">
                   {watch(`projects.${index}.bullets`).map((bullet: string, bulletIndex: number) => (
                     <div key={bulletIndex} className="flex items-start space-x-2">
-                      <span className="text-sm text-zinc-500 mt-1">•</span>
+                      <span className="text-sm text-muted-foreground mt-1">•</span>
                       <Input
                         value={bullet}
                         onChange={(e) => {
@@ -242,7 +242,7 @@ export function ProjectsStep() {
         onClick={addProject}
         className="w-full"
       >
-        <Plus className="h-4 w-4 mr-2" />
+        <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
         {t('proj_add_project')}
       </Button>
     </div>

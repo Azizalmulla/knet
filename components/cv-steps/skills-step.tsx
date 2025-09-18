@@ -71,13 +71,13 @@ export function SkillsStep() {
               {(watch(`skills.${key}`) ?? []).map((skill: string, index: number) => (
                 <span
                   key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-zinc-100 text-zinc-800"
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-secondary text-secondary-foreground"
                 >
                   {skill}
                   <button
                     type="button"
                     onClick={() => removeSkill(key, index)}
-                    className="ml-2 text-zinc-500 hover:text-zinc-700"
+                    className="ltr:ml-2 rtl:mr-2 text-muted-foreground hover:text-foreground"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -123,7 +123,7 @@ export function SkillsStep() {
                         setNewSkills(prev => ({ ...prev, [key]: '' }));
                         sendEvent('skills_suggest_click', 1, { category: key, suggestion });
                       }}
-                      className="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                      className="px-2 py-1 text-xs rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border"
                       data-testid={`suggest-${key}-${suggestion}`}
                     >
                       {suggestion}

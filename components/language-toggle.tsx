@@ -12,7 +12,7 @@ export default function LanguageToggle() {
       style={{ position: 'fixed', top: 16, right: 16, zIndex: 10000 }}
       aria-label="language-toggle"
     >
-      <div className="inline-flex items-center rounded-full border bg-white/90 backdrop-blur px-1 py-1 shadow-sm">
+      <div className="inline-flex items-center rounded-full border bg-card/90 backdrop-blur px-1 py-1 shadow-sm text-foreground">
         <Button
           type="button"
           size="sm"

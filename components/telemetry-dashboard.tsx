@@ -76,13 +76,13 @@ export default function TelemetryDashboard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-red-600">Telemetry Error</CardTitle>
+          <CardTitle className="text-destructive">Telemetry Error</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">{error}</p>
+            <p className="text-sm text-muted-foreground">{error}</p>
             <Button onClick={handleRefresh} size="sm" variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
               Retry
             </Button>
           </div>
@@ -103,8 +103,8 @@ export default function TelemetryDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Field & Interest Analytics</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-2xl font-semibold text-foreground">Field & Interest Analytics</h2>
+          <p className="text-sm text-muted-foreground">
             Top combinations from {data.totalSubmissions} submissions
           </p>
         </div>
@@ -125,9 +125,9 @@ export default function TelemetryDashboard() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <Users className="h-8 w-8 text-blue-600" />
+              <Users className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-sm text-gray-600">Total Submissions</p>
+                <p className="text-sm text-muted-foreground">Total Submissions</p>
                 <p className="text-2xl font-bold">{data.totalSubmissions}</p>
               </div>
             </div>
@@ -137,9 +137,9 @@ export default function TelemetryDashboard() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <TrendingUp className="h-8 w-8 text-green-600" />
+              <TrendingUp className="h-8 w-8 text-emerald-500" />
               <div>
-                <p className="text-sm text-gray-600">Most Popular</p>
+                <p className="text-sm text-muted-foreground">Most Popular</p>
                 <p className="text-lg font-semibold truncate">
                   {topCombo ? `${topCombo.percentage}%` : 'N/A'}
                 </p>
@@ -151,9 +151,9 @@ export default function TelemetryDashboard() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <BarChart3 className="h-8 w-8 text-purple-600" />
+              <BarChart3 className="h-8 w-8 text-accent" />
               <div>
-                <p className="text-sm text-gray-600">Unique Combos</p>
+                <p className="text-sm text-muted-foreground">Unique Combos</p>
                 <p className="text-2xl font-bold">{data.combos.length}</p>
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function TelemetryDashboard() {
             Top {data.limit} Field & Interest Combinations
           </CardTitle>
           {lastRefresh && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Last updated: {lastRefresh.toLocaleString()}
             </p>
           )}
@@ -188,14 +188,14 @@ export default function TelemetryDashboard() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <span className="flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                        <span className="flex items-center justify-center w-6 h-6 bg-secondary text-secondary-foreground text-xs font-semibold rounded-full">
                           {index + 1}
                         </span>
                         <div>
-                          <p className="font-medium text-sm text-gray-900">
+                          <p className="font-medium text-sm text-foreground">
                             {combo.field_of_study}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-muted-foreground">
                             → {combo.area_of_interest}
                           </p>
                         </div>
@@ -203,14 +203,14 @@ export default function TelemetryDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">{combo.count} submissions</p>
-                      <p className="text-xs text-gray-500">{combo.percentage}%</p>
+                      <p className="text-xs text-muted-foreground">{combo.percentage}%</p>
                     </div>
                   </div>
                   
                   {/* Progress Bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-2">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-300"
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
@@ -220,8 +220,8 @@ export default function TelemetryDashboard() {
           </div>
           
           {data.combos.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <p>No combination data available yet.</p>
             </div>
           )}

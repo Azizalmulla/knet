@@ -63,6 +63,15 @@ const translations: Translations = {
     preview: "Preview",
     complete_field_selection: "Complete field selection",
     submit_to_knet: "Submit to KNET",
+    // Watheefti classification (Review step)
+    profile_classification_required: "Profile Classification (Required)",
+    degree_watheefti: "Degree (Watheefti)",
+    yoe_watheefti: "Years of Experience (Watheefti)",
+    aoi_watheefti: "Area of Interest (Watheefti)",
+    select_degree: "Select degree",
+    select_yoe: "Select years of experience",
+    select_area: "Select area of interest",
+    please_choose_option: "Please choose an option",
 
     // Wizard field labels (Personal)
     label_location: "Location",
@@ -76,7 +85,7 @@ const translations: Translations = {
     edu_field: "Field of Study",
     edu_start_date: "Start Date",
     edu_end_date: "End Date",
-    edu_gpa: "GPA (Optional)",
+    edu_gpa: "GPA",
     edu_description: "Description",
     edu_currently_studying: "I'm currently studying",
     edu_add_education: "Add Education",
@@ -144,6 +153,7 @@ const translations: Translations = {
     phone_min_10: "Phone number must be at least 10 characters",
     cv_required: "CV file is required",
     pdf_only: "Only PDF files are allowed",
+    allowed_file_types: "Allowed file types: PDF, DOC/DOCX, JPG, PNG",
 
     // Upload Page
     upload_title: "Upload Your CV",
@@ -219,6 +229,42 @@ const translations: Translations = {
     system_error: "System Error",
     admin_error_message: "Something went wrong with the admin dashboard.",
     reload_page: "Reload Page",
+
+    // Global actions
+    back: "Back",
+    cancel: "Cancel",
+
+    // Header tabs
+    student_cvs: "Student CVs",
+    ai_agent: "AI Agent",
+
+    // Telemetry
+    events_today: "Events Today",
+    loading_telemetry: "Loading telemetry…",
+    no_events_today: "No events recorded today yet.",
+
+    // Chat UI
+    role_you: "You",
+    role_ai_agent: "AI Agent",
+    role_system: "System",
+    project_highlights: "Project Highlights",
+    copy_shortlist: "Copy shortlist",
+    thinking: "Thinking...",
+    chat_placeholder: "Ask anything… (Shift+Enter for new line)",
+    gpa: "GPA",
+    experience: "Experience",
+    score: "Score",
+    ai_found_matches: "Found matching candidates",
+    raw_label: "Raw:",
+
+    // Auth messages
+    too_many_attempts: "Too many login attempts",
+    login_failed: "Login failed",
+
+    // Quick replies
+    quick_cs_high_gpa: "CS students with GPA > 3.5",
+    quick_recent_webdev: "Recent Web Dev grads",
+    quick_with_internships: "With internships",
   },
   ar: {
     // Common
@@ -272,6 +318,15 @@ const translations: Translations = {
     preview: "المعاينة",
     complete_field_selection: "أكمل اختيار الحقول",
     submit_to_knet: "إرسال إلى KNET",
+    // Watheefti classification (Review step)
+    profile_classification_required: "تصنيف الملف (إلزامي)",
+    degree_watheefti: "المؤهل (وظيفتي)",
+    yoe_watheefti: "سنوات الخبرة (وظيفتي)",
+    aoi_watheefti: "مجال الاهتمام (وظيفتي)",
+    select_degree: "اختر المؤهل",
+    select_yoe: "اختر سنوات الخبرة",
+    select_area: "اختر مجال الاهتمام",
+    please_choose_option: "يرجى اختيار خيار",
 
     // Draft restore
     draft_found: "تم العثور على مسودة",
@@ -286,6 +341,7 @@ const translations: Translations = {
     phone_min_10: "يجب أن يكون رقم الهاتف 10 أحرف على الأقل",
     cv_required: "ملف السيرة الذاتية مطلوب",
     pdf_only: "يسمح فقط بملفات PDF",
+    allowed_file_types: "الملفات المسموح بها: PDF و DOC/DOCX و JPG و PNG",
 
     // Upload Page
     upload_title: "تحميل السيرة الذاتية",

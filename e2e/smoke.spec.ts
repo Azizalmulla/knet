@@ -13,7 +13,8 @@ test.describe('Production Smoke Tests', () => {
   });
 
   test('upload page loads and is functional', async ({ page }) => {
-    await page.goto(`${base}/start`);
+    // Navigate directly to the upload page where the file input resides
+    await page.goto(`${base}/upload`);
     await expect(page.getByText('Upload Your CV')).toBeVisible();
     
     // Check that upload functionality is available (no broken scripts)

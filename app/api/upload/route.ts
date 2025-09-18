@@ -9,16 +9,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    // Validate size (max 5MB) and content type (PDF/DOC/DOCX)
-    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    // Validate size (max 4MB to stay under Vercel serverless body limit)
+    const MAX_SIZE = 4 * 1024 * 1024; // 4MB
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 413 });
+      return NextResponse.json({ error: 'File too large (max 4MB)' }, { status: 413 });
     }
 
     const allowedTypes = new Set<string>([
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/png',
+      'image/jpg',
     ]);
     // If the browser provided a type, validate it; otherwise allow and let Blob infer
     if (file.type && !allowedTypes.has(file.type)) {

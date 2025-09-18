@@ -5,10 +5,14 @@
   "framework": "nextjs",
   "functions": {
     "app/api/cv/[id]/pdf/route.ts": {
-      "runtime": "nodejs18.x",
       "maxDuration": 60,
       "memory": 1024,
-      "includeFiles": "node_modules/@sparticuz/chromium/**"
+      "includeFiles": "public/fonts/**"
+    },
+    "app/api/cv/pdf/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": "public/fonts/**"
     },
     "app/api/**/*.ts": {
       "maxDuration": 60

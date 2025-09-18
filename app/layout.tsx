@@ -7,6 +7,8 @@ import { V0Provider } from "@/lib/context"
 import dynamic from "next/dynamic"
 import { LanguageProvider } from "@/lib/language"
 import LanguageToggle from "@/components/language-toggle"
+import { ThemeProvider } from "@/components/theme-provider"
+import AppToaster from "@/components/ui/sonner-toaster"
 
 const V0Setup = dynamic(() => import("@/components/v0-setup"))
 
@@ -41,15 +43,20 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark" style={{backgroundColor: '#000000', color: '#ffffff'}}>
-      <body className={`${interSans.variable} ${jetBrainsMono.variable} ${ibmArabic.variable} antialiased font-sans font-medium`} style={{backgroundColor: '#000000', color: '#ffffff', fontFamily: 'var(--font-geist-sans), var(--font-arabic), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: '500'}} suppressHydrationWarning>
-        <V0Provider isV0={isV0}>
-          <LanguageProvider>
-            {children}
-            <LanguageToggle />
-          </LanguageProvider>
-          {isV0 && <V0Setup />}
-        </V0Provider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${interSans.variable} ${jetBrainsMono.variable} ${ibmArabic.variable} antialiased font-sans font-medium transition-colors duration-300`} suppressHydrationWarning>
+        <ThemeProvider>
+          <V0Provider isV0={isV0}>
+            <LanguageProvider>
+              {children}
+              <div className="no-print">
+                <LanguageToggle />
+                <AppToaster />
+              </div>
+            </LanguageProvider>
+            {isV0 && <V0Setup />}
+          </V0Provider>
+        </ThemeProvider>
       </body>
     </html>
   )

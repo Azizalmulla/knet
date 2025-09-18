@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
                 ],
                 spacing: { after: 100 },
               }),
-              ...(exp.bullets || []).map(bullet => 
+              ...(exp.bullets || []).map((bullet: string) => 
                 new Paragraph({
                   children: [
                     new TextRun({
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
                   spacing: { after: 50 },
                 }),
               ] : []),
-              ...(project.bullets || []).map(bullet => 
+              ...(project.bullets || []).map((bullet: string) => 
                 new Paragraph({
                   children: [
                     new TextRun({

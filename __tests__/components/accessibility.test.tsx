@@ -138,7 +138,7 @@ describe('Accessibility Tests', () => {
       
       await waitFor(() => {
         // Should advance to step 2 since form is valid
-        expect(screen.getByText('Step 2 of 6')).toBeInTheDocument()
+        expect(screen.getByText('Step 2 of 5')).toBeInTheDocument()
       })
     })
 
@@ -171,7 +171,7 @@ describe('Accessibility Tests', () => {
       await user.keyboard('{Enter}')
       
       // Should not advance step - check step indicator
-      expect(screen.getByText('Step 1 of 6')).toBeInTheDocument()
+      expect(screen.getByText('Step 1 of 5')).toBeInTheDocument()
       expect(screen.getAllByText('Personal Info')).toHaveLength(2) // One in progress, one in card title
     })
 

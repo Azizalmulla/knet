@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertCircle, Save, RotateCcw } from 'lucide-react';
 import { useAutosave, loadDraft, clearDraft, hasDraft, getDraftInfo } from '@/lib/autosave';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { PersonalInfoStep } from './cv-steps/personal-info-step';
 import { EducationStep } from './cv-steps/education-step';
-import { ExperienceStep } from './cv-steps/experience-step';
-import { ProjectsStep } from './cv-steps/projects-step';
+import { ExperienceProjectsStep } from './cv-steps/experience-projects-step';
 import { SkillsStep } from './cv-steps/skills-step';
 import { ReviewStep } from './cv-steps/review-step';
 import { cvSchema, createLocalizedCvSchema, type CVData, defaultCVValues, stepFields } from '@/lib/cv-schemas';
@@ -20,8 +20,7 @@ import { useLanguage } from '@/lib/language';
 const steps = [
   { id: 'personal', title: 'Personal Info' },
   { id: 'education', title: 'Education' },
-  { id: 'experience', title: 'Experience' },
-  { id: 'projects', title: 'Projects' },
+  { id: 'experienceProjects', title: 'Experience & Projects' },
   { id: 'skills', title: 'Skills' },
   { id: 'review', title: 'Review' },
 ];
@@ -51,10 +50,8 @@ export default function CVBuilderWizard() {
         return t('step_personal');
       case 'education':
         return t('step_education');
-      case 'experience':
-        return t('step_experience');
-      case 'projects':
-        return t('step_projects');
+      case 'experienceProjects':
+        return 'Experience & Projects';
       case 'skills':
         return t('step_skills');
       case 'review':
@@ -151,12 +148,10 @@ export default function CVBuilderWizard() {
       case 1:
         return <EducationStep />;
       case 2:
-        return <ExperienceStep />;
+        return <ExperienceProjectsStep />;
       case 3:
-        return <ProjectsStep />;
-      case 4:
         return <SkillsStep />;
-      case 5:
+      case 4:
         return <ReviewStep />;
       default:
         return null;
@@ -167,35 +162,28 @@ export default function CVBuilderWizard() {
 
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={{ backgroundColor: '#000', color: '#fff' }}>
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className="mx-auto max-w-4xl px-4 py-8">
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             {/* Draft Restore Notification */}
             {showDraftRestore && draftInfo && (
-              <Card className="mb-6 border-blue-200 bg-blue-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Save className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="text-sm font-medium text-blue-900">
-                          {t('draft_found')}
-                        </p>
-                        <p className="text-xs text-blue-700">
-                          {t('draft_unsaved_from', { age: draftInfo.age })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
+              <Alert className="mb-6">
+                <Save className="h-5 w-5" />
+                <AlertTitle>{t('draft_found')}</AlertTitle>
+                <AlertDescription>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      {t('draft_unsaved_from', { age: draftInfo.age })}
+                    </p>
+                    <div className="flex items-center gap-2">
                       <Button
                         type="button"
                         size="sm"
                         onClick={restoreDraft}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
                         data-testid="restore-draft-btn"
                       >
-                        <RotateCcw className="h-3 w-3 mr-1" />
+                        <RotateCcw className="h-3 w-3 ltr:mr-1 rtl:ml-1" />
                         {t('restore')}
                       </Button>
                       <Button
@@ -209,8 +197,8 @@ export default function CVBuilderWizard() {
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </AlertDescription>
+              </Alert>
             )}
             
             {/* Progress */}
@@ -259,19 +247,7 @@ export default function CVBuilderWizard() {
                 {t('previous')}
               </Button>
               {currentStep === steps.length - 1 ? (
-                <Button
-                  data-testid="complete-btn"
-                  type="submit"
-                  onClick={async (e) => {
-                    const ok = await form.trigger(['template', 'language'], { shouldFocus: true });
-                    if (!ok) {
-                      e.preventDefault();
-                      return;
-                    }
-                  }}
-                >
-                  {t('complete')}
-                </Button>
+                <div />
               ) : (
                 <Button
                   onClick={nextStep}

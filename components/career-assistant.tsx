@@ -104,13 +104,19 @@ export default function CareerAssistant() {
       }
 
       const locale = language === 'arabic' ? 'ar' : language === 'kuwaiti_arabic' ? 'kw' : 'en'
+      // One-line frontend rule: if the user types in Arabic anywhere, force lang = 'ar'
+      const AR_RE = /[\u0600-\u06FF]/
+      const hasArabic = AR_RE.test(existingCV) || AR_RE.test(parsedCv) || AR_RE.test(jobDescription) || (() => {
+        try { return AR_RE.test(JSON.stringify(parsedCvData || cvData || {})) } catch { return false }
+      })()
+      const effectiveLocale = hasArabic ? 'ar' : locale
 
       const response = await fetch('/api/ai/career-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: selectedMode || mode,
-          locale,
+          locale: effectiveLocale,
           tone,
           form: parsedCvData || cvData || {},
           parsedCv: parsedCv || undefined,
@@ -169,16 +175,16 @@ export default function CareerAssistant() {
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
-          <Sparkles className="h-8 w-8 text-blue-500" />
+          <Sparkles className="h-8 w-8 text-primary" />
           AI Career Assistant
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Generate, optimize, and enhance your CV with AI-powered career guidance
         </p>
       </div>
 
       {errorBanner && (
-        <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-amber-800">
+        <div className="rounded-md bg-secondary/10 border border-border p-3 text-foreground">
           {errorBanner}
         </div>
       )}
@@ -305,7 +311,7 @@ export default function CareerAssistant() {
                   placeholder="Paste job description to tailor bullets (React, TypeScript, Next.js, Tailwind...)"
                   rows={3}
                 />
-                <div className="mt-1 text-xs text-gray-500">{jobDescription.length}/3000</div>
+                <div className="mt-1 text-xs text-muted-foreground">{jobDescription.length}/3000</div>
               </div>
             </div>
           </div>
@@ -313,7 +319,7 @@ export default function CareerAssistant() {
           <div className="flex gap-3">
             <Button onClick={() => callCareerAssistant()} disabled={loading} className="h-10">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              <span className="ml-2">Run</span>
+              <span className="ltr:ml-2 rtl:mr-2">Run</span>
             </Button>
           </div>
         </CardContent>
@@ -416,7 +422,7 @@ export default function CareerAssistant() {
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {result.needs.map((n, i) => (
-                    <span key={i} className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm">{n}</span>
+                    <span key={i} className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm">{n}</span>
                   ))}
                 </div>
               </CardContent>
@@ -428,12 +434,12 @@ export default function CareerAssistant() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Generated CV</CardTitle>
                 <Button onClick={downloadCV} size="sm" variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
                   Download JSON
                 </Button>
               </CardHeader>
               <CardContent>
-                <pre className="bg-gray-50 p-4 rounded-lg text-sm overflow-auto max-h-96">
+                <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto max-h-96">
                   {JSON.stringify(result.cv, null, 2)}
                 </pre>
               </CardContent>
@@ -450,7 +456,7 @@ export default function CareerAssistant() {
                   {result.careerSuggestions.map((suggestion, index) => (
                     <span
                       key={index}
-                      className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                      className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm"
                     >
                       {suggestion}
                     </span>
@@ -466,7 +472,7 @@ export default function CareerAssistant() {
                 <CardTitle>Cover Letter</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{result.coverLetter}</p>
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap">{result.coverLetter}</p>
               </CardContent>
             </Card>
           )}
@@ -480,10 +486,10 @@ export default function CareerAssistant() {
                 <ol className="space-y-2">
                   {result.interviewQuestions.map((question, index) => (
                     <li key={index} className="flex gap-3">
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-sm font-medium min-w-[24px] text-center">
+                      <span className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-sm font-medium min-w-[24px] text-center">
                         {index + 1}
                       </span>
-                      <span className="text-gray-700">{question}</span>
+                      <span className="text-foreground">{question}</span>
                     </li>
                   ))}
                 </ol>

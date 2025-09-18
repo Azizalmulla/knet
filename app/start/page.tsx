@@ -5,19 +5,20 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguage } from "@/lib/language"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 export default function Start() {
   const { t } = useLanguage()
   return (
-    <div className="min-h-screen bg-background text-foreground" style={{backgroundColor: '#000000', color: '#ffffff'}}>
-      {/* Top bar (white) */}
-      <header className="border-b bg-white border-zinc-200">
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Top bar (forced white/light) */}
+      <header className="border-b bg-white border-gray-200 text-gray-900">
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image src="/images/logo.png" alt="KNET" width={160} height={36} className="h-9 w-auto" />
-            <span className="text-xs text-zinc-600 hidden sm:inline">{t('student_dashboard')}</span>
+            <span className="text-xs text-gray-600 hidden sm:inline">{t('student_dashboard')}</span>
           </div>
-          <Link href="/" className="text-sm text-zinc-700 hover:text-zinc-900 transition">{t('home')}</Link>
+          <Link href="/" className="text-sm text-gray-900 hover:opacity-80 transition">{t('home')}</Link>
         </div>
       </header>
 
@@ -30,7 +31,7 @@ export default function Start() {
       </section>
 
       {/* Actions */}
-      <main className="mx-auto max-w-6xl px-4 pb-16" style={{backgroundColor: '#000000'}}>
+      <main className="mx-auto max-w-6xl px-4 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card className="min-h-[220px]">
             <CardHeader>
@@ -43,39 +44,15 @@ export default function Start() {
               </Button>
             </CardContent>
           </Card>
-
-          <Card className="min-h-[220px]">
-            <CardHeader>
-              <CardTitle className="font-bold">{t('ai_cv_builder')}</CardTitle>
-              <CardDescription>Use our multi-step wizard and AI to create an ATS-friendly CV.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <Button asChild variant="secondary" className="w-full h-11 rounded-xl">
-                <Link href="/ai-builder">{t('start_building')}</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="min-h-[220px]">
-            <CardHeader>
-              <CardTitle className="font-bold">{t('admin_dashboard')}</CardTitle>
-              <CardDescription>{t('admin_dashboard_desc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <Button asChild variant="outline" className="w-full h-11 rounded-xl">
-                <Link href="/admin">Open Admin</Link>
-              </Button>
-            </CardContent>
-          </Card>
         </div>
         
         {/* Privacy Notice */}
-        <div className="mt-8 p-4 border border-white/10 rounded-lg bg-white/5">
-          <h3 className="text-sm font-medium mb-2">{t('privacy_notice')}</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {t('privacy_text').replace('{email}', 'support')}
-          </p>
-        </div>
+        <Alert className="mt-8">
+          <AlertTitle>{t('privacy_notice')}</AlertTitle>
+          <AlertDescription>
+            <p className="text-xs leading-relaxed">{t('privacy_text').replace('{email}', 'support')}</p>
+          </AlertDescription>
+        </Alert>
       </main>
     </div>
   )

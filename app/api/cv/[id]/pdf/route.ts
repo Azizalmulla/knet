@@ -1,71 +1,80 @@
 import { NextResponse } from 'next/server'
-import chromium from '@sparticuz/chromium'
-import puppeteer from 'puppeteer-core'
+import { sql } from '@vercel/postgres'
+import { pdf, Font } from '@react-pdf/renderer'
+import fs from 'fs'
+import path from 'path'
+import { createCVDocument } from '@/lib/pdf/cv-document'
 
 export const runtime = 'nodejs'
 
-function cvPrintUrl(id: string, token: string | undefined, req: Request) {
-  const fallback = new URL(req.url).origin
-  const base = process.env.NEXT_PUBLIC_BASE_URL || fallback
-  const url = new URL(`/cv/print?id=${id}`, base)
-  if (token) url.searchParams.set('token', token)
-  return url.toString()
+// Register local TTF fonts ONCE per lambda cold start
+function registerFontSafe(family: string, files: { src: string; fontWeight?: number | 'normal' | 'bold' }[]) {
+  try {
+    const cwd = process.cwd()
+    const okFiles = files
+      .map((f) => ({ ...f, src: path.resolve(cwd, f.src) }))
+      .filter((f) => fs.existsSync(f.src) && /\.(ttf|otf)$/i.test(f.src))
+    if (okFiles.length) {
+      Font.register({ family, fonts: okFiles as any })
+      const fam = ((Font as any)._knet_families || {}) as Record<string, boolean>
+      fam[family] = true
+      ;(Font as any)._knet_families = fam
+    }
+  } catch {
+    // swallow errors and let Helvetica fallback
+  }
 }
+
+try {
+  if (!(Font as any)._knet_fs_registered) {
+    registerFontSafe('Inter', [
+      { src: './public/fonts/Inter-Regular.ttf', fontWeight: 400 },
+      { src: './public/fonts/Inter-Bold.ttf', fontWeight: 700 },
+    ])
+    registerFontSafe('NotoKufiArabic', [
+      { src: './public/fonts/NotoKufiArabic-Regular.ttf', fontWeight: 400 },
+      { src: './public/fonts/NotoKufiArabic-Bold.ttf', fontWeight: 700 },
+    ])
+    ;(Font as any)._knet_fs_registered = true
+  }
+} catch {}
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const { id } = params
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token') ?? undefined
+  const langParam = searchParams.get('lang') ?? undefined
 
-  let browser: puppeteer.Browser | null = null
   try {
-    // Configure chromium for Vercel serverless
-    chromium.setHeadlessMode = true
-    chromium.setGraphicsMode = false
-    await chromium.font('https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJKjp-hinted.zip')
-    const executablePath = await chromium.executablePath()
-    console.log('CHROMIUM_EXEC_PATH:', executablePath)
-    // Ensure shared libraries are resolvable (libnspr4.so, etc.)
-    try {
-      const libDir = '/var/task/node_modules/@sparticuz/chromium/lib'
-      const pkgDir = '/var/task/node_modules/@sparticuz/chromium'
-      const currentLd = process.env.LD_LIBRARY_PATH || ''
-      const paths = [libDir, pkgDir, currentLd].filter(Boolean)
-      process.env.LD_LIBRARY_PATH = paths.join(':')
-      if (!process.env.FONTCONFIG_PATH) process.env.FONTCONFIG_PATH = libDir
-      console.log('LD_LIBRARY_PATH:', process.env.LD_LIBRARY_PATH)
-    } catch {}
-    
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath,
-      headless: chromium.headless,
-      env: {
-        ...process.env,
-        LD_LIBRARY_PATH: `${process.env.LD_LIBRARY_PATH ? process.env.LD_LIBRARY_PATH + ':' : ''}/var/task/node_modules/@sparticuz/chromium/lib:/var/task/node_modules/@sparticuz/chromium`,
-        FONTCONFIG_PATH: process.env.FONTCONFIG_PATH || '/var/task/node_modules/@sparticuz/chromium/lib',
-        HOME: process.env.HOME || '/tmp',
-      },
-    })
+    // Admin gate (avoid exposing PII)
+    const adminKey = process.env.ADMIN_KEY || process.env.NEXT_PUBLIC_ADMIN_KEY || 'test-admin-key'
+    if (!token || token !== adminKey) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    const page = await browser.newPage()
-    const target = cvPrintUrl(id, token, req)
+    // Fetch student record
+    const result = await sql`SELECT id, full_name, email, cv_json, cv_template FROM public.students WHERE id = ${id} LIMIT 1`
+    if (!result?.rows?.length) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    const row = result.rows[0] as any
+    const cv = (typeof row.cv_json === 'string' ? JSON.parse(row.cv_json) : row.cv_json) || {}
+    const template = (row.cv_template as any) || 'minimal'
+    const language = langParam || cv.language || row.language || 'en'
 
-    await page.goto(target, { waitUntil: 'networkidle0', timeout: 60000 })
-    await page.emulateMediaType('print')
+    // Fonts are registered at module load if present under public/fonts
 
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      preferCSSPageSize: true,
-      margin: { top: '18mm', right: '16mm', bottom: '18mm', left: '16mm' },
-    })
+    // Render React-PDF document directly (no headless browser)
+    const element = createCVDocument(cv, template, language)
+    const blob = await pdf(element).toBlob()
+    const ab = await blob.arrayBuffer()
+    const bytes = new Uint8Array(ab)
 
-    return new NextResponse(pdf, {
+    return new Response(bytes, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="CV-${id}.pdf"`,
+        'Content-Disposition': `attachment; filename="CV-${row.id}.pdf"`,
+        'Cache-Control': 'no-store',
       },
     })
   } catch (err: any) {
@@ -73,7 +82,5 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       { error: 'Failed to generate PDF', detail: String(err?.message || err) },
       { status: 500 }
     )
-  } finally {
-    try { await browser?.close() } catch {}
   }
 }

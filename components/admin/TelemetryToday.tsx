@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/language";
 
 type Row = { event: string; count: number };
 
 export default function TelemetryToday() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +24,7 @@ export default function TelemetryToday() {
     })();
   }, []);
 
-  if (loading) return <div className="text-sm text-muted-foreground">Loading telemetry…</div>;
+  if (loading) return <div className="text-sm text-muted-foreground">{t('loading_telemetry')}</div>;
 
   const important = new Set([
     // Clicks
@@ -51,7 +53,7 @@ export default function TelemetryToday() {
         </div>
       ))}
       {filtered.length === 0 && (
-        <div className="text-sm text-muted-foreground">No events recorded today yet.</div>
+        <div className="text-sm text-muted-foreground">{t('no_events_today')}</div>
       )}
     </div>
   );

@@ -272,7 +272,7 @@ export function ExperienceStep() {
               variant="ghost"
               size="sm"
               onClick={() => remove(index)}
-              className="text-red-500 hover:text-red-700"
+              className="text-destructive hover:text-destructive/90"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -290,7 +290,7 @@ export function ExperienceStep() {
                   data-testid={`field-experience-${index}-company`}
                 />
                 {(errors as any).experience?.[index]?.company && (
-                  <p id={`company-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-experience-${index}-company`}>
+                  <p id={`company-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-experience-${index}-company`}>
                     {(errors as any).experience[index]?.company?.message as string}
                   </p>
                 )}
@@ -306,7 +306,7 @@ export function ExperienceStep() {
                   data-testid={`field-experience-${index}-position`}
                 />
                 {(errors as any).experience?.[index]?.position && (
-                  <p id={`position-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-experience-${index}-position`}>
+                  <p id={`position-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-experience-${index}-position`}>
                     {(errors as any).experience[index]?.position?.message as string}
                   </p>
                 )}
@@ -325,7 +325,7 @@ export function ExperienceStep() {
                   data-testid={`field-experience-${index}-startDate`}
                 />
                 {(errors as any).experience?.[index]?.startDate && (
-                  <p id={`startDate-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-experience-${index}-startDate`}>
+                  <p id={`startDate-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-experience-${index}-startDate`}>
                     {(errors as any).experience[index]?.startDate?.message as string}
                   </p>
                 )}
@@ -341,7 +341,7 @@ export function ExperienceStep() {
                   data-testid={`field-experience-${index}-endDate`}
                 />
                 {(errors as any).experience?.[index]?.endDate && (
-                  <p id={`endDate-${index}-error`} role="alert" className="text-sm text-red-500 mt-1" data-testid={`error-experience-${index}-endDate`}>
+                  <p id={`endDate-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-experience-${index}-endDate`}>
                     {(errors as any).experience[index]?.endDate?.message as string}
                   </p>
                 )}
@@ -350,7 +350,7 @@ export function ExperienceStep() {
                     id={`current-${index}`}
                     type="checkbox"
                     {...register(`experience.${index}.current`)}
-                    className="mr-2"
+                    className="ltr:mr-2 rtl:ml-2"
                     data-testid={`field-experience-${index}-current`}
                   />
                   <Label htmlFor={`current-${index}`} className="text-sm">{t('exp_current')}</Label>
@@ -376,7 +376,7 @@ export function ExperienceStep() {
                 className="mt-2"
                 aria-label={loadingAI === index ? 'Generating...' : 'Generate ATS Bullets'}
               >
-                <Wand2 className="h-4 w-4 mr-2" />
+                <Wand2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
                 <span className="sr-only">{loadingAI === index ? 'Generating...' : 'Generate ATS Bullets'}</span>
                 {loadingAI === index ? 'Generating...' : disabledButtons.has(index) ? 'Wait 10s...' : 'Generate ATS Bullets'}
               </Button>
@@ -388,7 +388,7 @@ export function ExperienceStep() {
                 <div className="space-y-2 mt-2">
                   {watch(`experience.${index}.bullets`).map((bullet: string, bulletIndex: number) => (
                     <div key={bulletIndex} className="flex items-start space-x-2">
-                      <span className="text-sm text-zinc-500 mt-1">•</span>
+                      <span className="text-sm text-muted-foreground mt-1">•</span>
                       <Input
                         value={bullet}
                         onChange={(e) => {
@@ -413,7 +413,7 @@ export function ExperienceStep() {
         onClick={addExperience}
         className="w-full"
       >
-        <Plus className="h-4 w-4 mr-2" />
+        <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
         {t('exp_add_experience')}
       </Button>
     </div>
