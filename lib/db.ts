@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres';
 
 export const db = sql;
+export { sql };
 
 // The following is the SQL to create the table in Vercel Postgres dashboard:
 

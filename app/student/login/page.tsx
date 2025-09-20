@@ -1,7 +1,7 @@
 "use client"
 
 import { signIn } from "next-auth/react"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Mail, Loader2 } from "lucide-react"
@@ -10,7 +10,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 
-export default function StudentLoginPage() {
+function StudentLoginContent() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [provider, setProvider] = useState<string | null>(null)
@@ -157,5 +157,17 @@ export default function StudentLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function StudentLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    }>
+      <StudentLoginContent />
+    </Suspense>
   )
 }

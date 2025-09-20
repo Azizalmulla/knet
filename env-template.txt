@@ -1,0 +1,30 @@
+# Careerly Environment Configuration Template
+# Copy this to .env.local and fill in your values
+
+# Database Connection (REQUIRED)
+# Get this from your Neon dashboard
+DATABASE_URL=postgresql://user:password@host/database
+# Alternative name (same value)
+POSTGRES_URL=postgresql://user:password@host/database
+
+# Security (REQUIRED)
+# Generate a strong random string (32+ characters)
+JWT_SECRET=your-very-long-random-secret-key-here-change-this
+NEXTAUTH_SECRET=your-very-long-random-secret-key-here-change-this
+
+# Vercel Blob Storage (REQUIRED for file uploads)
+# Get this from your Vercel dashboard
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_token_here
+
+# Super Admin Credentials (OPTIONAL - defaults provided)
+SUPER_ADMIN_EMAIL=super@careerly.com
+SUPER_ADMIN_PASSWORD=super123
+
+# Optional Configuration
+COOKIE_DOMAIN=.careerly.com  # For subdomain sharing
+NODE_ENV=development
+
+# Example filled configuration:
+# DATABASE_URL=postgresql://username:password@ep-cool-name-123456.us-east-1.aws.neon.tech/careerly
+# JWT_SECRET=super-secret-jwt-key-that-is-very-long-and-random-123456789
+# BLOB_READ_WRITE_TOKEN=vercel_blob_rw_1234567890abcdef
