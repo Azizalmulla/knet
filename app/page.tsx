@@ -238,7 +238,7 @@ export default function Home() {
             <h2 id="how-it-works" className="text-3xl md:text-4xl font-extrabold tracking-tight">
               {t('how_it_works')}
             </h2>
-            <p className="mt-2 text-neutral-600">3 steps. Brutally simple.</p>
+            <p className="mt-2 text-neutral-600">{t('three_steps_simple')}</p>
           </div>
 
           {/* Band frame with offset shadow */}
@@ -296,9 +296,9 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4">
           <div className="mb-8 md:mb-10 text-center">
             <h2 id="why-choose-us" className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              Why Wathefni AI?
+              {t('why_wathefni')}
             </h2>
-            <p className="mt-2 text-neutral-600 text-lg">The only platform that does it all</p>
+            <p className="mt-2 text-neutral-600 text-lg">{t('only_platform_does_all')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -418,8 +418,8 @@ export default function Home() {
       <section aria-labelledby="enroll" className="mt-16">
         <div className="mx-auto max-w-7xl px-4">
           <div className="mb-6 md:mb-8">
-            <h2 id="enroll" className="text-3xl md:text-4xl font-extrabold tracking-tight">Enroll your company</h2>
-            <p className="mt-2 text-neutral-600">Tell us about your organization and we’ll get you onboarded.</p>
+            <h2 id="enroll" className="text-3xl md:text-4xl font-extrabold tracking-tight">{t('enroll_your_company')}</h2>
+            <p className="mt-2 text-neutral-600">{t('tell_us_about_org')}</p>
           </div>
           <EnrollForm />
         </div>

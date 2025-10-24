@@ -66,6 +66,13 @@ const translations: Translations = {
     natural_language: "Natural language",
     for_hr_teams: "For HR Teams",
     how_it_works: "How Wathefni AI works",
+    three_steps_simple: "3 steps. Brutally simple.",
+    why_wathefni: "Why Wathefni AI?",
+    only_platform_does_all: "The only platform that does it all",
+    enroll_your_company: "Enroll your company",
+    tell_us_about_org: "Tell us about your organization and we'll get you onboarded.",
+    which_companies_interested: "Which companies are you interested in?",
+    select_companies_submit: "Select one or more companies to submit your CV",
     
     // Student Login
     welcome_to: "Welcome to Wathefni AI",
@@ -544,6 +551,13 @@ const translations: Translations = {
     natural_language: "لغة طبيعية",
     for_hr_teams: "لفرق الموارد البشرية",
     how_it_works: "كيف يعمل Wathefni AI",
+    three_steps_simple: "3 خطوات. بسيطة للغاية.",
+    why_wathefni: "لماذا Wathefni AI؟",
+    only_platform_does_all: "المنصة الوحيدة التي تفعل كل شيء",
+    enroll_your_company: "سجّل شركتك",
+    tell_us_about_org: "أخبرنا عن مؤسستك وسنقوم بتسجيلك.",
+    which_companies_interested: "ما هي الشركات التي تهتم بها؟",
+    select_companies_submit: "اختر شركة واحدة أو أكثر لإرسال سيرتك الذاتية",
     
     // Student Login
     welcome_to: "مرحباً بك في Wathefni AI",

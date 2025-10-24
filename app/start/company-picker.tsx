@@ -159,10 +159,10 @@ export default function CompanyPicker() {
         {/* Header */}
         <div className="mb-10 text-center">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-            Which companies are you interested in?
+            {t('which_companies_interested')}
           </h1>
           <p className="text-neutral-700">
-            Select one or more companies to submit your CV
+            {t('select_companies_submit')}
           </p>
         </div>
         
