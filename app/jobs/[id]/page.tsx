@@ -14,6 +14,7 @@ import {
   CheckCircle, ArrowLeft
 } from 'lucide-react'
 import { Space_Grotesk } from 'next/font/google'
+import { useLanguage } from '@/lib/language'
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"] })
 
@@ -39,6 +40,7 @@ interface Job {
 }
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
+  const { t } = useLanguage()
   const router = useRouter()
   const jobId = params.id
   
@@ -197,7 +199,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading job details...</p>
+        <p>{t('loading_job')}</p>
       </div>
     )
   }
@@ -207,9 +209,9 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <p className="text-destructive mb-4">Job not found</p>
+            <p className="text-destructive mb-4">{t('job_not_found')}</p>
             <Button onClick={() => router.push('/jobs')}>
-              Browse All Jobs
+              {t('back_to_jobs')}
             </Button>
           </CardContent>
         </Card>
@@ -229,7 +231,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Jobs
+            {t('back_to_jobs')}
           </Button>
 
           <div className="flex items-start gap-4 mb-6">
@@ -254,11 +256,11 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             {hasApplied ? (
               <Button disabled size="lg" className="rounded-2xl border-[2px] border-black bg-green-500 text-white shadow-[4px_4px_0_#111]">
                 <CheckCircle className="w-5 h-5 mr-2" />
-                Applied
+                {t('you_have_applied')}
               </Button>
             ) : (
               <Button onClick={handleApply} size="lg" className="rounded-2xl border-[2px] border-black bg-[#ffd6a5] text-black shadow-[4px_4px_0_#111] hover:-translate-y-0.5 transition-transform">
-                Apply Now
+                {t('apply_now')}
               </Button>
             )}
           </div>
@@ -278,7 +280,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              Posted {getRelativeTime(job.created_at)}
+              {t('posted')} {getRelativeTime(job.created_at)}
             </span>
           </div>
         </div>
@@ -289,7 +291,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         {/* Description */}
         <Card>
           <CardHeader>
-            <CardTitle>About the Role</CardTitle>
+            <CardTitle>{t('job_description')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap">{job.description}</p>
@@ -300,7 +302,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         {job.requirements && (
           <Card>
             <CardHeader>
-              <CardTitle>Requirements</CardTitle>
+              <CardTitle>{t('requirements')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap">{job.requirements}</p>
@@ -312,7 +314,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         {job.responsibilities && (
           <Card>
             <CardHeader>
-              <CardTitle>Responsibilities</CardTitle>
+              <CardTitle>{t('responsibilities')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap">{job.responsibilities}</p>
@@ -324,7 +326,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         {job.benefits && (
           <Card>
             <CardHeader>
-              <CardTitle>Benefits</CardTitle>
+              <CardTitle>{t('benefits')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap">{job.benefits}</p>
@@ -336,7 +338,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         {job.skills && job.skills.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Required Skills</CardTitle>
+              <CardTitle>{t('required_skills')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -354,7 +356,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         {!hasApplied && (
           <div className="sticky bottom-4">
             <Button onClick={handleApply} size="lg" className="w-full shadow-lg">
-              Apply for this Position
+              {t('apply_for_job')}
             </Button>
           </div>
         )}
@@ -364,9 +366,9 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Apply for {job.title}</DialogTitle>
+            <DialogTitle>{t('application_submitted')}</DialogTitle>
             <DialogDescription>
-              Submit your application to {job.company_name}
+              {t('application_success_msg')}
             </DialogDescription>
           </DialogHeader>
 
@@ -380,40 +382,37 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             {success && (
               <div className="rounded-lg border-[2px] border-green-500 bg-green-50 p-3">
                 <p className="text-sm text-green-700">
-                  Application submitted successfully! The company will review your CV and contact you.
+                  {t('application_submitted')}
                 </p>
               </div>
             )}
 
             <div>
-              <Label htmlFor="email">Email Address *</Label>
+              <Label htmlFor="candidate_email">{t('your_email')} *</Label>
               <Input
-                id="email"
+                id="candidate_email"
                 type="email"
                 value={applicationData.candidate_email}
                 onChange={(e) => setApplicationData(prev => ({
                   ...prev,
                   candidate_email: e.target.value
                 }))}
-                placeholder="your.email@example.com"
+                placeholder={t('your_email_placeholder')}
                 required
                 disabled={applying}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Make sure you've already uploaded your CV to this platform
+                {t('make_sure_cv_uploaded')}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="cover_letter">Cover Letter (Optional)</Label>
+              <Label htmlFor="cover_letter">{t('cover_letter')}</Label>
               <Textarea
                 id="cover_letter"
                 value={applicationData.cover_letter}
-                onChange={(e) => setApplicationData(prev => ({
-                  ...prev,
-                  cover_letter: e.target.value
-                }))}
-                placeholder="Tell us why you're a great fit for this role..."
+                onChange={(e) => setApplicationData(prev => ({ ...prev, cover_letter: e.target.value }))}
+                placeholder={t('cover_letter_placeholder')}
                 rows={6}
                 disabled={applying}
               />
@@ -425,7 +424,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 disabled={applying || success}
                 className="flex-1"
               >
-                {applying ? 'Submitting...' : success ? 'Submitted!' : 'Submit Application'}
+                {applying ? t('submitting') : t('submit_application')}
               </Button>
               <Button
                 type="button"
@@ -433,7 +432,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 onClick={() => setShowApplyDialog(false)}
                 disabled={applying}
               >
-                Cancel
+                {t('cancel')}
               </Button>
             </div>
           </form>
