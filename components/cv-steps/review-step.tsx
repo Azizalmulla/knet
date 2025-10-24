@@ -375,6 +375,7 @@ export function ReviewStep() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ...finalCv,
+              cvType: 'ai',
               fieldOfStudy: fos,
               areaOfInterest: aoi,
               suggestedVacancies: vac,
@@ -399,6 +400,7 @@ export function ReviewStep() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...finalCv,
+            cvType: 'ai',
             fieldOfStudy: fos,
             areaOfInterest: aoi,
             suggestedVacancies: vac,
