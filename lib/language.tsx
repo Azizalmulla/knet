@@ -274,7 +274,7 @@ const translations: Translations = {
     jd_helper: "Paste a job description only if you want AI to tailor your wording.",
     smart_assist_helper: "Polishes wording and expands bullets without adding new facts.",
     complete_field_selection: "Complete field selection",
-    submit_to_knet: "Submit CV",
+    submit_cv: "Submit CV",
     // Profile classification (Review step)
     profile_classification_required: "Profile Classification (Required)",
     degree_watheefti: "Degree",
@@ -759,7 +759,7 @@ const translations: Translations = {
     jd_helper: "الصق وصفًا وظيفيًا فقط إذا كنت تريد من الذكاء الاصطناعي تحسين صياغتك.",
     smart_assist_helper: "يحسن الصياغة ويُوسّع النقاط دون إضافة حقائق جديدة.",
     complete_field_selection: "أكمل اختيار الحقول",
-    submit_to_knet: "إرسال السيرة الذاتية",
+    submit_cv: "إرسال السيرة الذاتية",
     // Profile classification (Review step)
     profile_classification_required: "تصنيف الملف (إلزامي)",
     degree_watheefti: "المؤهل",

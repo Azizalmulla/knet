@@ -35,8 +35,8 @@ export default function TelemetryToday() {
     "avg_bullets_generated_per_click",
     "ai_bullets_fail",
     // Submission
-    "submit_to_knet_success",
-    "submit_to_knet_fail",
+    "cv_submit_success",
+    "cv_submit_fail",
     // Guardrails
     "422_count",
     "429_count",

@@ -425,15 +425,15 @@ export function ReviewStep() {
             className: 'bg-emerald-50 border-emerald-200 text-emerald-900'
           });
         }
-        sendEvent('submit_to_knet_success', 1);
+        sendEvent('cv_submit_success', 1, { org: orgSlug || 'unknown' });
       } else {
         toast.error('Submission failed');
-        sendEvent('submit_to_knet_fail', 1, { status: 'unknown' });
+        sendEvent('cv_submit_fail', 1, { status: 'unknown', org: orgSlug || 'unknown' });
       }
     } catch (error) {
       console.error('Submission failed:', error);
       toast.error('Failed to submit. Please try again.');
-      sendEvent('submit_to_knet_fail', 1, { error: String(error) });
+      sendEvent('cv_submit_fail', 1, { error: String(error), org: orgSlug || 'unknown' });
     } finally {
       setIsSubmitting(false);
     }
