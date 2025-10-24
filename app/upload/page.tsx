@@ -6,6 +6,8 @@ import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
+// Note: This is a server component, so we can't use useLanguage hook here
+// The form itself (UploadCVForm) already uses translations
 export default async function UploadPage({
   searchParams,
 }: {
