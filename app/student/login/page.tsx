@@ -9,8 +9,10 @@ import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase-client"
+import { useLanguage } from "@/lib/language"
 
 function StudentLoginContent() {
+  const { t } = useLanguage()
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [provider, setProvider] = useState<string | null>(null)
@@ -24,8 +26,8 @@ function StudentLoginContent() {
   if (error) {
     toast.error(
       error === "access_denied"
-        ? "Access was denied. Please try again."
-        : "An error occurred during sign in"
+        ? t('access_denied')
+        : t('error_during_signin')
     )
   }
 
@@ -45,13 +47,13 @@ function StudentLoginContent() {
       })
 
       if (error) {
-        toast.error("Failed to send magic link: " + error.message)
+        toast.error(t('failed_to_send_magic_link') + ": " + error.message)
       } else {
-        toast.success("Check your email for a sign-in link!")
+        toast.success(t('check_email_for_link'))
         setEmail("")
       }
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
+      toast.error(t('something_went_wrong'))
     } finally {
       setIsLoading(false)
       setProvider(null)
@@ -70,11 +72,11 @@ function StudentLoginContent() {
       })
 
       if (error) {
-        toast.error("Failed to sign in: " + error.message)
+        toast.error(t('failed_to_sign_in') + ": " + error.message)
         setProvider(null)
       }
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
+      toast.error(t('something_went_wrong'))
       setProvider(null)
     }
   }
@@ -84,8 +86,8 @@ function StudentLoginContent() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo and Title */}
         <div className="text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight mb-2 text-black">Welcome to Wathefni AI</h1>
-          <p className="text-neutral-600">Sign in to manage your applications</p>
+          <h1 className="text-3xl font-extrabold tracking-tight mb-2 text-black">{t('welcome_to')}</h1>
+          <p className="text-neutral-600">{t('sign_in_to_manage')}</p>
         </div>
 
         {/* Sign in Card */}
@@ -119,7 +121,7 @@ function StudentLoginContent() {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                     />
                   </svg>
-                  Continue with Google
+                  {t('continue_with_google')}
                 </>
               )}
             </Button>
@@ -139,7 +141,7 @@ function StudentLoginContent() {
                     <path fill="#7fba00" d="M11 0h10v10H11z" />
                     <path fill="#ffb900" d="M11 11h10v10H11z" />
                   </svg>
-                  Continue with Microsoft
+                  {t('continue_with_microsoft')}
                 </>
               )}
             </Button>
@@ -151,7 +153,7 @@ function StudentLoginContent() {
               <div className="w-full border-t border-black"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-2 text-neutral-600">Or continue with</span>
+              <span className="bg-white px-2 text-neutral-600">{t('or_continue_with')}</span>
             </div>
           </div>
 
@@ -159,7 +161,7 @@ function StudentLoginContent() {
           <form onSubmit={handleEmailSignIn} className="space-y-3">
             <Input
               type="email"
-              placeholder="Email address"
+              placeholder={t('email_address')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
@@ -176,7 +178,7 @@ function StudentLoginContent() {
               ) : (
                 <>
                   <Mail className="w-5 h-5 mr-2" />
-                  Send Magic Link
+                  {t('send_magic_link')}
                 </>
               )}
             </Button>
@@ -185,13 +187,13 @@ function StudentLoginContent() {
           {/* Footer Links */}
           <div className="text-center text-xs text-neutral-500 space-y-2 pt-4">
             <p>
-              By signing in, you agree to our{" "}
+              {t('by_signing_in')}{" "}
               <Link href="/terms" className="underline decoration-[3px] decoration-black hover:text-black">
-                Terms of Service
+                {t('terms_of_service')}
               </Link>{" "}
-              and{" "}
+              {t('and')}{" "}
               <Link href="/privacy" className="underline decoration-[3px] decoration-black hover:text-black">
-                Privacy Policy
+                {t('privacy_policy')}
               </Link>
             </p>
           </div>
@@ -199,9 +201,9 @@ function StudentLoginContent() {
 
         {/* Admin Link */}
         <div className="text-center text-sm text-neutral-600">
-          Are you an admin?{" "}
+          {t('are_you_admin')}{" "}
           <Link href="/start" className="text-black underline decoration-[3px] decoration-black hover:no-underline">
-            Go to admin login
+            {t('go_to_admin_login')}
           </Link>
         </div>
       </div>
