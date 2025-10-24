@@ -10,18 +10,25 @@ import { notifyAdminOfNewMessage, getOrgAdminEmail } from '@/lib/inbox-notificat
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('[INBOX_WEBHOOK] ========== NEW WEBHOOK CALL ==========');
+    
     // Optional: verify Svix headers (Resend)
     const svixId = req.headers.get('svix-id');
     const svixTimestamp = req.headers.get('svix-timestamp');
     const svixSignature = req.headers.get('svix-signature');
+    console.log('[INBOX_WEBHOOK] Headers:', { svixId, svixTimestamp, hasSignature: !!svixSignature });
+    
     if (!svixId || !svixTimestamp || !svixSignature) {
       console.warn('[INBOX] Webhook without Svix headers');
     }
 
     const body = await req.json();
     const { type, data } = body || {};
+    console.log('[INBOX_WEBHOOK] Event type:', type);
+    console.log('[INBOX_WEBHOOK] Data:', JSON.stringify(data, null, 2));
 
     if (type !== 'email.received') {
+      console.log('[INBOX_WEBHOOK] Ignoring non-email event');
       return NextResponse.json({ received: true, ignored: true }, { status: 200 });
     }
 
@@ -37,25 +44,33 @@ export async function POST(req: NextRequest) {
     // Normalize sender fields
     const candidateEmail = typeof from === 'string' ? from : from?.email;
     const candidateName = typeof from === 'object' ? (from?.name || candidateEmail) : candidateEmail;
+    console.log('[INBOX_WEBHOOK] From:', { candidateEmail, candidateName });
 
     // Determine recipient and org slug from recipient email
     const recipientEmail = Array.isArray(to) ? to[0]?.email : to;
+    console.log('[INBOX_WEBHOOK] To:', recipientEmail);
+    
     if (!recipientEmail || typeof recipientEmail !== 'string') {
+      console.error('[INBOX_WEBHOOK] Missing recipient email');
       return NextResponse.json({ error: 'Missing recipient' }, { status: 400 });
     }
 
     const match = recipientEmail.match(/^(.+)@wathefni\.ai$/i);
     if (!match) {
+      console.error('[INBOX_WEBHOOK] Recipient domain not wathefni.ai:', recipientEmail);
       return NextResponse.json({ error: 'Recipient domain unsupported' }, { status: 400 });
     }
     const orgSlug = match[1];
+    console.log('[INBOX_WEBHOOK] Extracted org slug:', orgSlug);
 
     // Resolve organization
     const orgRes = await sql`SELECT id::uuid as id, name FROM public.organizations WHERE slug = ${orgSlug} LIMIT 1`;
     if (!orgRes.rows.length) {
+      console.error('[INBOX_WEBHOOK] Organization not found:', orgSlug);
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
     const org = orgRes.rows[0] as { id: string; name: string };
+    console.log('[INBOX_WEBHOOK] Found org:', org);
 
     // Try to match existing thread by candidate email (newest first)
     const existingThreadRes = await sql`
@@ -71,8 +86,10 @@ export async function POST(req: NextRequest) {
     let threadId: string;
     if (existingThreadRes.rows.length) {
       threadId = existingThreadRes.rows[0].id as string;
+      console.log('[INBOX_WEBHOOK] Using existing thread:', threadId);
     } else {
       // Create a new thread
+      console.log('[INBOX_WEBHOOK] Creating new thread for:', candidateEmail);
       const insertThreadRes = await sql`
         INSERT INTO public.inbox_threads (
           organization_id, subject, candidate_name, candidate_email, unread_count
@@ -86,10 +103,12 @@ export async function POST(req: NextRequest) {
         RETURNING id::uuid as id
       `;
       threadId = insertThreadRes.rows[0].id as string;
+      console.log('[INBOX_WEBHOOK] Created thread:', threadId);
     }
 
     // Insert incoming message
     const content = (text || html || '').toString();
+    console.log('[INBOX_WEBHOOK] Saving message, content length:', content.length);
     await sql`
       INSERT INTO public.inbox_messages (
         thread_id, from_type, from_name, from_email, content, is_read
@@ -97,6 +116,7 @@ export async function POST(req: NextRequest) {
         ${threadId}::uuid, 'candidate', ${candidateName}, ${candidateEmail}, ${content}, FALSE
       )
     `;
+    console.log('[INBOX_WEBHOOK] ✅ Message saved successfully!');
 
     // Notify first admin of the org
     const adminEmail = await getOrgAdminEmail(org.id);
