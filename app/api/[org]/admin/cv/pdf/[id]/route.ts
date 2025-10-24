@@ -145,7 +145,7 @@ export async function GET(req: NextRequest, { params }: { params: { org: string;
     // Macchiato-only export (parity with preview) for AI-generated CVs
     const macchiatoBytes = await renderMacchiatoPdf(cv)
     if (macchiatoBytes) {
-      return new Response(macchiatoBytes, {
+      return new Response(Buffer.from(macchiatoBytes), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="CV-${row.id}.pdf"`,
