@@ -244,7 +244,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="example@email.com"
+                  placeholder={t('email_placeholder')}
                   disabled={loading}
                   dir="ltr"
                   className={errors.email ? 'border-destructive' : ''}
@@ -264,7 +264,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+965 9999 9999"
+                placeholder={t('phone_placeholder')}
                 disabled={loading}
                 dir="ltr"
                 className={errors.phone ? 'border-destructive' : ''}
@@ -398,7 +398,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
                 type="text"
                 value={gpa}
                 onChange={(e) => setGPA(e.target.value)}
-                placeholder="0.00 - 4.00"
+                placeholder={t('gpa_placeholder')}
                 disabled={loading}
                 dir="ltr"
                 className={errors.gpa ? 'border-destructive' : ''}
