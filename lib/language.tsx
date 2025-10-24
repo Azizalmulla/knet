@@ -188,6 +188,37 @@ const translations: Translations = {
     loading_job: "Loading job details...",
     job_not_found: "Job not found",
     
+    // AI Agent Dashboard
+    job_title_placeholder: "e.g., Frontend Developer",
+    location_placeholder: "e.g., Kuwait",
+    must_have_placeholder: "React, TypeScript, REST APIs",
+    nice_to_have_placeholder: "Tailwind, Next.js, Playwright",
+    language_placeholder: "e.g., Arabic, English",
+    field_filter_placeholder: "e.g., Computer Science",
+    area_filter_placeholder: "e.g., Web Development",
+    why_picked: "Why Picked",
+    download_cv: "Download",
+    na: "N/A",
+    csv_name: "Name",
+    csv_email: "Email",
+    csv_field_of_study: "Field of Study",
+    csv_gpa_header: "GPA",
+    csv_experience_count: "Experience Count",
+    csv_score_header: "Score",
+    csv_pdf_url: "CV PDF URL",
+    csv_html_url: "CV HTML URL",
+    
+    // Watheefti Upload Form
+    enter_full_name_placeholder: "Enter your full name",
+    email_placeholder: "example@email.com",
+    phone_placeholder: "+965 9999 9999",
+    select_degree: "Select degree",
+    select_experience: "Select experience",
+    select_field: "Select field of study",
+    enter_field_placeholder: "Enter your field of study",
+    select_area: "Select area of interest",
+    gpa_placeholder: "0.00 - 4.00",
+    
     // Start (Student dashboard landing)
     student_dashboard: "Student Dashboard",
     home: "Home",
@@ -242,9 +273,9 @@ const translations: Translations = {
     degree_watheefti: "Degree",
     yoe_watheefti: "Years of Experience",
     aoi_watheefti: "Area of Interest",
-    select_degree: "Select degree",
+    select_degree_watheefti: "Select degree",
     select_yoe: "Select years of experience",
-    select_area: "Select area of interest",
+    select_area_watheefti: "Select area of interest",
     please_choose_option: "Please choose an option",
 
     // Wizard field labels (Personal)
@@ -634,6 +665,37 @@ const translations: Translations = {
     close: "إغلاق",
     loading_job: "جاري تحميل تفاصيل الوظيفة...",
     job_not_found: "الوظيفة غير موجودة",
+    
+    // AI Agent Dashboard
+    job_title_placeholder: "مثال: مطور واجهات أمامية",
+    location_placeholder: "مثال: الكويت",
+    must_have_placeholder: "React, TypeScript, REST APIs",
+    nice_to_have_placeholder: "Tailwind, Next.js, Playwright",
+    language_placeholder: "مثال: العربية، الإنجليزية",
+    field_filter_placeholder: "مثال: علوم الحاسوب",
+    area_filter_placeholder: "مثال: تطوير الويب",
+    why_picked: "سبب الاختيار",
+    download_cv: "تنزيل",
+    na: "غير متوفر",
+    csv_name: "الاسم",
+    csv_email: "البريد الإلكتروني",
+    csv_field_of_study: "مجال الدراسة",
+    csv_gpa_header: "المعدل التراكمي",
+    csv_experience_count: "عدد سنوات الخبرة",
+    csv_score_header: "النقاط",
+    csv_pdf_url: "رابط PDF",
+    csv_html_url: "رابط HTML",
+    
+    // Watheefti Upload Form
+    enter_full_name_placeholder: "أدخل اسمك الكامل",
+    email_placeholder: "example@email.com",
+    phone_placeholder: "+965 9999 9999",
+    select_degree: "اختر الدرجة العلمية",
+    select_experience: "اختر سنوات الخبرة",
+    select_field: "اختر مجال الدراسة",
+    enter_field_placeholder: "أدخل مجال دراستك",
+    select_area: "اختر مجال الاهتمام",
+    gpa_placeholder: "0.00 - 4.00",
 
     // Start (Student dashboard landing)
     student_dashboard: "لوحة الطالب",
@@ -689,9 +751,9 @@ const translations: Translations = {
     degree_watheefti: "المؤهل",
     yoe_watheefti: "سنوات الخبرة",
     aoi_watheefti: "مجال الاهتمام",
-    select_degree: "اختر المؤهل",
+    select_degree_watheefti: "اختر المؤهل",
     select_yoe: "اختر سنوات الخبرة",
-    select_area: "اختر مجال الاهتمام",
+    select_area_watheefti: "اختر مجال الاهتمام",
     please_choose_option: "يرجى اختيار خيار",
 
     // Wizard field labels (Personal)
