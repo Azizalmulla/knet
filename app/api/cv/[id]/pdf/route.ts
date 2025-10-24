@@ -54,8 +54,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch student record
-    const result = await sql`SELECT id, full_name, email, cv_json, cv_template FROM public.students WHERE id = ${id} LIMIT 1`
+    // Fetch candidate record (updated from students table)
+    const result = await sql`SELECT id::uuid as id, full_name, email, cv_json, cv_template, cv_type::text as cv_type, cv_blob_key FROM public.candidates WHERE id = ${id}::uuid LIMIT 1`
     if (!result?.rows?.length) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
@@ -72,10 +72,19 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       setReactPdfOverride(mod as any)
     } catch {}
 
+    // Check if it's an AI-generated CV (flexible matching)
+    const cvType = String(row.cv_type || '').toLowerCase()
+    const isAIGenerated = ['ai_generated', 'ai', 'ai_builder', 'generated'].includes(cvType)
+    
+    // Only render Macchiato for AI-generated CVs
+    if (!isAIGenerated) {
+      return new Response('Original CV unavailable', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+    }
+    
     // Macchiato-only export
     const macchiatoBytes = await renderMacchiatoPdf(cv)
     if (macchiatoBytes) {
-      return new Response(macchiatoBytes, {
+      return new Response(Buffer.from(macchiatoBytes), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="CV-${row.id}.pdf"`,
