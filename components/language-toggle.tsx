@@ -9,16 +9,16 @@ export default function LanguageToggle() {
 
   return (
     <div
-      className="fixed right-3 bottom-3 md:top-4 md:bottom-auto md:right-4"
+      className="fixed right-4 bottom-4 md:top-20 md:bottom-auto md:right-4"
       style={{ zIndex: 10000 }}
       aria-label="language-toggle"
     >
-      <div className="inline-flex items-center gap-1 rounded-2xl border-[3px] border-black bg-white px-1 py-1 shadow-[6px_6px_0_#111]">
+      <div className="inline-flex items-center gap-0.5 rounded-xl border-[2px] border-black bg-white px-0.5 py-0.5 shadow-[4px_4px_0_#111]">
         <Button
           type="button"
           size="sm"
           variant="ghost"
-          className={`h-8 px-3 rounded-xl border-[2px] ${lang === 'en' ? 'bg-black text-white border-black hover:bg-black' : 'bg-white text-black border-black hover:bg-neutral-100'}`}
+          className={`h-7 px-2.5 text-xs rounded-lg border-[1.5px] ${lang === 'en' ? 'bg-black text-white border-black hover:bg-black' : 'bg-white text-black border-transparent hover:bg-neutral-100'}`}
           onClick={() => setLang('en')}
           aria-pressed={lang === 'en'}
         >
@@ -28,7 +28,7 @@ export default function LanguageToggle() {
           type="button"
           size="sm"
           variant="ghost"
-          className={`h-8 px-3 rounded-xl border-[2px] ${lang === 'ar' ? 'bg-black text-white border-black hover:bg-black' : 'bg-white text-black border-black hover:bg-neutral-100'}`}
+          className={`h-7 px-2.5 text-xs rounded-lg border-[1.5px] ${lang === 'ar' ? 'bg-black text-white border-black hover:bg-black' : 'bg-white text-black border-transparent hover:bg-neutral-100'}`}
           onClick={() => setLang('ar')}
           aria-pressed={lang === 'ar'}
         >
