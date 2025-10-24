@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { pdf, Font } from '@react-pdf/renderer'
+import { Font } from '@react-pdf/renderer'
+import { renderMacchiatoPdf } from '@/lib/jsonresume/macchiato'
 import fs from 'fs'
 import path from 'path'
 import React from 'react'
@@ -43,20 +44,25 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const cv = body?.cv || {}
-    const template = (body?.template as 'minimal'|'modern'|'creative') || 'minimal'
-    const language = (body?.language as string) || 'en'
-
-    const element = createCVDocument(cv, template, language)
-    const blob = await pdf(element).toBlob()
-    const ab = await blob.arrayBuffer()
-    const bytes = new Uint8Array(ab)
-
-    return new Response(bytes, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="CV.pdf"',
-        'Cache-Control': 'no-store',
-      },
+    // Deprecated route: use Macchiato-only to keep parity with preview
+    const bytes = await renderMacchiatoPdf(cv)
+    if (bytes) {
+      const res = new Response(bytes, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="CV.pdf"',
+          'Cache-Control': 'no-store',
+          'X-Renderer': 'macchiato',
+          'Deprecation': 'true',
+          'Sunset': 'Sun, 01 Dec 2025 00:00:00 GMT',
+        },
+      })
+      res.headers.set('Link', '</api/cv/pdf>; rel="successor-version"')
+      return res
+    }
+    return new Response('Deprecated: Macchiato renderer unavailable', {
+      status: 410,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Deprecation': 'true' },
     })
   } catch (err: any) {
     return NextResponse.json({ error: 'Failed to generate PDF', detail: String(err?.message || err) }, { status: 500 })

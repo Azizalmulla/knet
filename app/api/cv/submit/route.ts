@@ -86,10 +86,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure JSON columns exist (idempotent)
+    // Ensure columns exist (idempotent) for legacy students table
     try { await sql`ALTER TABLE public.students ADD COLUMN IF NOT EXISTS cv_json JSONB`; } catch {}
     try { await sql`ALTER TABLE public.students ADD COLUMN IF NOT EXISTS cv_template TEXT`; } catch {}
     try { await sql`ALTER TABLE public.students ADD COLUMN IF NOT EXISTS knet_profile JSONB`; } catch {}
+    try { await sql`ALTER TABLE public.students ADD COLUMN IF NOT EXISTS suggested_vacancies TEXT`; } catch {}
+    try { await sql`ALTER TABLE public.students ADD COLUMN IF NOT EXISTS suggested_vacancies_list TEXT[]`; } catch {}
 
     // Insert into database (persist both html URL and JSON for SSR templates)
     const fieldOfStudy = cvData.fieldOfStudy || (cvData as any)?.education?.[0]?.fieldOfStudy || 'Not specified';

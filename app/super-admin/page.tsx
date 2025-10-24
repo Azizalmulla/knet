@@ -49,6 +49,20 @@ export default function SuperAdminDashboard() {
   const [showNewOrgDialog, setShowNewOrgDialog] = useState(false)
   const [showInviteDialog, setShowInviteDialog] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState('')
+  // Audit tab state
+  const [auditEvents, setAuditEvents] = useState<Array<{ timestamp: string; action: string; org_id?: string | null; org_slug?: string | null; payload?: any }>>([])
+  const [auditLoading, setAuditLoading] = useState(false)
+  const fetchAudit = async () => {
+    setAuditLoading(true)
+    try {
+      const res = await fetch('/api/super-admin/audit?limit=50')
+      if (res.ok) {
+        const data = await res.json()
+        setAuditEvents(Array.isArray(data?.events) ? data.events : [])
+      }
+    } catch {}
+    finally { setAuditLoading(false) }
+  }
   
   useEffect(() => {
     checkAuth()
@@ -96,17 +110,21 @@ export default function SuperAdminDashboard() {
     e.preventDefault()
     const formData = new FormData(e.target as HTMLFormElement)
     
+    const payload = {
+      name: formData.get('name'),
+      slug: formData.get('slug'),
+      is_public: formData.get('is_public') === 'on',
+      company_code: formData.get('company_code') || null,
+      logo_url: formData.get('logo_url') || null
+    }
+    
+    console.log('[CREATE ORG] Sending payload:', payload)
+    
     try {
       const res = await fetch('/api/super-admin/organizations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.get('name'),
-          slug: formData.get('slug'),
-          is_public: formData.get('is_public') === 'on',
-          company_code: formData.get('company_code') || null,
-          logo_url: formData.get('logo_url') || null
-        })
+        body: JSON.stringify(payload)
       })
       
       if (res.ok) {
@@ -119,7 +137,8 @@ export default function SuperAdminDashboard() {
         generateQrCode(data.organization.slug)
       } else {
         const error = await res.json()
-        toast.error(error.message || 'Failed to create organization')
+        console.error('[CREATE ORG] Error response:', error)
+        toast.error(error.error || error.message || 'Failed to create organization')
       }
     } catch (error) {
       toast.error('Network error')
@@ -193,6 +212,25 @@ export default function SuperAdminDashboard() {
     navigator.clipboard.writeText(url)
     toast.success(`${type === 'student' ? 'Student' : 'Admin'} link copied!`)
   }
+
+  const handleDeleteOrg = async (org: Organization) => {
+    try {
+      const ok = window.confirm(`Delete organization "${org.name}"? This will hide it from students and disable features. You can re-create it later with the same name, but the slug will be archived.`)
+      if (!ok) return
+      const res = await fetch(`/api/super-admin/organizations/${org.id}?mode=soft`, {
+        method: 'DELETE',
+      })
+      const j = await res.json().catch(() => ({} as any))
+      if (res.ok && j?.success) {
+        toast.success('Organization deleted')
+        fetchOrganizations()
+      } else {
+        toast.error(j?.error || 'Failed to delete organization')
+      }
+    } catch (e) {
+      toast.error('Network error')
+    }
+  }
   
   const handleLogout = () => {
     fetch('/api/super-admin/logout', { method: 'POST' })
@@ -201,28 +239,28 @@ export default function SuperAdminDashboard() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-pulse text-slate-400">Loading...</div>
+      <div className="min-h-screen bg-[#eeeee4] text-neutral-900 flex items-center justify-center">
+        <div className="animate-pulse text-neutral-600">Loading...</div>
       </div>
     )
   }
   
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-[#eeeee4] text-neutral-900">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900">
+      <div className="border-b-[4px] border-black bg-white shadow-[8px_8px_0_#111]">
         <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-amber-500" />
             <div>
-              <h1 className="text-xl font-bold text-white">Super Admin Portal</h1>
-              <p className="text-sm text-slate-400">Manage organizations and admins</p>
+              <h1 className="text-xl font-bold text-black">Super Admin Portal</h1>
+              <p className="text-sm text-neutral-600">Manage organizations and admins</p>
             </div>
           </div>
           <Button 
             onClick={handleLogout}
             variant="outline" 
-            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            className="rounded-2xl border-[3px] border-black text-black bg-white hover:-translate-y-0.5 hover:bg-neutral-100 shadow-[6px_6px_0_#111] transition-transform"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Logout
@@ -233,7 +271,7 @@ export default function SuperAdminDashboard() {
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-8">
         <Tabs defaultValue="organizations" className="space-y-4">
-          <TabsList className="bg-slate-800">
+          <TabsList className="bg-white border-[3px] border-black rounded-2xl shadow-[6px_6px_0_#111]">
             <TabsTrigger value="organizations">
               <Building2 className="h-4 w-4 mr-2" />
               Organizations
@@ -247,7 +285,7 @@ export default function SuperAdminDashboard() {
           <TabsContent value="organizations" className="space-y-4">
             {/* Actions Bar */}
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-white">Organizations</h2>
+              <h2 className="text-2xl font-bold text-black">Organizations</h2>
               <Dialog open={showNewOrgDialog} onOpenChange={setShowNewOrgDialog}>
                 <DialogTrigger asChild>
                   <Button className="bg-amber-600 hover:bg-amber-700 text-white">
@@ -255,61 +293,61 @@ export default function SuperAdminDashboard() {
                     New Organization
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-slate-800 text-white border-slate-700">
+                <DialogContent className="bg-white text-neutral-900 border-black border-[3px] rounded-2xl shadow-[6px_6px_0_#111]">
                   <DialogHeader>
                     <DialogTitle>Create New Organization</DialogTitle>
-                    <DialogDescription className="text-slate-400">
+                    <DialogDescription className="text-neutral-600">
                       Set up a new organization with admin access
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreateOrg} className="space-y-4">
                     <div>
-                      <Label htmlFor="name" className="text-slate-200">Organization Name</Label>
+                      <Label htmlFor="name" className="text-neutral-800">Organization Name</Label>
                       <Input
                         id="name"
                         name="name"
                         required
-                        placeholder="KNET"
-                        className="bg-slate-700 border-slate-600 text-white"
+                        placeholder="Organization Inc."
+                        className="bg-white border-[3px] border-black text-black rounded-2xl"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="slug" className="text-slate-200">URL Slug</Label>
+                      <Label htmlFor="slug" className="text-neutral-800">URL Slug</Label>
                       <Input
                         id="slug"
                         name="slug"
                         required
-                        pattern="^[a-z0-9-]+$"
-                        placeholder="knet"
-                        className="bg-slate-700 border-slate-600 text-white"
+                        pattern="^[a-z0-9\-]+$"
+                        placeholder="acme"
+                        className="bg-white border-[3px] border-black text-black rounded-2xl"
                       />
-                      <p className="text-xs text-slate-400 mt-1">Lowercase letters, numbers, and hyphens only</p>
+                      <p className="text-xs text-neutral-600 mt-1">Lowercase letters, numbers, and hyphens only</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch id="is_public" name="is_public" defaultChecked />
-                      <Label htmlFor="is_public" className="text-slate-200">Public (visible in picker)</Label>
+                      <Label htmlFor="is_public" className="text-neutral-800">Public (visible in picker)</Label>
                     </div>
                     <div>
-                      <Label htmlFor="company_code" className="text-slate-200">Company Code (optional)</Label>
+                      <Label htmlFor="company_code" className="text-neutral-800">Company Code (optional)</Label>
                       <Input
                         id="company_code"
                         name="company_code"
                         placeholder="PRIV2024"
-                        className="bg-slate-700 border-slate-600 text-white"
+                        className="bg-white border-[3px] border-black text-black rounded-2xl"
                       />
-                      <p className="text-xs text-slate-400 mt-1">For private access</p>
+                      <p className="text-xs text-neutral-600 mt-1">For private access</p>
                     </div>
                     <div>
-                      <Label htmlFor="logo_url" className="text-slate-200">Logo URL (optional)</Label>
+                      <Label htmlFor="logo_url" className="text-neutral-800">Logo URL (optional)</Label>
                       <Input
                         id="logo_url"
                         name="logo_url"
-                        placeholder="/images/logos/knet.png"
-                        className="bg-slate-700 border-slate-600 text-white"
+                        placeholder="/images/logos/company.png"
+                        className="bg-white border-[3px] border-black text-black rounded-2xl"
                       />
                     </div>
                     <div className="flex gap-2">
-                      <Button type="submit" className="bg-amber-600 hover:bg-amber-700">
+                      <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white">
                         Create Organization
                       </Button>
                       <Button type="button" variant="outline" onClick={() => setShowNewOrgDialog(false)}>
@@ -323,13 +361,13 @@ export default function SuperAdminDashboard() {
             
             {/* Organizations Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {organizations.map((org) => (
-                <Card key={org.id} className="bg-slate-800 border-slate-700">
+              {organizations.filter((o) => !o.slug?.startsWith('deleted-')).map((org) => (
+                <Card key={org.id} className="bg-white border-black border-[3px] rounded-2xl shadow-[6px_6px_0_#111]">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-white">{org.name}</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardTitle className="text-black">{org.name}</CardTitle>
+                        <CardDescription className="text-neutral-600">
                           /{org.slug}
                         </CardDescription>
                       </div>
@@ -342,21 +380,21 @@ export default function SuperAdminDashboard() {
                     {/* Feature Toggles */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-300">AI Builder</span>
+                        <span className="text-sm text-neutral-700">AI Builder</span>
                         <Switch
                           checked={org.enable_ai_builder}
                           onCheckedChange={(checked) => toggleFeature(org.id, 'enable_ai_builder', checked)}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-300">Exports</span>
+                        <span className="text-sm text-neutral-700">Exports</span>
                         <Switch
                           checked={org.enable_exports}
                           onCheckedChange={(checked) => toggleFeature(org.id, 'enable_exports', checked)}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-300">Analytics</span>
+                        <span className="text-sm text-neutral-700">Analytics</span>
                         <Switch
                           checked={org.enable_analytics}
                           onCheckedChange={(checked) => toggleFeature(org.id, 'enable_analytics', checked)}
@@ -369,7 +407,7 @@ export default function SuperAdminDashboard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+                        className="flex-1 rounded-2xl border-[3px] border-black text-black hover:bg-neutral-100 shadow-[4px_4px_0_#111]"
                         onClick={() => copyLink(org.slug, 'student')}
                       >
                         <Link className="h-3 w-3 mr-1" />
@@ -378,7 +416,7 @@ export default function SuperAdminDashboard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+                        className="flex-1 rounded-2xl border-[3px] border-black text-black hover:bg-neutral-100 shadow-[4px_4px_0_#111]"
                         onClick={() => copyLink(org.slug, 'admin')}
                       >
                         <Link className="h-3 w-3 mr-1" />
@@ -387,7 +425,7 @@ export default function SuperAdminDashboard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        className="rounded-2xl border-[3px] border-black text-black hover:bg-neutral-100 shadow-[4px_4px_0_#111]"
                         onClick={() => {
                           setSelectedOrg(org)
                           generateQrCode(org.slug)
@@ -395,13 +433,21 @@ export default function SuperAdminDashboard() {
                       >
                         <QrCode className="h-3 w-3" />
                       </Button>
+                      <Button
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => handleDeleteOrg(org)}
+                        title="Delete organization"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                     
                     {/* Manage Admins */}
-                    <div className="pt-2 border-t border-slate-700">
+                    <div className="pt-2 border-t border-black">
                       <Button
                         size="sm"
-                        className="w-full bg-slate-700 hover:bg-slate-600"
+                        className="w-full bg-white text-black border-[3px] border-black rounded-2xl shadow-[6px_6px_0_#111] hover:-translate-y-0.5 hover:bg-neutral-100"
                         onClick={() => {
                           setSelectedOrg(org)
                           setShowInviteDialog(true)
@@ -414,7 +460,7 @@ export default function SuperAdminDashboard() {
                     </div>
                     
                     {org.company_code && (
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-neutral-600">
                         Code: {org.company_code}
                       </div>
                     )}
@@ -425,15 +471,46 @@ export default function SuperAdminDashboard() {
           </TabsContent>
           
           <TabsContent value="audit" className="space-y-4">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-white border-black border-[3px] rounded-2xl shadow-[6px_6px_0_#111]">
               <CardHeader>
-                <CardTitle className="text-white">Audit Log</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-black">Audit Log</CardTitle>
+                <CardDescription className="text-neutral-600">
                   Recent super admin actions
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-slate-400">Audit log implementation pending...</div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-neutral-600">{auditLoading ? 'Loading…' : `Events: ${auditEvents.length}`}</div>
+                  <Button variant="outline" size="sm" onClick={fetchAudit}>
+                    <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+                  </Button>
+                </div>
+                {auditEvents.length === 0 ? (
+                  <div className="text-neutral-600">No events yet.</div>
+                ) : (
+                  <div className="overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-neutral-600">
+                          <th className="py-1 pr-4">Time</th>
+                          <th className="py-1 pr-4">Action</th>
+                          <th className="py-1 pr-4">Org</th>
+                          <th className="py-1">Payload</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {auditEvents.map((e, idx) => (
+                          <tr key={idx} className="border-t border-black">
+                            <td className="py-1 pr-4">{new Date(e.timestamp).toLocaleString()}</td>
+                            <td className="py-1 pr-4">{e.action}</td>
+                            <td className="py-1 pr-4">{e.org_slug || e.org_id || '—'}</td>
+                            <td className="py-1 whitespace-pre-wrap">{typeof e.payload === 'object' ? JSON.stringify(e.payload) : String(e.payload || '')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -442,16 +519,16 @@ export default function SuperAdminDashboard() {
         {/* QR Code Modal */}
         {qrCodeUrl && selectedOrg && (
           <Dialog open={!!qrCodeUrl} onOpenChange={() => setQrCodeUrl('')}>
-            <DialogContent className="bg-slate-800 text-white border-slate-700">
+            <DialogContent className="bg-white text-neutral-900 border-black border-[3px] rounded-2xl shadow-[6px_6px_0_#111]">
               <DialogHeader>
                 <DialogTitle>QR Code for {selectedOrg.name}</DialogTitle>
-                <DialogDescription className="text-slate-400">
+                <DialogDescription className="text-neutral-600">
                   Students can scan this to access the submission form
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col items-center space-y-4">
                 <img src={qrCodeUrl} alt="QR Code" className="bg-white p-4 rounded" />
-                <div className="text-sm text-slate-400">
+                <div className="text-sm text-neutral-600">
                   {window.location.origin}/{selectedOrg.slug}/start
                 </div>
                 <Button
@@ -461,7 +538,7 @@ export default function SuperAdminDashboard() {
                     link.href = qrCodeUrl
                     link.click()
                   }}
-                  className="bg-amber-600 hover:bg-amber-700"
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download QR Code
@@ -473,31 +550,31 @@ export default function SuperAdminDashboard() {
         
         {/* Invite Admin Dialog */}
         <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-          <DialogContent className="bg-slate-800 text-white border-slate-700">
+          <DialogContent className="bg-white text-neutral-900 border-black border-[3px] rounded-2xl shadow-[6px_6px_0_#111]">
             <DialogHeader>
               <DialogTitle>Invite Admin to {selectedOrg?.name}</DialogTitle>
-              <DialogDescription className="text-slate-400">
+              <DialogDescription className="text-neutral-600">
                 Send an invitation to manage this organization
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleInviteAdmin} className="space-y-4">
               <div>
-                <Label htmlFor="email" className="text-slate-200">Email Address</Label>
+                <Label htmlFor="email" className="text-neutral-800">Email Address</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   required
                   placeholder="admin@example.com"
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="bg-white border-[3px] border-black text-black rounded-2xl"
                 />
               </div>
               <div>
-                <Label htmlFor="role" className="text-slate-200">Role</Label>
+                <Label htmlFor="role" className="text-neutral-800">Role</Label>
                 <select
                   id="role"
                   name="role"
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white rounded-md"
+                  className="w-full px-3 py-2 bg-white border-[3px] border-black text-black rounded-md"
                 >
                   <option value="admin">Admin</option>
                   <option value="owner">Owner</option>
@@ -506,18 +583,18 @@ export default function SuperAdminDashboard() {
               </div>
               <div className="flex items-center space-x-2">
                 <Switch id="sendEmail" name="sendEmail" />
-                <Label htmlFor="sendEmail" className="text-slate-200">Send email notification</Label>
+                <Label htmlFor="sendEmail" className="text-neutral-800">Send email notification</Label>
               </div>
               
               {/* Current Admins List */}
               {orgAdmins.length > 0 && (
-                <div className="border-t border-slate-700 pt-4">
-                  <h4 className="text-sm font-medium text-slate-300 mb-2">Current Admins</h4>
+                <div className="border-t border-black pt-4">
+                  <h4 className="text-sm font-medium text-neutral-700 mb-2">Current Admins</h4>
                   <div className="space-y-2">
                     {orgAdmins.map((admin) => (
                       <div key={admin.id} className="flex justify-between items-center text-sm">
-                        <span className="text-slate-400">{admin.email}</span>
-                        <Badge variant="outline" className="text-slate-400">
+                        <span className="text-neutral-600">{admin.email}</span>
+                        <Badge variant="outline" className="text-neutral-600">
                           {admin.role}
                         </Badge>
                       </div>
@@ -527,7 +604,7 @@ export default function SuperAdminDashboard() {
               )}
               
               <div className="flex gap-2">
-                <Button type="submit" className="bg-amber-600 hover:bg-amber-700">
+                <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white">
                   Send Invitation
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowInviteDialog(false)}>

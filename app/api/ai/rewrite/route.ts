@@ -37,7 +37,6 @@ export async function POST(request: NextRequest) {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
     }
-
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -55,14 +54,33 @@ Requirements:
 
     const completion = await callOpenAIWithRetry(openai, prompt);
 
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No content received from OpenAI');
+    const rawContent = completion.choices[0]?.message?.content;
+    if (!rawContent) {
+      console.error('OpenAI returned empty content');
+      return NextResponse.json(
+        { error: 'Failed to generate bullet points' },
+        { status: 500 }
+      );
     }
 
-    // Parse the JSON response
-    const bullets = JSON.parse(content);
-    
+    // Remove common Markdown fences before parsing
+    const cleaned = rawContent
+      .replace(/```json\s*/gi, '')
+      .replace(/```/g, '')
+      .trim();
+
+    let bullets: string[] = [];
+    try {
+      const parsed = JSON.parse(cleaned);
+      bullets = Array.isArray(parsed) ? parsed : [];
+    } catch (parseError) {
+      console.error('OpenAI returned non-JSON payload', { rawContent });
+      return NextResponse.json(
+        { error: 'Failed to generate bullet points' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ bullets });
   } catch (error) {
     console.error('OpenAI API error:', error);

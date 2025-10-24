@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     const to = 'azizalmulla16@gmail.com'
-    const from = process.env.RESEND_FROM || 'Careerly <onboarding@resend.dev>'
+    const from = process.env.RESEND_FROM || 'Wathefni AI <onboarding@resend.dev>'
 
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #111">
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     let sendError: string | null = null
 
     // Try Resend if configured
-    const result = await sendWithResend({ from, to, subject: `Careerly Lead: ${companyName}`, html })
+    const result = await sendWithResend({ from, to, subject: `Wathefni AI Lead: ${companyName}`, html })
     if (result.ok) {
       sent = true
     } else {

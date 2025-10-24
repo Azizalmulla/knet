@@ -6,7 +6,7 @@ test.describe('Error Boundary', () => {
     await page.goto('/ai-builder');
 
     // Intercept submit API to return 500 error
-    await page.route('/api/cv/submit', (route) => {
+    await page.route('/api/submit', (route) => {
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -25,7 +25,7 @@ test.describe('Error Boundary', () => {
     await page.getByTestId('field-education-0-institution').fill('Test University');
     await page.getByTestId('field-education-0-degree').fill('Computer Science');
     await page.getByTestId('field-education-0-field').fill('Software Engineering');
-    await page.getByTestId('field-education-0-graduationDate').fill('2020-09');
+    await page.getByTestId('field-education-0-startDate').fill('2020-09');
     await page.getByTestId('next-btn').click();
 
     await page.getByText('Add Experience').click();
@@ -56,7 +56,7 @@ test.describe('Error Boundary', () => {
     await expect(page.getByRole('button', { name: /try again/i })).toBeVisible();
 
     // Now mock successful response for retry
-    await page.route('/api/cv/submit', (route) => {
+    await page.route('/api/submit', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',

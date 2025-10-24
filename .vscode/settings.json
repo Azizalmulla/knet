@@ -1,0 +1,11 @@
+{
+  // Silence IDE warnings for Tailwind v4 PostCSS at-rules used in app/globals.css
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+
+  // Treat CSS files as PostCSS to improve at-rule handling and IntelliSense
+  "files.associations": {
+    "*.css": "postcss"
+  }
+}

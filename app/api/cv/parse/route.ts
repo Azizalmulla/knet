@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { sql, getDbInfo } from '@/lib/db';
 import { checkRateLimitWithConfig, createRateLimitResponse } from '@/lib/rateLimit';
 import { v1 as documentai } from '@google-cloud/documentai';
 import mammoth from 'mammoth';
+import { createServerClient } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs';
 
@@ -36,20 +37,65 @@ function cleanText(input: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Enforce logged-in student (Supabase)
+  let emailLower: string | null = null
+  try {
+    const supabase = createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.email) emailLower = user.email.toLowerCase()
+  } catch {}
+  if (!emailLower) {
+    const { host: dbHost, db: dbName } = getDbInfo()
+    const res = NextResponse.json({ ok: false, code: 'UNAUTHENTICATED', message: 'You must be logged in.' }, { status: 401 })
+    res.headers.set('X-DB-Host', dbHost)
+    res.headers.set('X-DB-Name', dbName)
+    res.headers.set('X-User-Email', '')
+    res.headers.set('X-Org-Slug', '')
+    res.headers.set('X-Org-Id', '')
+    res.headers.set('X-Loopback-Found', 'false')
+    return res
+  }
+
   // Rate limit: 10 req / 5 min / IP
   const rl = checkRateLimitWithConfig(request, { maxRequests: 10, windowMs: 5 * 60 * 1000, namespace: 'cv-parse' });
-  if (!rl.success) return createRateLimitResponse(rl);
+  if (!rl.success) {
+    const { host: dbHost, db: dbName } = getDbInfo()
+    const res = createRateLimitResponse(rl)
+    res.headers.set('X-DB-Host', dbHost)
+    res.headers.set('X-DB-Name', dbName)
+    res.headers.set('X-User-Email', emailLower)
+    res.headers.set('X-Org-Slug', '')
+    res.headers.set('X-Org-Id', '')
+    res.headers.set('X-Loopback-Found', 'false')
+    return res
+  }
 
   let body: any;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ ok: false, code: 'BAD_REQUEST', message: 'Invalid JSON body' }, { status: 400 });
+    const { host: dbHost, db: dbName } = getDbInfo()
+    const res = NextResponse.json({ ok: false, code: 'BAD_REQUEST', message: 'Invalid JSON body' }, { status: 400 })
+    res.headers.set('X-DB-Host', dbHost)
+    res.headers.set('X-DB-Name', dbName)
+    res.headers.set('X-User-Email', emailLower)
+    res.headers.set('X-Org-Slug', '')
+    res.headers.set('X-Org-Id', '')
+    res.headers.set('X-Loopback-Found', 'false')
+    return res
   }
 
   const { blobUrl, fileBase64, mime: providedMime, studentId } = body || {};
   if (!studentId || (!blobUrl && !fileBase64)) {
-    return NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'Missing file or studentId' }, { status: 400 });
+    const { host: dbHost, db: dbName } = getDbInfo()
+    const res = NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'Missing file or studentId' }, { status: 400 })
+    res.headers.set('X-DB-Host', dbHost)
+    res.headers.set('X-DB-Name', dbName)
+    res.headers.set('X-User-Email', emailLower)
+    res.headers.set('X-Org-Slug', '')
+    res.headers.set('X-Org-Id', '')
+    res.headers.set('X-Loopback-Found', 'false')
+    return res
   }
 
   // Ensure schema exists (idempotent)
@@ -81,7 +127,15 @@ export async function POST(request: NextRequest) {
       const len = Number(res.headers.get('content-length') || '0');
       if (len && len > MAX_BYTES) {
         try { await sql`UPDATE students SET cv_parse_status = 'error' WHERE id = ${studentId}`; } catch {}
-        return NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'File too large' }, { status: 400 });
+        const { host: dbHost, db: dbName } = getDbInfo()
+        const res = NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'File too large' }, { status: 400 })
+        res.headers.set('X-DB-Host', dbHost)
+        res.headers.set('X-DB-Name', dbName)
+        res.headers.set('X-User-Email', emailLower)
+        res.headers.set('X-Org-Slug', '')
+        res.headers.set('X-Org-Id', '')
+        res.headers.set('X-Loopback-Found', 'false')
+        return res
       }
       const ab = await res.arrayBuffer();
       if (ab.byteLength > MAX_BYTES) {
@@ -94,18 +148,42 @@ export async function POST(request: NextRequest) {
       const buf = Buffer.from(String(fileBase64), 'base64');
       if (buf.byteLength > MAX_BYTES) {
         try { await sql`UPDATE students SET cv_parse_status = 'error' WHERE id = ${studentId}`; } catch {}
-        return NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'File too large' }, { status: 400 });
+        const { host: dbHost, db: dbName } = getDbInfo()
+        const res = NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'File too large' }, { status: 400 })
+        res.headers.set('X-DB-Host', dbHost)
+        res.headers.set('X-DB-Name', dbName)
+        res.headers.set('X-User-Email', emailLower)
+        res.headers.set('X-Org-Slug', '')
+        res.headers.set('X-Org-Id', '')
+        res.headers.set('X-Loopback-Found', 'false')
+        return res
       }
       fileBuf = buf;
     }
   } catch (e: any) {
     try { await sql`UPDATE students SET cv_parse_status = 'error' WHERE id = ${studentId}`; } catch {}
-    return NextResponse.json({ ok: false, code: 'BAD_FILE', message: e?.message || 'Failed to load file' }, { status: 400 });
+    const { host: dbHost, db: dbName } = getDbInfo()
+    const res = NextResponse.json({ ok: false, code: 'BAD_FILE', message: e?.message || 'Failed to load file' }, { status: 400 })
+    res.headers.set('X-DB-Host', dbHost)
+    res.headers.set('X-DB-Name', dbName)
+    res.headers.set('X-User-Email', emailLower)
+    res.headers.set('X-Org-Slug', '')
+    res.headers.set('X-Org-Id', '')
+    res.headers.set('X-Loopback-Found', 'false')
+    return res
   }
 
   if (!fileBuf) {
     try { await sql`UPDATE students SET cv_parse_status = 'error' WHERE id = ${studentId}`; } catch {}
-    return NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'No file content' }, { status: 400 });
+    const { host: dbHost, db: dbName } = getDbInfo()
+    const res = NextResponse.json({ ok: false, code: 'BAD_FILE', message: 'No file content' }, { status: 400 })
+    res.headers.set('X-DB-Host', dbHost)
+    res.headers.set('X-DB-Name', dbName)
+    res.headers.set('X-User-Email', emailLower)
+    res.headers.set('X-Org-Slug', '')
+    res.headers.set('X-Org-Id', '')
+    res.headers.set('X-Loopback-Found', 'false')
+    return res
   }
 
   // Detect default mime if still unknown
@@ -135,7 +213,17 @@ export async function POST(request: NextRequest) {
         if (process.env.NODE_ENV === 'development') {
           console.log('CV_PARSE_DOCX_OK', { studentId, size: fileBuf.byteLength, mime });
         }
-        return NextResponse.json({ ok: true, parsedText, tokens, pages: null, confidence: null });
+        {
+          const { host: dbHost, db: dbName } = getDbInfo()
+          const res = NextResponse.json({ ok: true, parsedText, tokens, pages: null, confidence: null })
+          res.headers.set('X-DB-Host', dbHost)
+          res.headers.set('X-DB-Name', dbName)
+          res.headers.set('X-User-Email', emailLower)
+          res.headers.set('X-Org-Slug', '')
+          res.headers.set('X-Org-Id', '')
+          res.headers.set('X-Loopback-Found', 'false')
+          return res
+        }
       } catch (docxErr: any) {
         // fall through to Document AI if Mammoth fails
         if (process.env.NODE_ENV === 'development') {
@@ -199,15 +287,29 @@ export async function POST(request: NextRequest) {
       }
     } catch (dbErr: any) {
       await sql`UPDATE students SET cv_parse_status = 'error' WHERE id = ${studentId}`;
-      return NextResponse.json({ ok: false, code: 'DOC_AI_ERROR', message: dbErr?.message || 'DB error' }, { status: 502 });
+      const { host: dbHost, db: dbName } = getDbInfo()
+      const res = NextResponse.json({ ok: false, code: 'DOC_AI_ERROR', message: dbErr?.message || 'DB error' }, { status: 502 })
+      res.headers.set('X-DB-Host', dbHost)
+      res.headers.set('X-DB-Name', dbName)
+      res.headers.set('X-User-Email', emailLower)
+      res.headers.set('X-Org-Slug', '')
+      res.headers.set('X-Org-Id', '')
+      res.headers.set('X-Loopback-Found', 'false')
+      return res
     }
-
-    return NextResponse.json({ ok: true, parsedText, tokens, pages, confidence });
   } catch (error: any) {
     try { await sql`UPDATE students SET cv_parse_status = 'error' WHERE id = ${studentId}`; } catch {}
     if (process.env.NODE_ENV === 'development') {
       console.error('CV_PARSE_FAIL', { studentId, size: fileBuf?.byteLength, mime, message: error?.message });
     }
-    return NextResponse.json({ ok: false, code: 'DOC_AI_ERROR', message: error?.message || 'Document AI failed' }, { status: 502 });
+    const { host: dbHost, db: dbName } = getDbInfo()
+    const res = NextResponse.json({ ok: false, code: 'DOC_AI_ERROR', message: error?.message || 'Document AI failed' }, { status: 502 })
+    res.headers.set('X-DB-Host', dbHost)
+    res.headers.set('X-DB-Name', dbName)
+    res.headers.set('X-User-Email', emailLower)
+    res.headers.set('X-Org-Slug', '')
+    res.headers.set('X-Org-Id', '')
+    res.headers.set('X-Loopback-Found', 'false')
+    return res
   }
 }

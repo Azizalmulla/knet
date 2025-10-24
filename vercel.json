@@ -14,6 +14,15 @@
       "memory": 1024,
       "includeFiles": "public/fonts/**"
     },
+    "app/api/cv/macchiato/pdf/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/[org]/admin/cv/pdf/[id]/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": "public/fonts/**"
+    },
     "app/api/**/*.ts": {
       "maxDuration": 60
     }

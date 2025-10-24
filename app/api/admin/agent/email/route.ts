@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { cookies } from 'next/headers';
+import { jwtVerify } from '@/lib/esm-compat/jose';
+import { sql } from '@vercel/postgres';
 
 // Email template schema
 const EmailGeneratorSchema = z.object({
@@ -7,7 +10,7 @@ const EmailGeneratorSchema = z.object({
   candidateName: z.string(),
   candidateEmail: z.string(),
   roleTitle: z.string(),
-  companyName: z.string().default('KNET'),
+  companyName: z.string().default('Wathefni AI'),
   reasons: z.array(z.string()).optional(),
   gaps: z.array(z.string()).optional(),
   interviewDate: z.string().optional(),
@@ -15,12 +18,43 @@ const EmailGeneratorSchema = z.object({
 });
 
 // Verify admin auth
-function verifyAdmin(request: NextRequest): boolean {
+const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production';
+
+async function getAuthContext(request: NextRequest): Promise<{ authorized: boolean; orgSlug?: string; orgName?: string }>
+{
+  // Path A: Legacy header key (dev/legacy)
   const provided = (request.headers.get('x-admin-key') || '').trim();
   const envKey = (process.env.ADMIN_KEY || '').trim();
   const fallback = process.env.NODE_ENV !== 'production' ? 'test-admin-key' : '';
-  if (!provided) return false;
-  return [envKey, fallback].filter(Boolean).includes(provided);
+  if (provided && [envKey, fallback].filter(Boolean).includes(provided)) {
+    // Org will be derived from body or default later
+    return { authorized: true };
+  }
+
+  // Path B: Org-scoped admin session via cookie (recommended)
+  try {
+    let session = request.cookies.get('admin_session')?.value;
+    if (!session) {
+      // Fallback to the server cookie store
+      session = cookies().get('admin_session')?.value;
+    }
+    if (session) {
+      const secret = new TextEncoder().encode(JWT_SECRET);
+      const { payload } = await jwtVerify(session, secret);
+      const orgSlug = String((payload as any)?.orgSlug || '').trim();
+      if (orgSlug) {
+        // Try to resolve org name
+        let orgName: string | undefined;
+        try {
+          const res = await sql`SELECT name FROM public.organizations WHERE slug = ${orgSlug} LIMIT 1`;
+          orgName = res?.rows?.[0]?.name as string | undefined;
+        } catch {}
+        return { authorized: true, orgSlug, orgName };
+      }
+    }
+  } catch {}
+
+  return { authorized: false };
 }
 
 // Generate email templates
@@ -130,29 +164,83 @@ ${companyName}`
   return templates[type];
 }
 
-// POST: Generate email template
+// POST: Send email via Resend
 export async function POST(request: NextRequest) {
-  if (!verifyAdmin(request)) {
+  // Accept either x-admin-key or admin_session cookie
+  const auth = await getAuthContext(request);
+  if (!auth.authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  
+
   try {
     const body = await request.json();
-    const validated = EmailGeneratorSchema.parse(body);
+    const { orgSlug: bodyOrgSlug, orgName: bodyOrgName, sendEmail = true, ...rest } = body;
+    const validated = EmailGeneratorSchema.parse(rest);
     
     const template = generateEmailTemplate(validated);
     
-    // Also return mailto link for easy sending
-    const mailtoLink = `mailto:${validated.candidateEmail}?subject=${encodeURIComponent(template.subject)}&body=${encodeURIComponent(template.body)}`;
-    
+    // If sendEmail is false, just return template (for preview)
+    if (!sendEmail) {
+      const mailtoLink = `mailto:${validated.candidateEmail}?subject=${encodeURIComponent(template.subject)}&body=${encodeURIComponent(template.body)}`;
+      return NextResponse.json({
+        success: true,
+        template,
+        mailtoLink,
+        candidateEmail: validated.candidateEmail
+      });
+    }
+
+    // Send actual email via Resend
+    if (!process.env.RESEND_API_KEY) {
+      return NextResponse.json({ 
+        error: 'Email service not configured. Set RESEND_API_KEY in environment.' 
+      }, { status: 500 });
+    }
+
+    const { Resend } = await import('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // Resolve org identity for sender
+    const resolvedOrgSlug = (auth.orgSlug || bodyOrgSlug || '').trim();
+    let resolvedOrgName = (auth.orgName || bodyOrgName || '').trim();
+    if (!resolvedOrgName && resolvedOrgSlug) {
+      try {
+        const res = await sql`SELECT name FROM public.organizations WHERE slug = ${resolvedOrgSlug} LIMIT 1`;
+        resolvedOrgName = res?.rows?.[0]?.name as string || '';
+      } catch {}
+    }
+
+    const fromEmail = resolvedOrgSlug
+      ? `${resolvedOrgSlug}@wathefni.ai`
+      : (process.env.RESEND_FROM || 'hr@wathefni.ai');
+    const fromName = resolvedOrgName ? `${resolvedOrgName} HR Team` : 'HR Team';
+
+    const result = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: validated.candidateEmail,
+      subject: template.subject,
+      text: template.body,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #333;">
+          ${template.body.split('\n').map(line => 
+            line.trim() === '' ? '<br>' : `<p style="margin: 12px 0;">${line}</p>`
+          ).join('')}
+        </div>
+      `,
+    });
+
+    const emailId = result.data?.id || 'unknown';
+    console.log('✅ Email sent via Resend:', emailId);
+
     return NextResponse.json({
       success: true,
+      emailId,
       template,
-      mailtoLink,
-      candidateEmail: validated.candidateEmail
+      candidateEmail: validated.candidateEmail,
+      sentFrom: fromEmail,
     });
   } catch (error: any) {
-    console.error('Failed to generate email:', error);
+    console.error('Failed to send email:', error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ 
         error: 'Invalid request data',
@@ -160,7 +248,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     return NextResponse.json({ 
-      error: 'Failed to generate email template' 
+      error: error.message || 'Failed to send email' 
     }, { status: 500 });
   }
 }

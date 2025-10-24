@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import AdminDashboard from '@/components/admin-dashboard';
+import { useSearchParams } from 'next/navigation';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useInactivityTimeout } from '@/lib/useInactivityTimeout';
 import { useLanguage } from '@/lib/language';
-import { AdminThemeToggle } from '@/components/admin/theme-toggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -76,7 +76,7 @@ function AdminLogin({ onLogin }: { onLogin: (token: string) => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#eeeee4] text-neutral-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{t('admin_access')}</CardTitle>
@@ -126,6 +126,13 @@ function AdminContent() {
   const [inlineToken, setInlineToken] = useState('');
   const [inlineError, setInlineError] = useState('');
   const [inlineLoading, setInlineLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const qpOrg = (searchParams?.get('org') || '').trim();
+  useEffect(() => {
+    if (qpOrg && typeof window !== 'undefined') {
+      try { sessionStorage.setItem('current_org', qpOrg) } catch {}
+    }
+  }, [qpOrg]);
 
   // Auto-logout after 30 minutes of inactivity
   useInactivityTimeout({
@@ -187,7 +194,7 @@ function AdminContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-screen bg-[#eeeee4] text-neutral-900 flex items-center justify-center">
         <div>{t('admin_loading')}</div>
       </div>
     );
@@ -202,14 +209,14 @@ function AdminContent() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-screen bg-[#eeeee4] text-neutral-900 flex items-center justify-center">
         <div>{t('admin_loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#eeeee4] text-neutral-900">
       {/* Inline Re-auth Modal */}
       <Dialog open={showReauth}>
         <DialogContent>
@@ -270,7 +277,7 @@ function AdminContent() {
         </DialogContent>
       </Dialog>
       {/* Top admin header pinned with nav */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="sticky top-0 z-50 bg-white border-b-[4px] border-black shadow-[8px_8px_0_#111]">
         <div className="mx-auto max-w-7xl w-full px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Button
@@ -297,12 +304,10 @@ function AdminContent() {
             {/* Tabs will portal into this slot */}
             <div id="admin-tabs-slot" className="flex items-center" />
           </div>
-          <div className="flex items-center gap-3">
-            <AdminThemeToggle />
-          </div>
+          {/* Theme toggle removed; neo-brutalist is default */}
         </div>
       </div>
-      <AdminDashboard />
+      <AdminDashboard orgSlug={qpOrg || undefined} />
     </div>
   );
 }
@@ -327,7 +332,9 @@ export default function AdminPage() {
         </div>
       }
     >
-      <AdminContent />
+      <Suspense fallback={<div className="min-h-screen bg-background text-foreground flex items-center justify-center">Loading…</div>}>
+        <AdminContent />
+      </Suspense>
     </ErrorBoundary>
   );
 }

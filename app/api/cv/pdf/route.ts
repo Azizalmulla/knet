@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { pdf, Font } from '@react-pdf/renderer'
+import { setReactPdfOverride } from '@/lib/pdf/react-pdf-shim'
 import fs from 'fs'
 import path from 'path'
 import React from 'react'
 import { createCVDocument } from '@/lib/pdf/cv-document'
+import { renderMacchiatoPdf } from '@/lib/jsonresume/macchiato'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 // Register local TTF fonts ONCE per lambda cold start
 function registerFontSafe(family: string, files: { src: string; fontWeight?: number | 'normal' | 'bold' }[]) {
@@ -43,20 +47,31 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const cv = body?.cv || {}
-    const template = (body?.template as 'minimal'|'modern'|'creative') || 'minimal'
+    const template = (body?.template as any) || 'professional'
     const language = (body?.language as string) || 'en'
+    const density = body?.density === 'compact' ? 'compact' : 'comfortable'
 
-    const element = createCVDocument(cv, template, language)
-    const blob = await pdf(element).toBlob()
-    const ab = await blob.arrayBuffer()
-    const bytes = new Uint8Array(ab)
+    // Ensure our shim uses the real renderer primitives in this server environment
+    try {
+      const mod = await import('@react-pdf/renderer')
+      setReactPdfOverride(mod as any)
+    } catch {}
 
-    return new Response(bytes, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="CV.pdf"',
-        'Cache-Control': 'no-store',
-      },
+    // Render Macchiato (must match preview); no fallback
+    const macchiatoBytes = await renderMacchiatoPdf(cv)
+    if (macchiatoBytes) {
+      return new Response(macchiatoBytes, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="CV.pdf"',
+          'Cache-Control': 'no-store',
+          'X-Renderer': 'macchiato',
+        },
+      })
+    }
+    return new Response('Macchiato renderer unavailable', {
+      status: 501,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Renderer': 'unavailable' },
     })
   } catch (err: any) {
     return NextResponse.json({ error: 'Failed to generate PDF', detail: String(err?.message || err) }, { status: 500 })

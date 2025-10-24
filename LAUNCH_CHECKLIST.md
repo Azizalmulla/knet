@@ -30,8 +30,8 @@
 ### Rate Limiting Test
 ```bash
 # Verify 6th rapid request returns 429
-curl -X POST https://app.domain.com/api/cv/submit -H "Content-Type: application/json" -d '{}' &
-curl -X POST https://app.domain.com/api/cv/submit -H "Content-Type: application/json" -d '{}' &
+curl -X POST https://app.domain.com/api/submit -H "Content-Type: application/json" -d '{}' &
+curl -X POST https://app.domain.com/api/submit -H "Content-Type: application/json" -d '{}' &
 # ... repeat 6 times, expect 429 on 6th
 ```
 
@@ -107,7 +107,7 @@ npm run check:all
 npm run e2e:smoke
 
 # 3. Rate limiting check  
-for i in {1..6}; do curl -X POST https://your-app.com/api/cv/submit -d '{}' -H "Content-Type: application/json"; done
+for i in {1..6}; do curl -X POST https://your-app.com/api/submit -d '{}' -H "Content-Type: application/json"; done
 
 # 4. Admin authentication
 curl -H "Authorization: Bearer wrong_key" https://your-app.com/admin

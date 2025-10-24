@@ -226,7 +226,7 @@ const CvSchema = z.object({
 }).strip()
 
 const InputSchema = z.object({
-  mode: z.enum(['complete','optimize','suggestRoles','coverLetter','interviewPrep','bullets','summary','master']).optional(),
+  mode: z.enum(['complete','optimize','suggestRoles','coverLetter','interviewPrep','bullets','summary','master','smartExpand']).optional(),
   locale: z.enum(['en','ar','kw']).default('en'),
   tone: z.enum(['professional','creative','academic']).default('professional'),
   form: z.any().optional(),
@@ -281,12 +281,11 @@ function mapLegacyTaskToMode(task?: string): 'complete'|'optimize'|'suggestRoles
 function computeNeeds(form: any, mode: string): string[] {
   const needs: string[] = []
   const pi = form?.personalInfo || {}
-  // Only enforce strict requirements for cover letters, where contact info is essential
-  if (mode === 'coverLetter') {
+  // Enforce contact info for full CV completion and cover letters
+  if (mode === 'complete' || mode === 'coverLetter') {
     if (!pi.fullName) needs.push('personalInfo.fullName')
     if (!pi.email) needs.push('personalInfo.email')
   }
-  // For summary/complete/optimize/bullets, proceed even if summary/name/email are missing — the model or fallback will handle it
   return needs
 }
 
@@ -304,21 +303,20 @@ function localizeCv(cv: CVData, locale: 'en'|'ar'|'kw'): CVData {
   return out
 }
 
-function optimizeForATS(bullets: string[], jobDescription?: string): string[] {
-  const kws = (jobDescription || '').toLowerCase()
-  return bullets.map(bullet => {
-    let optimized = bullet
-    if (!bullet.match(/^(Developed|Built|Implemented|Created|Designed|Led|Managed|Optimized|Delivered|Collaborated)/)) {
-      optimized = `Developed ${bullet.replace(/^[-•\s]+/, '').replace(/^[a-z]/, (m) => m.toUpperCase())}`
-    }
-    if (!optimized.endsWith('.')) {
-      optimized += '.'
-    }
-    if (kws.includes('react') && !optimized.toLowerCase().includes('react')) optimized += ' (React)'
-    if (kws.includes('typescript') && !optimized.toLowerCase().includes('typescript')) optimized += ' (TypeScript)'
-    if (kws.includes('next') && !optimized.toLowerCase().includes('next')) optimized += ' (Next.js)'
-    return optimized
-  })
+function optimizeForATS(bullets: string[], _jobDescription?: string): string[] {
+  // Non-inventive formatter: strong verb + cleaned sentence + period. No new tech/keywords added.
+  const startVerb = /^(Developed|Built|Implemented|Created|Designed|Led|Managed|Optimized|Delivered|Collaborated|Automated|Improved|Engineered|Configured)\b/
+  return bullets
+    .map(b => String(b || '').trim())
+    .filter(Boolean)
+    .map(bullet => {
+      let optimized = bullet.replace(/^[-•\s]+/, '').replace(/\s+/g, ' ').trim()
+      if (!startVerb.test(optimized)) {
+        optimized = optimized.replace(/^[a-z]/, (m) => m.toUpperCase())
+      }
+      if (!/[.!?]$/.test(optimized)) optimized += '.'
+      return optimized
+    })
 }
 
 function generateCareerSuggestions(fieldOfStudy?: string, areaOfInterest?: string): string[] {
@@ -447,7 +445,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = input.data as any
-    const mode: 'complete'|'optimize'|'suggestRoles'|'coverLetter'|'interviewPrep'|'bullets'|'summary'|'master' = body.mode || mapLegacyTaskToMode(body.task) || 'complete'
+    const mode: 'complete'|'optimize'|'suggestRoles'|'coverLetter'|'interviewPrep'|'bullets'|'summary'|'master'|'smartExpand' = body.mode || mapLegacyTaskToMode(body.task) || 'complete'
     const locale: 'en'|'ar'|'kw' = body.locale || (body.language === 'arabic' ? 'ar' : body.language === 'kuwaiti_arabic' ? 'kw' : 'en')
     const tone = body.tone || 'professional'
     const form = body.form || body.cvData || {}
@@ -470,6 +468,137 @@ export async function POST(request: NextRequest) {
     if (resp.needs && resp.needs.length > 0) {
       safeLog('ALERT:CAREER_ASSIST_422', { mode, locale, duration: Date.now()-started, needs: resp.needs.length })
       return NextResponse.json({ needs: resp.needs }, { status: 422 })
+    }
+
+    // Smart Expand & Improve (No Fabrication) — exact JSON contract
+    if (mode === 'smartExpand') {
+      // Helper to sanitize model output to preserve original entries
+      const buildInputSnapshot = (formAny: any) => {
+        const sForm: any = formAny || {}
+        const exp = Array.isArray(sForm.experience) ? sForm.experience : []
+        const pro = Array.isArray(sForm.projects) ? sForm.projects : []
+        return {
+          summary: String(sForm.summary || sForm?.personalInfo?.summary || ''),
+          experience: exp.map((e: any) => ({
+            company: e?.company,
+            position: e?.position || e?.title,
+            startDate: e?.startDate,
+            endDate: e?.endDate,
+            current: !!e?.current,
+            location: e?.location,
+            bullets: Array.isArray(e?.bullets) ? e.bullets : [],
+          })),
+          projects: pro.map((p: any) => ({
+            name: p?.name,
+            description: p?.description,
+            technologies: Array.isArray(p?.technologies) ? p.technologies : [],
+            bullets: Array.isArray(p?.bullets) ? p.bullets : [],
+            url: p?.url,
+          })),
+          education: Array.isArray(sForm.education) ? sForm.education : [],
+          skills: sForm.skills || { technical: [], soft: [] },
+          languages: Array.isArray(sForm?.skills?.languages) ? sForm.skills.languages : (Array.isArray(sForm.languages) ? sForm.languages : []),
+          achievements: Array.isArray(sForm.achievements) ? sForm.achievements : [],
+          certifications: Array.isArray(sForm.certifications) ? sForm.certifications : [],
+          achievementSeeds: Array.isArray(sForm.achievementSeeds) ? sForm.achievementSeeds : undefined,
+          certificationSeeds: Array.isArray(sForm.certificationSeeds) ? sForm.certificationSeeds : undefined,
+        }
+      }
+
+      const cvIn = buildInputSnapshot(form)
+
+      // No-key deterministic fallback: rewrite bullets only
+      if (!process.env.OPENAI_API_KEY) {
+        const rewrite = (arr?: string[]) => Array.isArray(arr) ? optimizeForATS(arr) : []
+        const out = {
+          summary: cvIn.summary,
+          experience: cvIn.experience.map((e: any) => ({ ...e, bullets: rewrite(e.bullets).slice(0,5) })),
+          projects: cvIn.projects.map((p: any) => ({ ...p, bullets: rewrite(p.bullets).slice(0,5) })),
+          education: cvIn.education,
+          skills: cvIn.skills,
+          languages: cvIn.languages,
+          achievements: cvIn.achievements,
+          certifications: cvIn.certifications,
+          suggestedAchievements: [],
+          suggestedCertifications: [],
+        }
+        return NextResponse.json(out)
+      }
+
+      try {
+        const { default: OpenAI } = await import('openai')
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+        
+        // Extract job description for targeting
+        const jobDesc = (form?.review?.jobDescription || form?.jobDescription || '').trim()
+        const hasJobContext = jobDesc.length > 20
+        
+        // Calculate experience recency for adaptive bullet counts
+        const now = new Date()
+        const isRecent = (dateStr: string) => {
+          if (!dateStr) return false
+          const match = dateStr.match(/(\d{4})/)
+          if (!match) return false
+          const year = parseInt(match[1], 10)
+          return (now.getFullYear() - year) <= 3
+        }
+        
+        const systemPrompt = [
+          'You are a precise CV refiner. Expand and polish WITHOUT inventing facts.',
+          hasJobContext ? `\n🎯 TARGET JOB CONTEXT:\n${jobDesc.slice(0, 1200)}\n\nALIGN CV CONTENT:\n- Use keywords and required skills from the job posting\n- Highlight relevant experience and technologies\n- Match industry terminology and priorities\n- Emphasize qualifications mentioned in requirements\n` : '',
+          '- Do NOT add jobs/companies/schools/dates/locations/technologies.',
+          '- Do NOT invent metrics/titles/tools/responsibilities not present in input.',
+          '- Preserve all existing entries (education, experience, projects, skills, soft skills, languages, achievements, certifications). None may be dropped.',
+          '- Rewrite summary and bullets for clarity/professionalism; keep factual meaning.',
+          '- ADAPTIVE BULLET COUNT:',
+          '  * Recent roles (last 3 years): 3–4 bullets with strong impact',
+          '  * Older roles: 2–3 bullets, keep concise',
+          '  * Entry-level roles: 2–3 bullets',
+          '  * Keep CV concise (ideal: 1 page for <5yrs exp, 2 pages for 5+ yrs)',
+          '- Use strong action verbs (Led, Architected, Optimized, Delivered, etc.)',
+          '- Keep education, skills, languages unchanged. Suggestions from seeds only in dedicated arrays.',
+          'Output ONLY JSON with keys: summary, experience, projects, education, skills, languages, achievements, certifications, suggestedAchievements, suggestedCertifications.'
+        ].filter(Boolean).join('\n')
+        
+        const messages = [
+          { role: 'system' as const, content: systemPrompt },
+          { role: 'user' as const, content: JSON.stringify(cvIn) },
+        ]
+        const completion = await callOpenAIWithRetry(openai, messages)
+        const content = completion?.choices?.[0]?.message?.content
+        const parsed = tryParseJson<any>(content || '') || {}
+
+        // Sanitize: preserve arrays/entries from input, only update bullets and summary
+        const sanitize = (p: any) => {
+          const result: any = {}
+          result.summary = String(p.summary || cvIn.summary || '')
+          const norm = (arr?: any[]) => Array.isArray(arr) ? arr : []
+          result.experience = norm(cvIn.experience).map((e: any, i: number) => {
+            const src = Array.isArray(p.experience) ? p.experience[i] : undefined
+            const newBullets = Array.isArray(src?.bullets) ? src.bullets.slice(0,5) : (Array.isArray(e?.bullets) ? e.bullets.slice(0,5) : [])
+            return { ...e, bullets: optimizeForATS(newBullets).slice(0,5) }
+          })
+          result.projects = norm(cvIn.projects).map((pr: any, i: number) => {
+            const src = Array.isArray(p.projects) ? p.projects[i] : undefined
+            const newBullets = Array.isArray(src?.bullets) ? src.bullets.slice(0,5) : (Array.isArray(pr?.bullets) ? pr.bullets.slice(0,5) : [])
+            return { ...pr, bullets: optimizeForATS(newBullets).slice(0,5) }
+          })
+          result.education = cvIn.education
+          result.skills = cvIn.skills
+          result.languages = cvIn.languages
+          result.achievements = cvIn.achievements
+          result.certifications = cvIn.certifications
+          result.suggestedAchievements = Array.isArray(p.suggestedAchievements) ? p.suggestedAchievements : []
+          result.suggestedCertifications = Array.isArray(p.suggestedCertifications) ? p.suggestedCertifications : []
+          return result
+        }
+
+        const out = sanitize(parsed)
+        return NextResponse.json(out)
+      } catch (err: any) {
+        safeLog('ALERT:CAREER_ASSIST_SMART_EXPAND_FAIL', { err: String(err?.message || err) })
+        return NextResponse.json({ error: 'Failed to generate output' }, { status: 502 })
+      }
     }
 
     // Master mode: return EXACT JSON as specified by the master prompt
@@ -605,7 +734,25 @@ OUTPUT FORMAT (return ONLY this JSON)
         try {
           const { default: OpenAI } = await import('openai')
           const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-          const userPrompt = `Use this when the user clicks the “Generate ATS Bullets” button. Send company, title, rawNotes, tech, optional jobDescription, and the ONLY output should be a JSON array bullets.\nYou are an ATS rewrite assistant. Rewrite raw notes into 3–5 crisp, impact-focused bullets.\n\nRules:\n- Start each bullet with a strong verb (Designed, Built, Optimized, Automated, Led, Implemented, Reduced, Increased).\n- Remove first person ("I", "my").\n- Insert realistic impact/scale placeholders if unknown (e.g., "by 15%", "for 10k+ users").\n- Mention relevant tools/tech if present.\n- Keep bullets 1 line each (max ~22 words).\n- Use past tense unless “Currently working here” is true.\n\nContext:\n- Company: ${company}\n- Title: ${title}\n- Currently working here: ${isCurrent}\n- Raw notes: """${rawNotes}"""\n- Tech stack (optional): ${techCsv}\n- Job description (optional): """${jobDescription || ''}"""\n\nOutput strictly as JSON array named "bullets".`
+          const userPrompt = `You are an ATS rewrite assistant.
+Rewrite raw notes into 3–5 crisp, professional bullets using ONLY the information provided.
+
+Strict rules:
+- Do NOT invent new facts, companies, dates, metrics, or technologies.
+- Start each bullet with a strong verb (Designed, Built, Optimized, Automated, Led, Implemented, Reduced, Increased).
+- Remove first person (no "I" or "my").
+- Keep bullets one line each (<= ~22 words), end with a period.
+- Use past tense unless “Currently working here” is true.
+
+Context:
+- Company: ${company}
+- Title: ${title}
+- Currently working here: ${isCurrent}
+- Raw notes: """${rawNotes}"""
+- Tech stack (optional): ${techCsv}
+- Job description (optional): """${jobDescription || ''}"""
+
+Output strictly as JSON array named "bullets".`
           const completion = await callOpenAIWithRetry(openai, [{ role: 'user', content: userPrompt }])
           const content = completion.choices?.[0]?.message?.content
           const parsed = tryParseJson<{ bullets?: string[] }>(content ?? undefined)
@@ -758,7 +905,7 @@ Output: JSON object with key "summary" only.`
         const { default: OpenAI } = await import('openai')
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-        const systemPrompt = `You are Smart AI Assist for a CV builder.\nGoal: Turn sparse student inputs into a complete, professional, ATS-friendly resume ready for PDF export.\nDo both: complete missing content and improve existing wording.\n\nRules\n- Keep all factual user details (names, dates, degrees) unchanged.\n- Do not invent employers, dates, or credentials.\n- If work experience is thin, create relevant academic or personal Projects (not fake jobs).\n- For bullets, use action verb + what you did + tech + outcome. Use metrics only if implied; otherwise use scope/scale (e.g., “built REST API used by 3 modules”).\n- Organize Skills into groups: technical, frameworks, tools, databases, cloud, languages, soft.\n- Always include these sections when possible: summary, education, experience or projects, skills, languages, and add certifications / awards if provided or clearly inferable from inputs.\n- Tone: concise, professional, recruiter-friendly. No fluff, no first-person.\n- Target density: 3–5 bullets per role/project; 1–2 pages total content.\n- Output valid JSON matching the schema below. No extra text.\n\nOutput JSON schema\n{\n  "summary": "string",\n  "education": [{"degree":"string","org":"string","start":"YYYY-MM?","end":"YYYY-MM?","gpa":"string?"}],\n  "experience": [{"title":"string","company":"string","start":"YYYY-MM?","end":"YYYY-MM?","location":"string?","bullets":["string", "..."]}],\n  "projects": [{"name":"string","role":"string?","tech":["string"],"start":"YYYY-MM?","end":"YYYY-MM?","bullets":["string","..."]}],\n  "skills": {"technical":["string"],"frameworks":["string"],"tools":["string"],"databases":["string"],"cloud":["string"],"languages":["string"],"soft":["string"]},\n  "certifications": ["string"],\n  "awards": ["string"],\n  "languages": ["string"]\n}\nIf a section is empty, return an empty array for it (don’t omit keys). Respect the requested language (EN/AR). For AR use formal MSA tone.`
+        const systemPrompt = `You are Smart AI Assist for a CV builder.\nGoal: Expand and improve ONLY what the user provided so their CV feels full and professional.\n\nSTRICT RULES\n- Do NOT invent new jobs, companies, dates, credentials, projects, or skills.\n- Do NOT add metrics or technologies that are not present in the input.\n- Keep factual details (names, dates, degree, employers) EXACTLY as provided.\n- For every existing job and project: produce 3–5 strong bullets by rewriting and expanding the user's notes only.\n- Expand the summary to 1–3 sentences using only existing details (no new facts).\n- Deduplicate and normalize skills into groups (technical, frameworks, tools, databases, cloud, languages, soft). No new items beyond input.\n- If a section is empty in input, keep it empty; never create new entries.\n- Tone: concise, professional, outcome-focused; no first-person.\n- Output valid JSON in the schema below. No extra text.\n\nOutput JSON schema\n{\n  "summary": "string",\n  "education": [{"degree":"string","org":"string","start":"YYYY-MM?","end":"YYYY-MM?","gpa":"string?"}],\n  "experience": [{"title":"string","company":"string","start":"YYYY-MM?","end":"YYYY-MM?","location":"string?","bullets":["string"]}],\n  "projects": [{"name":"string","role":"string?","tech":["string"],"start":"YYYY-MM?","end":"YYYY-MM?","bullets":["string"]}],\n  "skills": {"technical":["string"],"frameworks":["string"],"tools":["string"],"databases":["string"],"cloud":["string"],"languages":["string"],"soft":["string"]},\n  "certifications": ["string"],\n  "awards": ["string"],\n  "languages": ["string"]\n}`
 
         const inputPayload = {
           lang: locale,
@@ -819,7 +966,49 @@ Output: JSON object with key "summary" only.`
         const content = completion.choices?.[0]?.message?.content
         const parsed = tryParseJson<any>(content ?? undefined)
         if (parsed && Object.keys(parsed).length > 0) {
-          resp.cv = parsed
+          // Enforce non-fabrication on top of model output: keep only existing items and immutable fields
+          const keepExp = (overrides?.experience || [])
+          const keepProj = (overrides?.projects || [])
+          const safe: any = {
+            summary: typeof parsed.summary === 'string' ? parsed.summary : (overrides as any)?.personalInfo?.summary || '',
+            education: (overrides?.education || []).map((e: any, i: number) => ({
+              degree: e?.degree || '',
+              org: e?.institution || e?.org || '',
+              start: e?.startDate || '',
+              end: e?.endDate || e?.graduationDate || '',
+              gpa: e?.gpa || undefined,
+              // Optionally keep details from parsed if present but do not add unknown facts
+            })),
+            experience: keepExp.map((e: any, i: number) => ({
+              title: e?.title || e?.position || '',
+              company: e?.company || '',
+              start: e?.startDate || '',
+              end: e?.endDate || '',
+              location: e?.location || '',
+              bullets: optimizeForATS((parsed?.experience?.[i]?.bullets || e?.bullets || []).slice(0, 5)),
+            })),
+            projects: keepProj.map((p: any, i: number) => ({
+              name: p?.name || '',
+              role: p?.role || '',
+              tech: Array.isArray(p?.technologies) ? p.technologies : [],
+              start: p?.startDate || '',
+              end: p?.endDate || '',
+              bullets: optimizeForATS((parsed?.projects?.[i]?.bullets || p?.bullets || []).slice(0, 5)),
+            })),
+            skills: {
+              technical: Array.from(new Set((inputPayload.skills.technical || []).filter(Boolean))),
+              frameworks: Array.from(new Set((inputPayload.skills.frameworks || []).filter(Boolean))),
+              tools: Array.from(new Set((inputPayload.skills.tools || []).filter(Boolean))),
+              databases: Array.from(new Set((inputPayload.skills.databases || []).filter(Boolean))),
+              cloud: Array.from(new Set((inputPayload.skills.cloud || []).filter(Boolean))),
+              languages: Array.from(new Set((inputPayload.skills.languages || []).filter(Boolean))),
+              soft: Array.from(new Set((inputPayload.skills.soft || []).filter(Boolean))),
+            },
+            certifications: Array.isArray(parsed?.certifications) ? parsed.certifications : [],
+            awards: Array.isArray(parsed?.awards) ? parsed.awards : [],
+            languages: Array.isArray(parsed?.languages) ? parsed.languages : inputPayload.skills.languages || [],
+          }
+          resp.cv = safe
           resp.careerSuggestions = generateCareerSuggestions(fieldOfStudy, areaOfInterest)
           const out = OutputSchema.parse(resp)
           safeLog('ALERT:CAREER_ASSIST', { mode, locale, duration: Date.now()-started, needs: out.needs?.length || 0 })
@@ -830,10 +1019,50 @@ Output: JSON object with key "summary" only.`
       }
     }
 
-    // Fallback completion
-    let cv = generateDefaultCV(fieldOfStudy, areaOfInterest, overrides)
-    cv = localizeCv(cv, locale)
-    resp.cv = cv
+    // Fallback completion (non-generative): expand only what exists
+    const expandFromText = (text?: string) => extractSentences(text).slice(0, 6)
+    const expanded: CVData = JSON.parse(JSON.stringify(overrides || {}))
+    // Ensure 3–5 bullets per existing experience/project using available notes only
+    if (Array.isArray(expanded.experience)) {
+      expanded.experience = expanded.experience.map((e: any) => {
+        let seeds: string[] = []
+        if (Array.isArray(e?.bullets) && e.bullets.length) seeds = e.bullets
+        else if (Array.isArray(e?.details) && e.details.length) seeds = e.details
+        else seeds = expandFromText(guessDescriptionFromParsedCv(parsedCv))
+        const bullets = optimizeForATS(seeds).slice(0, 5)
+        while (bullets.length < 3 && seeds.length > 0) bullets.push(...optimizeForATS(seeds.slice(bullets.length, bullets.length + 1)))
+        return { ...e, bullets: bullets.slice(0, 5) }
+      })
+    }
+    if (Array.isArray(expanded.projects)) {
+      expanded.projects = expanded.projects.map((p: any) => {
+        const seeds = Array.isArray(p?.bullets) && p.bullets.length ? p.bullets : expandFromText(p?.description)
+        const bullets = optimizeForATS(seeds).slice(0, 5)
+        while (bullets.length < 3 && seeds.length > 0) bullets.push(...optimizeForATS(seeds.slice(bullets.length, bullets.length + 1)))
+        return { ...p, bullets: bullets.slice(0, 5) }
+      })
+    }
+    // Summary: expand to 1–3 sentences without new facts
+    const pi = (overrides?.personalInfo || {}) as any
+    if (typeof pi?.summary === 'string') {
+      const s = pi.summary.trim()
+      const sentences = extractSentences(s)
+      const out = sentences.length <= 1 ? `${s} ${sentences[0] || ''}`.trim() : sentences.slice(0, 3).join('. ')
+      expanded.personalInfo = { ...(expanded.personalInfo as any), summary: out.endsWith('.') ? out : (out ? out + '.' : out) }
+    }
+    // Skills: dedupe/normalize only
+    if (expanded.skills) {
+      const norm = (arr?: string[]) => Array.from(new Set((arr || []).map(x => String(x).trim()).filter(Boolean)))
+      expanded.skills = {
+        programmingLanguages: norm((expanded.skills as any).programmingLanguages),
+        frameworksLibraries: norm((expanded.skills as any).frameworksLibraries),
+        databases: norm((expanded.skills as any).databases),
+        toolsPlatforms: norm((expanded.skills as any).toolsPlatforms),
+        softSkills: norm((expanded.skills as any).softSkills),
+        languages: norm((expanded.skills as any).languages),
+      }
+    }
+    resp.cv = localizeCv(expanded, locale)
     if (!resp.cv || hasPlaceholdersLoose(resp.cv)) {
       return NextResponse.json({ error: 'INSUFFICIENT_INPUT', needs: resp.needs || [] }, { status: 422 })
     }

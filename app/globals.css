@@ -52,7 +52,8 @@
 :root {
   --radius: 0.625rem;
   /* Light theme (shadcn) */
-  --background: 0 0% 100%;
+  /* Brand off‑white #eeeee4 */
+  --background: 52 20% 93%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
@@ -60,15 +61,16 @@
   --popover-foreground: 222.2 84% 4.9%;
   --primary: 222.2 47.4% 11.2%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
+  /* Subtle surfaces harmonized with #eeeee4 */
+  --secondary: 52 20% 96%;
   --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
+  --muted: 52 20% 96%;
   --muted-foreground: 215 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
+  --accent: 52 20% 96%;
   --accent-foreground: 222.2 47.4% 11.2%;
   --destructive: 0 72% 51%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
+  --border: 214 24% 88%;
+  --input: 214 24% 88%;
   --ring: 222.2 84% 4.9%;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -86,25 +88,25 @@
   --background-blob: oklch(0.59 0.3 246 / 0.5);
 }
 .dark {
-  /* Dark theme (neutral near-black, no blue hue) */
-  --background: 0 0% 0%;        /* #000000 */
-  --foreground: 0 0% 98%;       /* #FAFAFA */
-  --card: 0 0% 6%;              /* #0F0F0F */
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 6%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 6%;
-  --secondary: 0 0% 12%;        /* #1F1F1F */
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 64%;  /* ~zinc-400 */
-  --accent: 0 0% 12%;
-  --accent-foreground: 0 0% 98%;
+  /* Unify dark with brand light to remove black surfaces */
+  --background: 52 20% 93%;     /* #eeeee4 */
+  --foreground: 0 0% 10%;       /* near-black text */
+  --card: 0 0% 100%;            /* white cards on off‑white page */
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 0 0% 10%;          /* dark text/buttons when needed */
+  --primary-foreground: 0 0% 98%;
+  --secondary: 52 20% 96%;
+  --secondary-foreground: 0 0% 10%;
+  --muted: 52 20% 96%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 52 20% 96%;
+  --accent-foreground: 0 0% 10%;
   --destructive: 0 62.8% 30.6%;
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 0 0% 45%;
+  --border: 214 24% 88%;
+  --input: 214 24% 88%;
+  --ring: 0 0% 20%;
 }
 
 @layer base {
@@ -113,6 +115,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -294,3 +298,79 @@
 .rtl .flex {
   flex-direction: row-reverse;
 }
+
+/* Arabic font support */
+.lang-ar,
+.lang-ar *,
+html[lang="ar"],
+html[lang="ar"] * {
+  font-family: var(--font-arabic), var(--font-geist-sans), system-ui, -apple-system, sans-serif !important;
+  font-feature-settings: "ss01" on, "ss02" on;
+  letter-spacing: 0.01em;
+}
+
+/* Ensure proper Arabic typography */
+.lang-ar h1, .lang-ar h2, .lang-ar h3, .lang-ar h4, .lang-ar h5, .lang-ar h6,
+html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] h3, html[lang="ar"] h4, html[lang="ar"] h5, html[lang="ar"] h6 {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.lang-ar p, .lang-ar span, .lang-ar div, .lang-ar button, .lang-ar input, .lang-ar textarea,
+html[lang="ar"] p, html[lang="ar"] span, html[lang="ar"] div, html[lang="ar"] button, html[lang="ar"] input, html[lang="ar"] textarea {
+  font-weight: 400;
+}
+
+/* Landing page curved dashed arrows */
+.arrow-container {
+  --highlight-color: #ff7473;
+}
+
+.arrow-body {
+  width: 100%;
+  height: 95%;
+  margin-left: 11px;
+  border-width: 3px 0 0 3px;
+  border-style: dashed;
+  border-color: var(--highlight-color);
+  border-top-left-radius: 100%;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.arrow-body::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  border-width: 15px 12px 0;
+  border-style: solid;
+  border-color: var(--highlight-color) transparent transparent;
+}
+
+.arrow-body-2 {
+  --highlight-color: #06b6d4;
+}
+
+.arrow-body-3 {
+  --highlight-color: #8b5cf6;
+}
+
+.group:hover .arrow-body {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px var(--highlight-color));
+}
+
+@media (max-width: 768px) {
+  .feature-container {
+    margin-bottom: 4rem;
+  }
+  .arrow-container {
+    width: 20px;
+    height: 12px;
+  }
+}
+
+/* Utilities */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

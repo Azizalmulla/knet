@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Plus, Trash2, Wand2, X, ChevronDown, ChevronUp, Briefcase, FolderOpen } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
 import { toast } from 'sonner';
+import { generateAIBullets, AIBulletsError } from '@/lib/ai-bullets';
 
 interface ExperienceProjectItem {
   type: 'experience' | 'project';
@@ -31,7 +32,7 @@ interface ExperienceProjectItem {
 }
 
 export function ExperienceProjectsStep() {
-  const { register, control, formState: { errors }, setValue, watch, getValues, setError } = useFormContext();
+  const { register, control, formState: { errors }, setValue, watch, getValues, setError, clearErrors } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'experienceProjects',
@@ -60,7 +61,7 @@ export function ExperienceProjectsStep() {
     } catch {}
   };
 
-  const addItem = () => {
+  const addExperience = () => {
     const newIndex = fields.length;
     append({
       type: 'experience',
@@ -72,7 +73,22 @@ export function ExperienceProjectsStep() {
       description: '',
       bullets: [],
     } as ExperienceProjectItem);
-    // Auto-expand the new item
+    setExpandedItems(prev => new Set(prev).add(newIndex));
+  };
+
+  const addProject = () => {
+    const newIndex = fields.length;
+    append({
+      type: 'project',
+      name: '',
+      url: '',
+      technologies: [],
+      startDate: '',
+      endDate: '',
+      current: false,
+      description: '',
+      bullets: [],
+    } as ExperienceProjectItem);
     setExpandedItems(prev => new Set(prev).add(newIndex));
   };
 
@@ -181,135 +197,76 @@ export function ExperienceProjectsStep() {
     try {
       const currentLocale = lang === 'ar' ? 'ar' : 'en';
       const section = currentItem.type === 'experience' ? 'experience' : 'projects';
-      
-      // Primary: legacy rewrite endpoint for compatibility with tests
-      const rewriteRes = await fetch('/api/ai/rewrite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rawText: currentItem?.description || '',
-          section: section,
-        }),
-      });
-      
+      // Click metric
       sendEvent('ai_bullets_clicks', 1, { index, type: currentItem.type });
 
-      // Primary happy path: legacy rewrite returns { ok: true, json() }
-      if (rewriteRes.ok) {
-        if (!isActive()) return; // stale
-        const data = await rewriteRes.json();
-        const bullets: string[] = data?.bullets || [];
-        const tidyBullets = (list: string[]) => list
-          .map(b => b.trim().replace(/^[−\-•\s]*/, '').replace(/^(i['']m|i am)\b/i, '').replace(/\s+/g, ' '))
-          .map(b => (b[0] ? b[0].toUpperCase() + b.slice(1) : b))
-          .map(b => /[.!?]$/.test(b) ? b : b + '.');
-        const cleaned = tidyBullets(bullets).slice(0, 5);
-        if (cleaned.length > 0) {
-          if (isActive()) setValue(`experienceProjects.${index}.bullets`, cleaned);
-          toast.success('ATS-optimized bullets generated');
-          sendEvent('avg_bullets_generated_per_click', cleaned.length, { index, type: currentItem.type });
-        } else {
-          toast.info('No bullets generated');
-        }
+      const bullets = await generateAIBullets({
+        section: section as any,
+        description: currentItem?.description || '',
+        experience: section === 'experience' ? {
+          position: currentItem?.position || '',
+          company: currentItem?.company || '',
+          location: currentItem?.location || '',
+          startDate: currentItem?.startDate || '',
+          endDate: currentItem?.endDate || '',
+          current: !!currentItem?.current,
+          description: currentItem?.description || '',
+          bullets: Array.isArray(currentItem?.bullets) ? currentItem.bullets : [],
+          technologies: Array.isArray(currentItem?.technologies) ? currentItem.technologies : [],
+        } : undefined,
+        project: section === 'projects' ? {
+          name: currentItem?.name || '',
+          description: currentItem?.description || '',
+          technologies: Array.isArray(currentItem?.technologies) ? currentItem.technologies : [],
+          url: currentItem?.url || '',
+          bullets: Array.isArray(currentItem?.bullets) ? currentItem.bullets : [],
+        } : undefined,
+        personalInfo: {
+          fullName: (values as any).fullName?.trim?.() || (values as any)?.personalInfo?.fullName || '',
+          email: (values as any).email?.trim?.() || (values as any)?.personalInfo?.email || '',
+        },
+        jobDescription: (values as any)?.review?.jobDescription?.slice(0, 3000) || '',
+        locale: currentLocale,
+        signal: controller.signal,
+      })
+
+      if (!isActive()) return; // stale
+      if (bullets.length > 0) {
+        setValue(`experienceProjects.${index}.bullets`, bullets)
+        toast.success('ATS-optimized bullets generated')
+        sendEvent('avg_bullets_generated_per_click', bullets.length, { index, type: currentItem.type })
       } else {
-        // Fallback to career-assistant with status handling
-        const caPayload = {
-          mode: 'bullets',
-          locale: currentLocale,
-          tone: 'professional',
-          form: {
-            personalInfo: {
-              fullName: (values as any).fullName?.trim() || '',
-              email: (values as any).email?.trim() || '',
-            },
-            [section]: [
-              currentItem.type === 'experience' ? {
-                title: currentItem?.position || '',
-                company: currentItem?.company || '',
-                location: currentItem?.location || '',
-                startDate: currentItem?.startDate || '',
-                endDate: currentItem?.endDate || '',
-                bullets: Array.isArray(currentItem?.bullets) ? currentItem.bullets : [],
-                technologies: Array.isArray(currentItem?.technologies) ? currentItem.technologies : [],
-                description: currentItem?.description || ''
-              } : {
-                name: currentItem?.name || '',
-                description: currentItem?.description || '',
-                technologies: Array.isArray(currentItem?.technologies) ? currentItem.technologies : [],
-                url: currentItem?.url || '',
-                bullets: Array.isArray(currentItem?.bullets) ? currentItem.bullets : [],
-              }
-            ],
-          },
-          parsedCv: serializeSingleItem(currentItem),
-          jobDescription: (values as any)?.review?.jobDescription?.slice(0, 3000) || '',
-          bulletsInput: currentItem.type === 'experience' ? {
-            company: currentItem?.company || '',
-            title: currentItem?.position || '',
-            isCurrent: !!currentItem?.current,
-            rawNotes: currentItem?.description || '',
-            techCsv: Array.isArray(currentItem?.technologies) ? currentItem.technologies.join(', ') : ''
-          } : {
-            name: currentItem?.name || '',
-            rawNotes: currentItem?.description || '',
-            techCsv: Array.isArray(currentItem?.technologies) ? currentItem.technologies.join(', ') : ''
-          }
-        } as any;
-
-        const res = await fetch('/api/ai/career-assistant', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(caPayload),
-          signal: controller.signal,
-        });
-
-        if (res.status === 200) {
-          if (!isActive()) return; // stale
-          const data = await res.json();
-          const bullets: string[] = data?.bullets || data?.cv?.[section]?.[0]?.bullets || [];
-          const tidyBullets = (list: string[]) => list
-            .map(b => b.trim().replace(/^[−\-•\s]*/, '').replace(/^(i['']m|i am)\b/i, '').replace(/\s+/g, ' '))
-            .map(b => (b[0] ? b[0].toUpperCase() + b.slice(1) : b))
-            .map(b => /[.!?]$/.test(b) ? b : b + '.');
-          const cleaned = tidyBullets(bullets).slice(0, 5);
-          if (cleaned.length > 0) {
-            if (isActive()) setValue(`experienceProjects.${index}.bullets`, cleaned);
-            toast.success('ATS-optimized bullets generated');
-            sendEvent('avg_bullets_generated_per_click', cleaned.length, { index, type: currentItem.type });
-          } else {
-            toast.info('No bullets generated');
-          }
-        } else if (res.status === 422) {
-          const data = await res.json();
-          const needs = data?.needs || [];
-          needs.forEach((path: string) => {
-            const field = path.replace(/^personalInfo\./, '');
-            try {
-              setError(field as any, { type: 'ai', message: 'Required for AI' });
-            } catch {}
-          });
-          toast.error('Add the highlighted fields, then retry');
-          sendEvent('422_count', 1, { feature: 'ai_bullets' });
-        } else if (res.status === 429) {
-          toast.error('Model is busy — try again');
-          setDisabledButtons(prev => new Set(prev).add(index));
-          setTimeout(() => {
-            setDisabledButtons(prev => {
-              const next = new Set(prev);
-              next.delete(index);
-              return next;
-            });
-          }, 10000);
-          sendEvent('429_count', 1, { feature: 'ai_bullets' });
-        } else {
-          throw new Error(`Failed to generate bullets: ${res.status}`);
-        }
+        toast.info('No bullets generated')
       }
     } catch (error: any) {
       if (error?.name === 'AbortError') {
         console.warn('⏳ Bullets generation aborted (timeout or manual).');
         toast.error('Request timed out. Please try again');
         sendEvent('ai_bullets_timeout', 1, { index });
+      } else if (error instanceof AIBulletsError) {
+        if (error.code === 422) {
+          (error.needs || []).forEach((path: string) => {
+            const field = path.replace(/^personalInfo\./, '');
+            try { setError(field as any, { type: 'ai', message: 'Required for AI' }); } catch {}
+          })
+          toast.error('Add the highlighted fields, then retry')
+          sendEvent('422_count', 1, { feature: 'ai_bullets' })
+        } else if (error.code === 429) {
+          toast.error('Model is busy — try again')
+          setDisabledButtons(prev => new Set(prev).add(index))
+          setTimeout(() => {
+            setDisabledButtons(prev => {
+              const next = new Set(prev)
+              next.delete(index)
+              return next
+            })
+          }, 10000)
+          sendEvent('429_count', 1, { feature: 'ai_bullets' })
+        } else {
+          console.error('❌ Generate bullets error:', error)
+          toast.error('Something went wrong. Please try again')
+          sendEvent('ai_bullets_fail', 1)
+        }
       } else {
         console.error('❌ Generate bullets error:', error);
         toast.error('Something went wrong. Please try again');
@@ -371,7 +328,7 @@ export function ExperienceProjectsStep() {
       if (item.technologies?.length > 0) {
         parts.push(item.technologies.slice(0, 3).join(', '));
       }
-      if (item.url) parts.push('Has URL');
+      if (item.url) parts.push(t('has_url'));
       return parts.join(' • ');
     }
   };
@@ -380,11 +337,11 @@ export function ExperienceProjectsStep() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Experience & Projects</h2>
-          <p className="text-sm text-muted-foreground">Add your work experience and project accomplishments</p>
+          <h2 className="text-lg font-semibold">{t('experience_projects_title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('experience_projects_subtitle')}</p>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={seedAcademicProject}>
-          Add Sample Project
+          {t('add_example_project')}
         </Button>
       </div>
 
@@ -413,18 +370,21 @@ export function ExperienceProjectsStep() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        remove(index);
-                      }}
-                      className="text-destructive hover:text-destructive/90"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          remove(index);
+                        }}
+                        className="text-destructive hover:text-destructive/90"
+                        aria-label={`Remove ${item?.type === 'experience' ? 'experience' : 'project'}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                     {isExpanded ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
@@ -438,7 +398,7 @@ export function ExperienceProjectsStep() {
                 <CardContent className="space-y-4 pt-0">
                   {/* Type Selection */}
                   <div>
-                    <Label>Type *</Label>
+                    <Label>{t('type_label')} *</Label>
                     <Select
                       value={item?.type || 'experience'}
                       onValueChange={(value) => {
@@ -464,13 +424,13 @@ export function ExperienceProjectsStep() {
                         <SelectItem value="experience">
                           <div className="flex items-center gap-2">
                             <Briefcase className="h-4 w-4" />
-                            Work Experience
+                            {t('work_experience_option')}
                           </div>
                         </SelectItem>
                         <SelectItem value="project">
                           <div className="flex items-center gap-2">
                             <FolderOpen className="h-4 w-4" />
-                            Project
+                            {t('project_option')}
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -482,20 +442,20 @@ export function ExperienceProjectsStep() {
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor={`company-${index}`}>Company *</Label>
+                          <Label htmlFor={`company-${index}`}>{t('exp_company')} *</Label>
                           <Input
                             id={`company-${index}`}
                             {...register(`experienceProjects.${index}.company`)}
-                            placeholder="Google, Microsoft, etc."
+                            placeholder={t('exp_company_placeholder')}
                             data-testid={`field-experienceProjects-${index}-company`}
                           />
                         </div>
                         <div>
-                          <Label htmlFor={`position-${index}`}>Position *</Label>
+                          <Label htmlFor={`position-${index}`}>{t('exp_position')} *</Label>
                           <Input
                             id={`position-${index}`}
                             {...register(`experienceProjects.${index}.position`)}
-                            placeholder="Software Engineer, Designer, etc."
+                            placeholder={t('exp_position_placeholder')}
                             data-testid={`field-experienceProjects-${index}-position`}
                           />
                         </div>
@@ -503,31 +463,59 @@ export function ExperienceProjectsStep() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor={`startDate-${index}`}>Start Date *</Label>
+                          <Label htmlFor={`startDate-${index}`}>{t('exp_start_date')} *</Label>
                           <Input
                             id={`startDate-${index}`}
+                            type="month"
                             {...register(`experienceProjects.${index}.startDate`)}
-                            placeholder="Jan 2023"
+                            placeholder={t('exp_start_placeholder')}
                             data-testid={`field-experienceProjects-${index}-startDate`}
                           />
+                          <p className="text-xs text-muted-foreground mt-1">{t('date_format_hint')}</p>
                         </div>
                         <div>
-                          <Label htmlFor={`endDate-${index}`}>End Date</Label>
-                          <Input
-                            id={`endDate-${index}`}
-                            {...register(`experienceProjects.${index}.endDate`)}
-                            placeholder="Dec 2023"
-                            data-testid={`field-experienceProjects-${index}-endDate`}
-                          />
+                          {!watch(`experienceProjects.${index}.current`) && (
+                            <>
+                              <Label htmlFor={`endDate-${index}`}>{t('exp_end_date')}</Label>
+                              <Input
+                                id={`endDate-${index}`}
+                                type="month"
+                                {...register(`experienceProjects.${index}.endDate`, {
+                                  onBlur: () => {
+                                    try {
+                                      const s = (watch(`experienceProjects.${index}.startDate`) || '').toString();
+                                      const e = (watch(`experienceProjects.${index}.endDate`) || '').toString();
+                                      if (s && e && s > e) {
+                                        setError(`experienceProjects.${index}.endDate` as any, { type: 'validate', message: t('date_range_invalid') });
+                                      } else {
+                                        clearErrors(`experienceProjects.${index}.endDate` as any);
+                                      }
+                                    } catch {}
+                                  }
+                                })}
+                                placeholder={t('exp_end_placeholder')}
+                                data-testid={`field-experienceProjects-${index}-endDate`}
+                              />
+                              {((errors as any)?.experienceProjects?.[index]?.endDate) && (
+                                <p className="text-sm text-destructive mt-1">{String((errors as any).experienceProjects?.[index]?.endDate?.message || '')}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-1">{t('date_format_hint')}</p>
+                            </>
+                          )}
                           <div className="flex items-center mt-2">
                             <input
                               id={`current-${index}`}
                               type="checkbox"
-                              {...register(`experienceProjects.${index}.current`)}
+                              {...register(`experienceProjects.${index}.current`, {
+                                onChange: (e) => {
+                                  const checked = (e.target as HTMLInputElement).checked;
+                                  setValue(`experienceProjects.${index}.endDate`, checked ? 'Present' : '');
+                                },
+                              })}
                               className="ltr:mr-2 rtl:ml-2"
                               data-testid={`field-experienceProjects-${index}-current`}
                             />
-                            <Label htmlFor={`current-${index}`} className="text-sm">Currently working here</Label>
+                            <Label htmlFor={`current-${index}`} className="text-sm">{t('exp_current')}</Label>
                           </div>
                         </div>
                       </div>
@@ -539,25 +527,25 @@ export function ExperienceProjectsStep() {
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor={`name-${index}`}>Project Name *</Label>
+                          <Label htmlFor={`name-${index}`}>{t('proj_name')} *</Label>
                           <Input
                             id={`name-${index}`}
                             {...register(`experienceProjects.${index}.name`)}
-                            placeholder="My Awesome Project"
+                            placeholder={t('proj_name_placeholder')}
                           />
                         </div>
                         <div>
-                          <Label htmlFor={`url-${index}`}>URL</Label>
+                          <Label htmlFor={`url-${index}`}>{t('proj_url')}</Label>
                           <Input
                             id={`url-${index}`}
                             {...register(`experienceProjects.${index}.url`)}
-                            placeholder="https://github.com/user/project"
+                            placeholder={t('proj_url_placeholder')}
                           />
                         </div>
                       </div>
 
                       <div>
-                        <Label>Technologies</Label>
+                        <Label>{t('proj_technologies')}</Label>
                         <div className="flex flex-wrap gap-2 mb-2">
                           {watch(`experienceProjects.${index}.technologies`)?.map((tech: string, techIndex: number) => (
                             <span
@@ -579,7 +567,7 @@ export function ExperienceProjectsStep() {
                           <Input
                             value={newTech[index] || ''}
                             onChange={(e) => setNewTech(prev => ({ ...prev, [index]: e.target.value }))}
-                            placeholder="React, Node.js, etc."
+                            placeholder={t('proj_add_tech_placeholder')}
                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTechnology(index))}
                           />
                           <Button
@@ -588,8 +576,66 @@ export function ExperienceProjectsStep() {
                             size="sm"
                             onClick={() => addTechnology(index)}
                           >
-                            Add
+                            {t('proj_add')}
                           </Button>
+                        </div>
+                      </div>
+
+                      {/* Project timeline */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor={`proj-startDate-${index}`}>{t('exp_start_date')}</Label>
+                          <Input
+                            id={`proj-startDate-${index}`}
+                            type="month"
+                            {...register(`experienceProjects.${index}.startDate`)}
+                            placeholder={t('exp_start_placeholder')}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">{t('date_format_hint')}</p>
+                        </div>
+                        <div>
+                          {!watch(`experienceProjects.${index}.current`) && (
+                            <>
+                              <Label htmlFor={`proj-endDate-${index}`}>{t('exp_end_date')}</Label>
+                              <Input
+                                id={`proj-endDate-${index}`}
+                                type="month"
+                                {...register(`experienceProjects.${index}.endDate`, {
+                                  onBlur: () => {
+                                    try {
+                                      const s = (watch(`experienceProjects.${index}.startDate`) || '').toString();
+                                      const e = (watch(`experienceProjects.${index}.endDate`) || '').toString();
+                                      if (s && e && s > e) {
+                                        setError(`experienceProjects.${index}.endDate` as any, { type: 'validate', message: t('date_range_invalid') });
+                                      } else {
+                                        clearErrors(`experienceProjects.${index}.endDate` as any);
+                                      }
+                                    } catch {}
+                                  }
+                                })}
+                                placeholder={t('exp_end_placeholder')}
+                              />
+                              {((errors as any)?.experienceProjects?.[index]?.endDate) && (
+                                <p className="text-sm text-destructive mt-1">{String((errors as any).experienceProjects?.[index]?.endDate?.message || '')}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-1">{t('date_format_hint')}</p>
+                            </>
+                          )}
+                          <div className="flex items-center mt-2">
+                            <input
+                              id={`proj-current-${index}`}
+                              type="checkbox"
+                              {...register(`experienceProjects.${index}.current`, {
+                                onChange: (e) => {
+                                  const checked = (e.target as HTMLInputElement).checked;
+                                  setValue(`experienceProjects.${index}.endDate`, checked ? 'Present' : '');
+                                },
+                              })}
+                              className="ltr:mr-2 rtl:ml-2"
+                              data-testid={`field-experienceProjects-${index}-current-project`}
+                            />
+                            <Label htmlFor={`proj-current-${index}`} className="text-sm">{t('proj_current')}</Label>
+                          </div>
                         </div>
                       </div>
                     </>
@@ -598,16 +644,12 @@ export function ExperienceProjectsStep() {
                   {/* Common fields */}
                   <div>
                     <Label htmlFor={`description-${index}`}>
-                      {item?.type === 'experience' ? 'Raw Notes' : 'Description'} *
+                      {item?.type === 'experience' ? t('exp_raw_description') : t('proj_description')} *
                     </Label>
                     <Textarea
                       id={`description-${index}`}
                       {...register(`experienceProjects.${index}.description`)}
-                      placeholder={
-                        item?.type === 'experience' 
-                          ? "What did you do and why it mattered? e.g., Built React components, worked with designers, reduced page load by ~30%."
-                          : "What was the goal, your part, and outcome? e.g., Dashboard for expenses using React + Node; added charts, monthly reports."
-                      }
+                      placeholder={item?.type === 'experience' ? t('exp_description_placeholder') : t('proj_description_placeholder')}
                       rows={3}
                       data-testid={`field-experienceProjects-${index}-description`}
                     />
@@ -618,17 +660,17 @@ export function ExperienceProjectsStep() {
                       onClick={() => generateBullets(index)}
                       disabled={loadingAI === index || disabledButtons.has(index)}
                       className="mt-2"
-                      aria-label={loadingAI === index ? 'Generating...' : 'Rewrite into CV Bullets'}
+                      aria-label={loadingAI === index ? t('exp_generating') : t('exp_generate_bullets')}
                     >
                       <Wand2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-                      {loadingAI === index ? 'Generating...' : disabledButtons.has(index) ? 'Wait 10s...' : 'Rewrite into CV Bullets'}
+                      {loadingAI === index ? t('exp_generating') : disabledButtons.has(index) ? t('ai_wait_message') : t('exp_generate_bullets')}
                     </Button>
                   </div>
 
                   {/* Generated bullets */}
                   {watch(`experienceProjects.${index}.bullets`)?.length > 0 && (
                     <div>
-                      <Label>Generated Bullets</Label>
+                      <Label>{item?.type === 'experience' ? t('exp_generated_bullets') : t('proj_generated_bullets')}</Label>
                       <div className="space-y-2 mt-2">
                         {watch(`experienceProjects.${index}.bullets`).map((bullet: string, bulletIndex: number) => (
                           <div key={bulletIndex} className="flex items-start space-x-2">
@@ -654,15 +696,16 @@ export function ExperienceProjectsStep() {
         );
       })}
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={addItem}
-        className="w-full"
-      >
-        <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-        Add Item
-      </Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <Button type="button" variant="outline" onClick={addExperience} className="w-full">
+          <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+          {t('exp_add_experience')}
+        </Button>
+        <Button type="button" variant="outline" onClick={addProject} className="w-full">
+          <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+          {t('proj_add_project')}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -13,87 +13,82 @@ jest.mock('next/server', () => ({
   },
 }))
 
-// Mock Blob upload
-jest.mock('@vercel/blob', () => ({
-  put: jest.fn().mockResolvedValue({ url: 'https://blob.example.com/fake.html' }),
+// Mock Supabase server client to simulate a logged-in user
+jest.mock('@/lib/supabase-server', () => ({
+  createServerClient: jest.fn(() => ({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({ data: { user: { email: 'test@example.com' } } }),
+    },
+  })),
 }))
 
-// Mock DB client
-jest.mock('@vercel/postgres', () => ({
-  sql: jest.fn().mockImplementation(async () => ({ rows: [{ id: 1 }] })),
-}))
+// Mock DB layer used by /api/submit
+jest.mock('@/lib/db', () => {
+  const handler = async (...args: any[]) => {
+    const [strings] = args
+    const text = Array.isArray(strings) ? strings.join('') : String(strings || '')
+    if (text.includes("to_regclass('public.organizations')")) return { rows: [{ c: 'public.organizations' }] }
+    if (text.includes("to_regclass('public.candidates')")) return { rows: [{ c: 'public.candidates' }] }
+    if (text.includes("to_regtype('yoe_bucket')")) return { rows: [{ t: 'yoe_bucket' }] }
+    if (text.includes("to_regtype('cv_type_enum')")) return { rows: [{ t: 'cv_type_enum' }] }
+    if (text.includes("to_regtype('parse_status_enum')")) return { rows: [{ t: 'parse_status_enum' }] }
+    if (text.includes('SELECT COUNT(*)::int as c FROM organizations')) return { rows: [{ c: 1 }] }
+    if (text.includes('FROM organizations WHERE slug =')) return { rows: [{ id: '11111111-1111-1111-1111-111111111111', name: 'Wathefni AI' }] }
+    if (text.includes('INSERT INTO public.candidates')) return { rows: [{ id: '00000000-0000-0000-0000-000000000001', created_at: new Date().toISOString(), parse_status: 'completed', cv_type: 'ai_generated' }] }
+    if (text.includes('SELECT 1 FROM public.candidates WHERE id =')) return { rows: [{ ok: 1 }] }
+    return { rows: [] }
+  }
+  return {
+    sql: jest.fn(handler),
+    getDbInfo: jest.fn(() => ({ host: 'localhost', db: 'testdb' })),
+  }
+})
 
 // Mock rate limiting to always allow
 jest.mock('@/lib/rateLimit', () => ({
-  checkRateLimit: jest.fn().mockReturnValue({ success: true, limit: 5, remaining: 5, resetTime: Date.now() + 300000 }),
-  createRateLimitResponse: jest.fn().mockReturnValue(new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 })),
+  peekRateLimitWithConfig: jest.fn().mockReturnValue({ success: true, limit: 10, remaining: 10, resetTime: Date.now() + 60000 }),
+  consumeRateLimitWithConfig: jest.fn(),
+  shouldSkipRateLimitForIdempotency: jest.fn().mockReturnValue(false),
 }))
 
-import { POST } from '@/app/api/cv/submit/route'
+import { POST } from '@/app/api/submit/route'
 
 const createPostRequest = (body: any): any => ({
   headers: new Headers({ 'x-forwarded-for': '127.0.0.1' }),
   json: async () => body,
   method: 'POST',
-  url: 'http://localhost:3000/api/cv/submit',
+  url: 'http://localhost:3000/api/submit',
 })
 
-describe('/api/cv/submit — knetProfile integration', () => {
+describe('/api/submit — multi-tenant candidate submission', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  test('returns 400 when knetProfile is missing (AI builder path)', async () => {
+  test('returns 400 when organization slug is missing', async () => {
     const req = createPostRequest({
       fullName: 'Aziz',
-      email: 'aziz@example.com',
       fieldOfStudy: 'Computer Science',
       areaOfInterest: 'IT',
-      template: 'minimal',
-      language: 'en',
-      suggestedVacancies: 'Developer/Support',
     })
-
     const res = await POST(req as any)
     expect(res.status).toBe(400)
     const data = await res.json()
-    expect(data.error).toMatch(/knetProfile/i)
+    expect(String(data.error || '')).toMatch(/organization/i)
   })
 
-  test('logs normalization diff when selections require normalization', async () => {
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-
+  test('succeeds when orgSlug provided and user is logged in', async () => {
     const req = createPostRequest({
       fullName: 'Aziz',
-      email: 'aziz@example.com',
-      phone: '+965 555',
       fieldOfStudy: 'Computer Science',
-      areaOfInterest: 'Information Technology', // will normalize to IT
-      template: 'minimal',
-      language: 'en',
-      suggestedVacancies: 'Developer/Support',
-      knetProfile: {
-        degreeBucket: 'Bachelor’s',
-        yearsOfExperienceBucket: '0–1',
-        areaOfInterest: 'Information Technology',
-      },
-      experience: [],
-      projects: [],
-      education: [],
-      skills: { technical: ['JS'] },
+      areaOfInterest: 'IT',
+      orgSlug: 'careerly',
+      cvType: 'ai',
     })
-
     const res = await POST(req as any)
     expect(res.status).toBe(200)
-    const content = await res.json()
-    expect(content.ok).toBe(true)
-
-    const calls = logSpy.mock.calls
-    const hasDiffLog = calls.some(
-      (args) => args[0] === 'knet_profile_normalized_diff' && args[1] && args[1].fields && args[1].fields.includes('areaOfInterest')
-    )
-    expect(hasDiffLog).toBe(true)
-
-    logSpy.mockRestore()
+    const data = await res.json()
+    expect(data.ok).toBe(true)
+    expect(data.candidate_id).toBeDefined()
   })
 })

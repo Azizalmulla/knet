@@ -96,7 +96,7 @@ test.describe('Autosave Functionality', () => {
 
   test('should clear draft on successful submission', async ({ page }) => {
     // Mock successful submission
-    await page.route('/api/cv/submit', (route) => {
+    await page.route('/api/submit', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -117,7 +117,7 @@ test.describe('Autosave Functionality', () => {
     await page.getByTestId('field-education-0-institution').fill('Test University');
     await page.getByTestId('field-education-0-degree').fill('Computer Science');
     await page.getByTestId('field-education-0-field').fill('Software Engineering');
-    await page.getByTestId('field-education-0-graduationDate').fill('2020-09');
+    await page.getByTestId('field-education-0-startDate').fill('2020-09');
     await page.getByTestId('next-btn').click();
 
     // Skip remaining steps

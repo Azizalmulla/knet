@@ -24,6 +24,9 @@ SUPER_ADMIN_PASSWORD=super123
 COOKIE_DOMAIN=.careerly.com  # For subdomain sharing
 NODE_ENV=development
 
+# Auto-parse CVs on upload (RECOMMENDED)
+AUTO_PARSE_ON_UPLOAD=true
+
 # Example filled configuration:
 # DATABASE_URL=postgresql://username:password@ep-cool-name-123456.us-east-1.aws.neon.tech/careerly
 # JWT_SECRET=super-secret-jwt-key-that-is-very-long-and-random-123456789

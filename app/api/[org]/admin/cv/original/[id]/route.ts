@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@vercel/postgres'
 import jwt from 'jsonwebtoken'
-import { head } from '@vercel/blob'
+import { getPresignedUrl } from '@/lib/storage'
 
 // Ensure @vercel/postgres has a connection string in local/prod
 if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
@@ -46,15 +46,14 @@ export async function GET(req: NextRequest, { params }: { params: { org: string;
     const key = res.rows[0].cv_blob_key as string | null
     if (!key) return NextResponse.json({ error: 'No file' }, { status: 404 })
 
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      return NextResponse.json({ error: 'BLOB_NOT_CONFIGURED' }, { status: 500 })
+    // Presign URL using whichever storage provider is configured
+    try {
+      const { url } = await getPresignedUrl(key, 60)
+      if (!url) return NextResponse.json({ error: 'PRESIGN_FAILED' }, { status: 502 })
+      return NextResponse.redirect(url, { status: 302 })
+    } catch (e: any) {
+      return NextResponse.json({ error: 'PRESIGN_FAILED', message: String(e?.message || e) }, { status: 502 })
     }
-
-    const info: any = await head(key, { token: process.env.BLOB_READ_WRITE_TOKEN! })
-    const url = info?.downloadUrl || info?.url
-    if (!url) return NextResponse.json({ error: 'BLOB_NOT_FOUND' }, { status: 404 })
-
-    return NextResponse.redirect(url, { status: 302 })
   } catch (err: any) {
     return NextResponse.json(
       { error: 'BLOB_HEAD_FAILED', message: String(err?.message || err) },

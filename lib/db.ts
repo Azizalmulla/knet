@@ -1,7 +1,25 @@
 import { sql } from '@vercel/postgres';
 
+// Ensure @vercel/postgres has a connection string in all runtimes
+if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
+  process.env.POSTGRES_URL = process.env.DATABASE_URL
+}
+
 export const db = sql;
 export { sql };
+
+export function getDbInfo(): { host: string; db: string } {
+  const url = process.env.POSTGRES_URL || process.env.DATABASE_URL || ''
+  try {
+    const u = new URL(url)
+    // u.host includes hostname:port (fine for tracing)
+    const host = u.host || 'unknown'
+    const db = (u.pathname || '').replace(/^\//, '') || 'unknown'
+    return { host, db }
+  } catch {
+    return { host: 'unknown', db: 'unknown' }
+  }
+}
 
 // The following is the SQL to create the table in Vercel Postgres dashboard:
 

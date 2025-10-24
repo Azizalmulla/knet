@@ -1,0 +1,47 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "components/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "react/no-unescaped-entities": "off",
+        "react-hooks/exhaustive-deps": "warn",
+        "@typescript-eslint/prefer-as-const": "off"
+      }
+    },
+    {
+      "files": [
+        "lib/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-require-imports": "off",
+        "@typescript-eslint/ban-ts-comment": "off"
+      }
+    },
+    {
+      "files": [
+        "lib/pdf/**/*.{ts,tsx}",
+        "lib/parse-cv.ts",
+        "lib/redact.ts",
+        "lib/rateLimit.ts",
+        "lib/storage.ts",
+        "lib/supabase-server.ts",
+        "lib/watheefti-fields.ts",
+        "lib/pdf/react-pdf-shim.tsx",
+        "lib/pdf/templates.tsx",
+        "lib/pdf/cv-document.tsx"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-require-imports": "off"
+      }
+    }
+  ]
+}

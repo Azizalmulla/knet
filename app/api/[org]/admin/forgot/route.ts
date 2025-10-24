@@ -67,13 +67,13 @@ export async function POST(request: NextRequest, { params }: { params: { org: st
     try {
       const html = `
         <div style="font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#111">
-          <h2 style="margin:0 0 12px">Reset your Careerly admin password</h2>
+          <h2 style="margin:0 0 12px">Reset your Wathefni AI admin password</h2>
           <p>We received a request to reset the password for <strong>${email}</strong> at <strong>${orgSlug}</strong>.</p>
           <p>Click the button below to choose a new password. This link expires in 1 hour.</p>
           <p style="margin:20px 0"><a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;border-radius:999px;text-decoration:none">Reset password</a></p>
           <p>If you did not request this, you can safely ignore this email.</p>
         </div>`
-      await sendEmail({ to: email, subject: 'Reset your Careerly admin password', html })
+      await sendEmail({ to: email, subject: 'Reset your Wathefni AI admin password', html })
     } catch (e) {
       // Non-fatal: email provider not configured or failed
       console.warn('EMAIL_SEND_ERROR', e)

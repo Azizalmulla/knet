@@ -80,15 +80,12 @@ export function CreativeTemplate({ data }: CreativeTemplateProps) {
           {/* Education quick summary */}
           {data.education && data.education.length > 0 && (
             <div>
-              <h2 className="text-xs uppercase tracking-wider mb-3 border-b border-white/30 pb-2">Education</h2>
               {data.education.map((edu, index) => (
                 <div key={index} className="mb-4">
                   <h3 className="font-semibold text-sm">{edu.degree}</h3>
                   <p className="text-sm opacity-90">{(edu as any).fieldOfStudy || ''}</p>
                   <p className="text-xs opacity-75">{edu.institution}</p>
-                  <p className="text-xs opacity-75">
-                    {((edu as any).startDate || (edu as any).graduationDate || '')} - {edu.endDate || 'Present'}
-                  </p>
+                  <p className="text-xs opacity-75">{((edu as any).startDate || (edu as any).graduationDate || '')} - {(edu as any).currentlyStudying ? 'Present' : edu.endDate || ''}</p>
                   {edu.gpa && <p className="text-xs opacity-75">GPA: {edu.gpa}</p>}
                 </div>
               ))}

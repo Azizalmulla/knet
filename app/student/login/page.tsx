@@ -1,28 +1,30 @@
 "use client"
 
-import { signIn } from "next-auth/react"
 import { useState, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Mail, Loader2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { createClient } from "@/lib/supabase-client"
 
 function StudentLoginContent() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [provider, setProvider] = useState<string | null>(null)
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/student/dashboard"
+  const router = useRouter()
+  const supabase = createClient()
+  const redirectTo = searchParams.get("redirectTo") || "/start"
   const error = searchParams.get("error")
 
   // Show error toast if there's an error
   if (error) {
     toast.error(
-      error === "OAuthAccountNotLinked"
-        ? "Email already in use with another provider"
+      error === "access_denied"
+        ? "Access was denied. Please try again."
         : "An error occurred during sign in"
     )
   }
@@ -35,16 +37,17 @@ function StudentLoginContent() {
     setProvider("email")
     
     try {
-      const result = await signIn("email", {
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        redirect: false,
-        callbackUrl,
+        options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+        },
       })
 
-      if (result?.error) {
-        toast.error("Failed to send magic link. Please try again.")
+      if (error) {
+        toast.error("Failed to send magic link: " + error.message)
       } else {
-        toast.success("Check your email for a sign-in link.")
+        toast.success("Check your email for a sign-in link!")
         setEmail("")
       }
     } catch (error) {
@@ -55,26 +58,42 @@ function StudentLoginContent() {
     }
   }
 
-  const handleOAuthSignIn = (provider: string) => {
-    setProvider(provider)
-    signIn(provider, { callbackUrl })
+  const handleOAuthSignIn = async (providerName: 'google' | 'azure') => {
+    setProvider(providerName)
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: providerName,
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+        },
+      })
+
+      if (error) {
+        toast.error("Failed to sign in: " + error.message)
+        setProvider(null)
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.")
+      setProvider(null)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#eeeee4] text-neutral-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         {/* Logo and Title */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Welcome to Careerly</h1>
-          <p className="text-zinc-400">Sign in to manage your applications</p>
+          <h1 className="text-3xl font-extrabold tracking-tight mb-2 text-black">Welcome to Wathefni AI</h1>
+          <p className="text-neutral-600">Sign in to manage your applications</p>
         </div>
 
         {/* Sign in Card */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 space-y-6">
+        <div className="relative rounded-[28px] border-[4px] border-black bg-white p-6 md:p-8 space-y-6 shadow-[8px_8px_0_#111]">
           {/* OAuth Providers */}
           <div className="space-y-3">
             <Button
-              className="w-full h-12 bg-white hover:bg-gray-100 text-black font-medium rounded-xl"
+              className="w-full h-12 bg-white text-black font-semibold rounded-2xl border-[3px] border-black shadow-[6px_6px_0_#111] hover:-translate-y-0.5 hover:bg-zinc-100 transition-transform disabled:opacity-60"
               onClick={() => handleOAuthSignIn("google")}
               disabled={isLoading}
             >
@@ -106,11 +125,11 @@ function StudentLoginContent() {
             </Button>
 
             <Button
-              className="w-full h-12 bg-[#0078D4] hover:bg-[#106EBE] text-white font-medium rounded-xl"
-              onClick={() => handleOAuthSignIn("azure-ad")}
+              className="w-full h-12 bg-[#0078D4] hover:bg-[#106EBE] text-white font-semibold rounded-2xl border-[3px] border-black shadow-[6px_6px_0_#111] hover:-translate-y-0.5 transition-transform disabled:opacity-60"
+              onClick={() => handleOAuthSignIn("azure")}
               disabled={isLoading}
             >
-              {provider === "azure-ad" ? (
+              {provider === "azure" ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
@@ -126,22 +145,52 @@ function StudentLoginContent() {
             </Button>
           </div>
 
-          {/* Email Sign In - Temporarily disabled */}
-          <div className="text-center text-sm text-zinc-500 p-4 bg-zinc-900 rounded-xl border border-zinc-800">
-            <Mail className="w-6 h-6 mx-auto mb-2 text-zinc-600" />
-            <p>Email sign-in coming soon</p>
-            <p className="text-xs mt-1">Use Google or Microsoft for now</p>
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-black"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white px-2 text-neutral-600">Or continue with</span>
+            </div>
           </div>
 
+          {/* Email Sign In */}
+          <form onSubmit={handleEmailSignIn} className="space-y-3">
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              className="h-12 bg-white border-[3px] border-black text-black placeholder:text-neutral-500 rounded-2xl"
+              required
+            />
+            <Button
+              type="submit"
+              className="w-full h-12 bg-white text-black font-semibold rounded-2xl border-[3px] border-black shadow-[6px_6px_0_#111] hover:-translate-y-0.5 hover:bg-zinc-100 transition-transform disabled:opacity-60"
+              disabled={isLoading || !email}
+            >
+              {provider === "email" ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <Mail className="w-5 h-5 mr-2" />
+                  Send Magic Link
+                </>
+              )}
+            </Button>
+          </form>
+
           {/* Footer Links */}
-          <div className="text-center text-xs text-zinc-500 space-y-2 pt-4">
+          <div className="text-center text-xs text-neutral-500 space-y-2 pt-4">
             <p>
               By signing in, you agree to our{" "}
-              <Link href="/terms" className="underline hover:text-white">
+              <Link href="/terms" className="underline decoration-[3px] decoration-black hover:text-black">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="underline hover:text-white">
+              <Link href="/privacy" className="underline decoration-[3px] decoration-black hover:text-black">
                 Privacy Policy
               </Link>
             </p>
@@ -149,9 +198,9 @@ function StudentLoginContent() {
         </div>
 
         {/* Admin Link */}
-        <div className="text-center text-sm text-zinc-500">
+        <div className="text-center text-sm text-neutral-600">
           Are you an admin?{" "}
-          <Link href="/start" className="text-white underline hover:no-underline">
+          <Link href="/start" className="text-black underline decoration-[3px] decoration-black hover:no-underline">
             Go to admin login
           </Link>
         </div>
@@ -163,7 +212,7 @@ function StudentLoginContent() {
 export default function StudentLoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#eeeee4] text-neutral-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     }>

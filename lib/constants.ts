@@ -2,8 +2,8 @@ import { z } from "zod"
 import type { FormStep } from "./types"
 
 export const FORM_TITLE = "CV Platform"
-export const COMPANY_NAME = "KNET"
-export const FORM_DESCRIPTION = "KNET CV Builder and Upload Platform"
+export const COMPANY_NAME = "Wathefni AI"
+export const FORM_DESCRIPTION = "Wathefni AI CV Builder and Upload Platform"
 
 export const FORM_FIELD_COMPLETION_TIME_SECONDS = 20
 

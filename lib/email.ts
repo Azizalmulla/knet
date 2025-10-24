@@ -5,23 +5,31 @@ export interface SendEmailOptions {
   subject: string
   html: string
   from?: string
+  replyTo?: string
 }
 
 async function sendViaResend(opts: SendEmailOptions) {
   const apiKey = process.env.RESEND_API_KEY!
   const from = opts.from || process.env.RESEND_FROM || 'noreply@careerly.app'
+  
+  const payload: any = {
+    from,
+    to: [opts.to],
+    subject: opts.subject,
+    html: opts.html
+  };
+  
+  if (opts.replyTo) {
+    payload.reply_to = [opts.replyTo];
+  }
+  
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      from,
-      to: [opts.to],
-      subject: opts.subject,
-      html: opts.html
-    })
+    body: JSON.stringify(payload)
   })
   if (!res.ok) {
     const txt = await res.text().catch(() => '')

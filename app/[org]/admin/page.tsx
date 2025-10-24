@@ -5,6 +5,8 @@ import { notFound, useRouter } from 'next/navigation'
 import AdminDashboard from '@/components/admin-dashboard'
 import { useLanguage } from '@/lib/language'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Inbox, Briefcase } from 'lucide-react'
 
 export default function OrgAdminPage({ params }: { params: { org: string } }) {
   const { t } = useLanguage()
@@ -22,9 +24,32 @@ export default function OrgAdminPage({ params }: { params: { org: string } }) {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
         <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t('admin_dashboard')}</h1>
-            <p className="text-sm text-muted-foreground mt-1">Organization: {orgSlug}</p>
+          <div className="flex items-center gap-6">
+            <div>
+              <h1 className="text-2xl font-bold">{t('admin_dashboard')}</h1>
+              <p className="text-sm text-muted-foreground mt-1">Organization: {orgSlug}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/${orgSlug}/admin/jobs`)}
+              className="flex items-center gap-2"
+            >
+              <Briefcase className="w-4 h-4" />
+              Jobs
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/${orgSlug}/admin/inbox`)}
+              className="flex items-center gap-2"
+            >
+              <Inbox className="w-4 h-4" />
+              Inbox
+              <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-xs">
+                Soon
+              </Badge>
+            </Button>
           </div>
           <div>
             <Button

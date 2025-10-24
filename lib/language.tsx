@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type Lang = "en" | "ar";
-
 type Dict = Record<string, string>;
 
 type Translations = Record<Lang, Dict>;
@@ -14,15 +13,63 @@ const translations: Translations = {
     ai_complete_button: 'Use AI to Complete (fill missing sections)',
     ai_improve_button: 'Use AI to Improve (polish for recruiters)',
     loading: 'Loading...',
+    date_format_hint: 'Format: month/year',
+    ai_wait_message: 'Wait 10s...',
+    missing_label: 'Missing',
+    go_fix: 'Go fix',
     
     // Global
     lang_en: "EN",
     lang_ar: "AR",
 
+    // Landing Page
+    hero_title_line1: "Careers made smarter.",
+    hero_title_line2: "Hiring made easier.",
+    hero_subtitle: "Redefining how careers and hiring work: smarter CVs, effortless submissions, and AI-powered tools for the modern workforce.",
+    enter_app: "Enter App",
+    career_dashboard: "Career Dashboard",
+    job_finder: "Smart Job Search",
+    privacy_first: "Privacy-first",
+    bilingual_ready: "Bilingual-ready",
+    secure_storage: "Secure storage",
+    contact: "Contact",
+    admin_login: "Admin Login",
+    get_to_know: "Get to know Wathefni AI",
+    company_name: "Wathefni AI",
+    
+    // Benefits
+    ai_cv_builder_benefit: "AI CV Builder",
+    ai_cv_builder_desc: "Create a polished, ATS-friendly CV in minutes.",
+    instant_parsing: "Instant parsing",
+    instant_parsing_desc: "We extract your info and surface key skills.",
+    privacy_first_benefit: "Privacy-first",
+    privacy_first_desc: "Your data stays secure and under your control.",
+    
+    // Audience sections
+    choose_your_path: "Choose your path",
+    choose_path_desc: "Two ways to get value from Wathefni AI. No extra fluff.",
+    students: "Students",
+    students_desc: "Build professional CVs with AI, browse jobs, and apply to multiple companies at once. 100% free.",
+    ai_cv_improvements: "AI CV improvements",
+    browse_jobs: "Browse 100+ jobs",
+    multi_company_apply: "Multi-company apply",
+    start_as_student: "Start as Student",
+    hr_teams: "HR Teams",
+    hr_teams_desc: "Post jobs, find qualified candidates with AI, and manage applications in one dashboard.",
+    post_job_openings: "Post job openings",
+    ai_recruiting_agent: "AI recruiting agent",
+    track_applications: "Track applications",
+    talk_to_ai_recruiter: "Talk to Your AI Recruiter",
+    ai_recruiter_example: "Find senior developers with React and Node.js experience",
+    ranks_candidates: "Ranks candidates",
+    sends_emails: "Sends emails",
+    natural_language: "Natural language",
+    for_hr_teams: "For HR Teams",
+    how_it_works: "How Wathefni AI works",
     // Start (Student dashboard landing)
     student_dashboard: "Student Dashboard",
     home: "Home",
-    build_cv_title: "Build a standout CV with KNET",
+    build_cv_title: "Build a standout CV with Wathefni AI",
     build_cv_subtitle:
       "Choose an option below to upload your existing CV or let AI help you craft an ATS-friendly one. You can always manage submissions from the admin dashboard.",
     upload_your_cv: "Upload Your CV",
@@ -33,7 +80,7 @@ const translations: Translations = {
     admin_dashboard_desc: "Review submissions, filter by field/interest, and download CVs.",
     privacy_notice: "Privacy Notice",
     privacy_text:
-      "Your CV and personal information are processed by KNET for career matching and job recommendation purposes. Data is retained for 12 months and accessible only to authorized KNET staff. You may request export or deletion of your data by contacting {email}. By proceeding, you consent to this processing under Kuwait's data protection regulations.",
+      "Your CV and personal information are processed for career matching and job recommendation purposes. Data is retained for 12 months and accessible only to authorized staff. You may request export or deletion of your data by contacting {email}. By proceeding, you consent to this processing under applicable data protection regulations.",
 
     // CV Builder Wizard
     ai_cv_builder_title: "AI CV Builder",
@@ -47,6 +94,9 @@ const translations: Translations = {
     previous: "Previous",
     next: "Next",
     complete: "Complete",
+    // Experience & Projects header/microcopy
+    experience_projects_title: "Experience & Projects",
+    experience_projects_subtitle: "Add your work experience and project accomplishments",
 
     // Review step controls
     customize_cv: "Customize Your CV",
@@ -61,13 +111,15 @@ const translations: Translations = {
     export_docx: "Export DOCX",
     exporting: "Exporting...",
     preview: "Preview",
+    jd_helper: "Paste a job description only if you want AI to tailor your wording.",
+    smart_assist_helper: "Polishes wording and expands bullets without adding new facts.",
     complete_field_selection: "Complete field selection",
-    submit_to_knet: "Submit to KNET",
-    // Watheefti classification (Review step)
+    submit_to_knet: "Submit CV",
+    // Profile classification (Review step)
     profile_classification_required: "Profile Classification (Required)",
-    degree_watheefti: "Degree (Watheefti)",
-    yoe_watheefti: "Years of Experience (Watheefti)",
-    aoi_watheefti: "Area of Interest (Watheefti)",
+    degree_watheefti: "Degree",
+    yoe_watheefti: "Years of Experience",
+    aoi_watheefti: "Area of Interest",
     select_degree: "Select degree",
     select_yoe: "Select years of experience",
     select_area: "Select area of interest",
@@ -95,6 +147,8 @@ const translations: Translations = {
     edu_start_placeholder: "2020-09",
     edu_end_placeholder: "2024-05",
     edu_description_placeholder: "Relevant coursework, achievements, honors...",
+    edu_gpa_achievements_label: "Add GPA & Achievements (optional)",
+    edu_achievements_placeholder: "Dean’s List, Honors in Math, Senior Project on AI.",
 
     // Wizard field labels (Experience)
     exp_company: "Company",
@@ -107,15 +161,22 @@ const translations: Translations = {
     exp_generating: "Generating...",
     exp_generated_bullets: "Generated Bullet Points",
     exp_add_experience: "Add Experience",
+    type_label: "Type",
+    work_experience_option: "Work Experience",
+    project_option: "Project",
+    add_example_project: "Add Example Project",
+    has_url: "Has URL",
     exp_company_placeholder: "Tech Corp",
     exp_position_placeholder: "Software Engineer",
     exp_start_placeholder: "2020-01",
     exp_end_placeholder: "2023-12 or Present",
+    exp_description_placeholder: "What did you do and why it mattered? e.g., Built React components, worked with designers, reduced page load by ~30%.",
 
     // Wizard field labels (Projects)
     proj_name: "Project Name",
     proj_url: "URL (Optional)",
     proj_description: "Description",
+    proj_current: "Currently ongoing",
     proj_generate_bullets: "Generate ATS Bullets",
     proj_generating: "Generating...",
     proj_technologies: "Technologies",
@@ -154,6 +215,8 @@ const translations: Translations = {
     cv_required: "CV file is required",
     pdf_only: "Only PDF files are allowed",
     allowed_file_types: "Allowed file types: PDF, DOC/DOCX, JPG, PNG",
+    file_too_large: "File size must be less than 10MB",
+    date_range_invalid: "End date must be after start date",
 
     // Upload Page
     upload_title: "Upload Your CV",
@@ -172,13 +235,13 @@ const translations: Translations = {
     suggested_vacancies_title: "Suggested Vacancies",
     invalid_combo: "Invalid combination: No suggested vacancies found for this Field of Study and Area of Interest.",
     privacy_notice_upload_title: "Privacy Notice",
-    privacy_notice_upload_p1: "By submitting your CV, you consent to KNET storing your personal information and CV data for up to 12 months for recruitment purposes.",
+    privacy_notice_upload_p1: "By submitting your CV, you consent to Wathefni AI storing your personal information and CV data for up to 12 months for recruitment purposes.",
     privacy_notice_upload_p2: "For privacy inquiries, data deletion requests, or to exercise your GDPR rights, contact us.",
     submit_cv: "Submit CV",
     uploading: "Uploading...",
     complete_all_fields: "Complete all fields with valid suggestions",
     success_title: "CV Uploaded Successfully!",
-    success_subtitle: "Your CV has been submitted to KNET.",
+    success_subtitle: "Your CV has been submitted successfully.",
     back_to_dashboard: "Back to Dashboard",
 
     // Admin Dashboard
@@ -202,6 +265,10 @@ const translations: Translations = {
     uploaded_cvs: "Uploaded CVs",
     ai_generated_cvs: "AI Generated CVs",
     filtered_results: "Filtered Results",
+    new_this_week: "New This Week",
+    recent_uploads_7d: "Recent Uploads (7d)",
+    parsed_today: "Parsed Today",
+    inbox_unread: "Inbox Unread",
     table_name: "Name",
     table_email: "Email",
     table_phone: "Phone",
@@ -269,15 +336,64 @@ const translations: Translations = {
   ar: {
     // Common
     loading: 'جاري التحميل...',
+    date_format_hint: 'التنسيق: شهر/سنة',
+    ai_wait_message: 'انتظر 10 ثوانٍ... ',
+    missing_label: 'مفقود',
+    go_fix: 'إصلاح',
 
     // Global
     lang_en: "إنجليزي",
     lang_ar: "عربي",
 
+    // Landing Page
+    hero_title_line1: "مسارات مهنية أذكى.",
+    hero_title_line2: "توظيف أسهل.",
+    hero_subtitle: "إعادة تعريف كيفية عمل المسارات المهنية والتوظيف: سير ذاتية أذكى، تقديمات سلسة، وأدوات مدعومة بالذكاء الاصطناعي للقوى العاملة الحديثة.",
+    enter_app: "دخول التطبيق",
+    career_dashboard: "لوحة المسار المهني",
+    job_finder: "البحث الذكي عن وظائف",
+    privacy_first: "الخصوصية أولاً",
+    bilingual_ready: "ثنائي اللغة",
+    secure_storage: "تخزين آمن",
+    contact: "تواصل معنا",
+    admin_login: "تسجيل دخول المسؤول",
+    get_to_know: "تعرف على Wathefni AI",
+    company_name: "Wathefni AI",
+    
+    // Benefits
+    ai_cv_builder_benefit: "منشئ السيرة الذاتية بالذكاء الاصطناعي",
+    ai_cv_builder_desc: "أنشئ سيرة ذاتية احترافية متوافقة مع ATS في دقائق.",
+    instant_parsing: "تحليل فوري",
+    instant_parsing_desc: "نستخرج معلوماتك ونبرز المهارات الرئيسية.",
+    privacy_first_benefit: "الخصوصية أولاً",
+    privacy_first_desc: "بياناتك آمنة وتحت سيطرتك.",
+    
+    // Audience sections
+    choose_your_path: "اختر مسارك",
+    choose_path_desc: "طريقتان للاستفادة من Wathefni AI. بدون تعقيدات.",
+    students: "الطلاب",
+    students_desc: "أنشئ سيرة ذاتية احترافية بالذكاء الاصطناعي، تصفح الوظائف، وقدّم لعدة شركات دفعة واحدة. مجاني 100%.",
+    ai_cv_improvements: "تحسينات السيرة الذاتية بالذكاء الاصطناعي",
+    browse_jobs: "تصفح أكثر من 100 وظيفة",
+    multi_company_apply: "التقديم لعدة شركات",
+    start_as_student: "ابدأ كطالب",
+    hr_teams: "فرق الموارد البشرية",
+    hr_teams_desc: "انشر الوظائف، ابحث عن المرشحين المؤهلين بالذكاء الاصطناعي، وأدر الطلبات من لوحة واحدة.",
+    post_job_openings: "نشر الوظائف",
+    ai_recruiting_agent: "وكيل التوظيف بالذكاء الاصطناعي",
+    track_applications: "تتبع الطلبات",
+    talk_to_ai_recruiter: "تحدث مع وكيل التوظيف الذكي",
+    ai_recruiter_example: "ابحث عن مطورين كبار لديهم خبرة في React و Node.js",
+    ranks_candidates: "يرتب المرشحين",
+    sends_emails: "يرسل رسائل البريد",
+    natural_language: "لغة طبيعية",
+    for_hr_teams: "لفرق الموارد البشرية",
+    how_it_works: "كيف يعمل Wathefni AI",
+
     // Start (Student dashboard landing)
     student_dashboard: "لوحة الطالب",
     home: "الرئيسية",
-    build_cv_title: "أنشئ سيرة ذاتية مميزة مع KNET",
+    build_cv_title: "أنشئ سيرة ذاتية مميزة مع Wathefni AI",
     build_cv_subtitle:
       "اختر خيارًا أدناه لتحميل سيرتك الذاتية أو دع الذكاء الاصطناعي يساعدك في صياغة سيرة متوافقة مع أنظمة التتبع. يمكنك دائمًا إدارة الطلبات من لوحة التحكم.",
     upload_your_cv: "تحميل السيرة الذاتية",
@@ -288,7 +404,7 @@ const translations: Translations = {
     admin_dashboard_desc: "مراجعة الطلبات، التصفية حسب التخصص والاهتمام، وتنزيل السير الذاتية.",
     privacy_notice: "إشعار الخصوصية",
     privacy_text:
-      "يتم استخدام سيرتك الذاتية ومعلوماتك الشخصية من قبل KNET لأغراض المواءمة الوظيفية والتوصية بالوظائف. تُحتفظ البيانات لمدة 12 شهرًا وتكون متاحة فقط لموظفي KNET المخوَّلين. يمكنك طلب تصدير أو حذف بياناتك عبر {email}. بالمتابعة، فإنك توافق على هذه المعالجة وفقًا للوائح حماية البيانات في الكويت.",
+      "تُستخدم سيرتك الذاتية ومعلوماتك الشخصية لأغراض المواءمة الوظيفية والتوصية بالوظائف. تُحتفظ البيانات لمدة 12 شهرًا وتكون متاحة فقط للموظفين المخوّلين. يمكنك طلب تصدير أو حذف بياناتك عبر {email}. بالمتابعة، فإنك توافق على هذه المعالجة وفقًا للوائح حماية البيانات المعمول بها.",
 
     // CV Builder Wizard
     ai_cv_builder_title: "منشئ السيرة الذاتية بالذكاء الاصطناعي",
@@ -302,6 +418,9 @@ const translations: Translations = {
     previous: "السابق",
     next: "التالي",
     complete: "إنهاء",
+    // Experience & Projects header/microcopy
+    experience_projects_title: "الخبرات والمشاريع",
+    experience_projects_subtitle: "أضف خبراتك العملية وإنجازات مشاريعك",
 
     // Review step controls
     customize_cv: "خصّص سيرتك الذاتية",
@@ -316,17 +435,46 @@ const translations: Translations = {
     export_docx: "تصدير DOCX",
     exporting: "جاري التصدير...",
     preview: "المعاينة",
+    jd_helper: "الصق وصفًا وظيفيًا فقط إذا كنت تريد من الذكاء الاصطناعي تحسين صياغتك.",
+    smart_assist_helper: "يحسن الصياغة ويُوسّع النقاط دون إضافة حقائق جديدة.",
     complete_field_selection: "أكمل اختيار الحقول",
-    submit_to_knet: "إرسال إلى KNET",
-    // Watheefti classification (Review step)
+    submit_to_knet: "إرسال السيرة الذاتية",
+    // Profile classification (Review step)
     profile_classification_required: "تصنيف الملف (إلزامي)",
-    degree_watheefti: "المؤهل (وظيفتي)",
-    yoe_watheefti: "سنوات الخبرة (وظيفتي)",
-    aoi_watheefti: "مجال الاهتمام (وظيفتي)",
+    degree_watheefti: "المؤهل",
+    yoe_watheefti: "سنوات الخبرة",
+    aoi_watheefti: "مجال الاهتمام",
     select_degree: "اختر المؤهل",
     select_yoe: "اختر سنوات الخبرة",
     select_area: "اختر مجال الاهتمام",
     please_choose_option: "يرجى اختيار خيار",
+
+    // Wizard field labels (Personal)
+    label_location: "الموقع",
+    label_summary: "الملخص المهني",
+    placeholder_location: "مدينة الكويت، الكويت",
+    placeholder_summary: "نظرة عامة موجزة عن خلفيتك المهنية وأهدافك الوظيفية...",
+
+    // Wizard field labels (Education)
+    edu_institution: "المؤسسة التعليمية",
+    edu_degree: "الدرجة العلمية",
+    edu_field: "مجال الدراسة",
+    edu_start_date: "تاريخ البدء",
+    edu_end_date: "تاريخ الانتهاء",
+    edu_gpa: "المعدل التراكمي",
+    edu_description: "الوصف",
+    edu_currently_studying: "أدرس حاليًا",
+    edu_add_education: "إضافة تعليم",
+
+    // Wizard field placeholders (Education)
+    edu_institution_placeholder: "جامعة التكنولوجيا",
+    edu_degree_placeholder: "بكالوريوس علوم الحاسوب",
+    edu_field_placeholder: "علوم الحاسوب",
+    edu_start_placeholder: "2020-09",
+    edu_end_placeholder: "2024-05",
+    edu_description_placeholder: "مقررات ذات صلة، إنجازات، تكريم...",
+    edu_gpa_achievements_label: "أضف المعدل والإنجازات (اختياري)",
+    edu_achievements_placeholder: "قائمة الشرف، تكريم في الرياضيات، مشروع التخرج في الذكاء الاصطناعي.",
 
     // Draft restore
     draft_found: "تم العثور على مسودة",
@@ -342,6 +490,8 @@ const translations: Translations = {
     cv_required: "ملف السيرة الذاتية مطلوب",
     pdf_only: "يسمح فقط بملفات PDF",
     allowed_file_types: "الملفات المسموح بها: PDF و DOC/DOCX و JPG و PNG",
+    file_too_large: "يجب أن يكون حجم الملف أقل من 10 ميجابايت",
+    date_range_invalid: "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء",
 
     // Upload Page
     upload_title: "تحميل السيرة الذاتية",
@@ -360,13 +510,13 @@ const translations: Translations = {
     suggested_vacancies_title: "الوظائف المقترحة",
     invalid_combo: "تركيبة غير صالحة: لا توجد وظائف مقترحة لهذا المجال ومجال الاهتمام.",
     privacy_notice_upload_title: "إشعار الخصوصية",
-    privacy_notice_upload_p1: "بإرسال سيرتك الذاتية، فإنك توافق على احتفاظ KNET بمعلوماتك الشخصية وبيانات سيرتك لمدة تصل إلى 12 شهرًا لأغراض التوظيف.",
+    privacy_notice_upload_p1: "بإرسال سيرتك الذاتية، فإنك توافق على احتفاظ Wathefni AI بمعلوماتك الشخصية وبيانات سيرتك لمدة تصل إلى 12 شهرًا لأغراض التوظيف.",
     privacy_notice_upload_p2: "للاستفسارات المتعلقة بالخصوصية أو طلبات حذف البيانات، تواصل معنا.",
     submit_cv: "إرسال السيرة الذاتية",
     uploading: "جاري الرفع...",
     complete_all_fields: "أكمل جميع الحقول مع اقتراحات صالحة",
     success_title: "تم رفع السيرة الذاتية بنجاح!",
-    success_subtitle: "تم إرسال سيرتك الذاتية إلى KNET.",
+    success_subtitle: "تم إرسال سيرتك الذاتية بنجاح.",
     back_to_dashboard: "العودة للوحة الطالب",
 
     // Admin Dashboard
@@ -390,6 +540,10 @@ const translations: Translations = {
     uploaded_cvs: "السير المرفوعة",
     ai_generated_cvs: "السير المولدة بالذكاء الاصطناعي",
     filtered_results: "النتائج بعد التصفية",
+    new_this_week: "جديد هذا الأسبوع",
+    recent_uploads_7d: "عمليات الرفع خلال 7 أيام",
+    parsed_today: "تم التحليل اليوم",
+    inbox_unread: "الرسائل غير المقروءة",
     table_name: "الاسم",
     table_email: "البريد الإلكتروني",
     table_phone: "الهاتف",
@@ -408,6 +562,25 @@ const translations: Translations = {
     ai_improve_button: "استخدم الذكاء الاصطناعي للتحسين",
 
     // Wizard field labels (Projects)
+    exp_current: "أعمل هنا حاليًا",
+    exp_company: "الشركة",
+    exp_position: "المسمى الوظيفي",
+    exp_start_date: "تاريخ البدء",
+    exp_end_date: "تاريخ الانتهاء",
+    proj_current: "مستمر حاليًا",
+    type_label: "النوع",
+    work_experience_option: "خبرة عملية",
+    project_option: "مشروع",
+    add_example_project: "إضافة مشروع مثال",
+    has_url: "يحتوي على رابط",
+    proj_url: "الرابط (اختياري)",
+    // Wizard field placeholders (Experience)
+    exp_company_placeholder: "شركة تقنية",
+    exp_position_placeholder: "مهندس برمجيات",
+    exp_start_placeholder: "2020-01",
+    exp_end_placeholder: "2023-12 أو الآن",
+    exp_description_placeholder: "ماذا فعلت ولماذا كان ذلك مهمًا؟ مثال: بناء مكونات React، التعاون مع المصممين، تقليل وقت التحميل ~30%.",
+    exp_raw_description: "الوصف الخام",
     proj_name: "اسم المشروع",
     proj_description: "الوصف",
     proj_generate_bullets: "توليد نقاط ATS",
@@ -459,6 +632,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (typeof document !== "undefined") {
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+      // Also set body class for font switching
+      document.body.classList.remove('lang-en', 'lang-ar');
+      document.body.classList.add(`lang-${lang}`);
     }
   }, [lang]);
 
@@ -466,6 +642,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLangState(l);
     if (typeof window !== "undefined") {
       localStorage.setItem("lang", l);
+      // Add/remove lang class and dir attribute on body
+      document.body.classList.remove('lang-en', 'lang-ar');
+      document.body.classList.add(`lang-${l}`);
+      document.documentElement.setAttribute('lang', l);
+      document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
     }
   };
 
@@ -480,7 +661,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     return str;
   };
 
-  const value = useMemo(() => ({ lang, setLang, t }), [lang]);
+  const value = useMemo(() => ({ lang, setLang, t }), [lang, t]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

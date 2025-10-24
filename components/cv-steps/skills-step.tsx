@@ -97,8 +97,9 @@ export function SkillsStep() {
                 type="button"
                 variant="outline"
                 onClick={() => addSkill(key)}
+                className="whitespace-nowrap"
               >
-                {t('skills_add')}
+                + {t('skills_add')}
               </Button>
             </div>
             {/* Autosuggest chips */}

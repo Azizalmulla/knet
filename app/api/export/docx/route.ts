@@ -4,7 +4,17 @@ import { CVData } from '@/lib/cv-schemas';
 
 export async function POST(request: NextRequest) {
   try {
-    const cvData: CVData = await request.json();
+    const body: any = await request.json();
+    const cvData: CVData = body;
+    const density: 'comfortable' | 'compact' = body?.density === 'compact' ? 'compact' : 'comfortable';
+
+    const H2_BEFORE = density === 'compact' ? 160 : 200;
+    const H2_AFTER  = density === 'compact' ? 80  : 100;
+    const ITEM_BEFORE = density === 'compact' ? 80 : 100;
+    const ITEM_AFTER  = density === 'compact' ? 40 : 50;
+    const BULLET_AFTER = density === 'compact' ? 40 : 50;
+    const HEADER1_AFTER = density === 'compact' ? 160 : 200; // name block
+    const HEADER2_AFTER = density === 'compact' ? 320 : 400; // contact block
 
     const doc = new Document({
       sections: [{
@@ -20,7 +30,7 @@ export async function POST(request: NextRequest) {
               }),
             ],
             alignment: AlignmentType.CENTER,
-            spacing: { after: 200 },
+            spacing: { after: HEADER1_AFTER },
           }),
           new Paragraph({
             children: [
@@ -30,7 +40,7 @@ export async function POST(request: NextRequest) {
               }),
             ],
             alignment: AlignmentType.CENTER,
-            spacing: { after: 400 },
+            spacing: { after: HEADER2_AFTER },
           }),
 
           // Summary
@@ -44,7 +54,7 @@ export async function POST(request: NextRequest) {
                 }),
               ],
               heading: HeadingLevel.HEADING_2,
-              spacing: { before: 200, after: 100 },
+              spacing: { before: H2_BEFORE, after: H2_AFTER },
             }),
             new Paragraph({
               children: [
@@ -53,7 +63,7 @@ export async function POST(request: NextRequest) {
                   size: 20,
                 }),
               ],
-              spacing: { after: 300 },
+              spacing: { after: density === 'compact' ? 240 : 300 },
             }),
           ] : []),
 
@@ -68,7 +78,7 @@ export async function POST(request: NextRequest) {
                 }),
               ],
               heading: HeadingLevel.HEADING_2,
-              spacing: { before: 200, after: 100 },
+              spacing: { before: H2_BEFORE, after: H2_AFTER },
             }),
             ...cvData.experience.flatMap(exp => [
               new Paragraph({
@@ -83,7 +93,7 @@ export async function POST(request: NextRequest) {
                     size: 22,
                   }),
                 ],
-                spacing: { before: 100, after: 50 },
+                spacing: { before: ITEM_BEFORE, after: ITEM_AFTER },
               }),
               new Paragraph({
                 children: [
@@ -93,7 +103,7 @@ export async function POST(request: NextRequest) {
                     size: 18,
                   }),
                 ],
-                spacing: { after: 100 },
+                spacing: { after: H2_AFTER },
               }),
               ...(exp.bullets || []).map((bullet: string) => 
                 new Paragraph({
@@ -103,7 +113,7 @@ export async function POST(request: NextRequest) {
                       size: 20,
                     }),
                   ],
-                  spacing: { after: 50 },
+                  spacing: { after: BULLET_AFTER },
                 })
               ),
             ]),
@@ -120,7 +130,7 @@ export async function POST(request: NextRequest) {
                 }),
               ],
               heading: HeadingLevel.HEADING_2,
-              spacing: { before: 200, after: 100 },
+              spacing: { before: H2_BEFORE, after: H2_AFTER },
             }),
             ...cvData.education.flatMap(edu => [
               new Paragraph({
@@ -131,7 +141,7 @@ export async function POST(request: NextRequest) {
                     size: 22,
                   }),
                 ],
-                spacing: { before: 100, after: 50 },
+                spacing: { before: ITEM_BEFORE, after: ITEM_AFTER },
               }),
               new Paragraph({
                 children: [
@@ -140,17 +150,17 @@ export async function POST(request: NextRequest) {
                     size: 20,
                   }),
                 ],
-                spacing: { after: 50 },
+                spacing: { after: ITEM_AFTER },
               }),
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: `${(edu as any).startDate || (edu as any).graduationDate || ''} - ${edu.endDate || 'Present'}`,
+                    text: `${(edu as any).startDate || (edu as any).graduationDate || ''} - ${edu.endDate || ((edu as any).currentlyStudying ? 'Present' : '')}`,
                     italics: true,
                     size: 18,
                   }),
                 ],
-                spacing: { after: edu.gpa ? 50 : 100 },
+                spacing: { after: edu.gpa ? ITEM_AFTER : H2_AFTER },
               }),
               ...(edu.gpa ? [
                 new Paragraph({
@@ -160,7 +170,7 @@ export async function POST(request: NextRequest) {
                       size: 18,
                     }),
                   ],
-                  spacing: { after: 100 },
+                  spacing: { after: H2_AFTER },
                 }),
               ] : []),
             ]),
@@ -177,7 +187,7 @@ export async function POST(request: NextRequest) {
                 }),
               ],
               heading: HeadingLevel.HEADING_2,
-              spacing: { before: 200, after: 100 },
+              spacing: { before: H2_BEFORE, after: H2_AFTER },
             }),
             ...cvData.projects.flatMap(project => [
               new Paragraph({
@@ -188,7 +198,7 @@ export async function POST(request: NextRequest) {
                     size: 22,
                   }),
                 ],
-                spacing: { before: 100, after: 50 },
+                spacing: { before: ITEM_BEFORE, after: ITEM_AFTER },
               }),
               new Paragraph({
                 children: [
@@ -197,7 +207,7 @@ export async function POST(request: NextRequest) {
                     size: 20,
                   }),
                 ],
-                spacing: { after: 50 },
+                spacing: { after: ITEM_AFTER },
               }),
               ...(project.technologies && project.technologies.length > 0 ? [
                 new Paragraph({
@@ -207,7 +217,7 @@ export async function POST(request: NextRequest) {
                       size: 18,
                     }),
                   ],
-                  spacing: { after: 50 },
+                  spacing: { after: ITEM_AFTER },
                 }),
               ] : []),
               ...(project.bullets || []).map((bullet: string) => 
@@ -218,11 +228,55 @@ export async function POST(request: NextRequest) {
                       size: 20,
                     }),
                   ],
-                  spacing: { after: 50 },
+                  spacing: { after: BULLET_AFTER },
                 })
               ),
             ]),
           ] : []),
+
+          // Achievements
+          ...(() => {
+            const list: string[] = Array.isArray((cvData as any)?.review?.achievements)
+              ? (cvData as any).review.achievements
+              : (Array.isArray((cvData as any)?.achievements) ? (cvData as any).achievements : []);
+            const items = (list || []).filter(Boolean).slice(0, 8);
+            if (items.length === 0) return [] as any[];
+            return [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Achievements', bold: true, size: 24 }),
+                ],
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: H2_BEFORE, after: H2_AFTER },
+              }),
+              ...items.map((a: string) => new Paragraph({
+                children: [ new TextRun({ text: `• ${a}`, size: 20 }) ],
+                spacing: { after: BULLET_AFTER },
+              })),
+            ]
+          })(),
+
+          // Certifications
+          ...(() => {
+            const list: string[] = Array.isArray((cvData as any)?.review?.certifications)
+              ? (cvData as any).review.certifications
+              : (Array.isArray((cvData as any)?.certifications) ? (cvData as any).certifications : []);
+            const items = (list || []).filter(Boolean).slice(0, 6);
+            if (items.length === 0) return [] as any[];
+            return [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Certifications', bold: true, size: 24 }),
+                ],
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: H2_BEFORE, after: H2_AFTER },
+              }),
+              ...items.map((c: string) => new Paragraph({
+                children: [ new TextRun({ text: `• ${c}`, size: 20 }) ],
+                spacing: { after: BULLET_AFTER },
+              })),
+            ]
+          })(),
 
           // Skills
           ...(cvData.skills ? [
@@ -235,7 +289,7 @@ export async function POST(request: NextRequest) {
                 }),
               ],
               heading: HeadingLevel.HEADING_2,
-              spacing: { before: 200, after: 100 },
+              spacing: { before: H2_BEFORE, after: H2_AFTER },
             }),
             ...(cvData.skills.technical && cvData.skills.technical.length > 0 ? [
               new Paragraph({
@@ -250,7 +304,7 @@ export async function POST(request: NextRequest) {
                     size: 20,
                   }),
                 ],
-                spacing: { after: 100 },
+                spacing: { after: H2_AFTER },
               }),
             ] : []),
             ...(cvData.skills.languages && cvData.skills.languages.length > 0 ? [
@@ -266,7 +320,7 @@ export async function POST(request: NextRequest) {
                     size: 20,
                   }),
                 ],
-                spacing: { after: 100 },
+                spacing: { after: H2_AFTER },
               }),
             ] : []),
             ...(cvData.skills.soft && cvData.skills.soft.length > 0 ? [
@@ -282,7 +336,7 @@ export async function POST(request: NextRequest) {
                     size: 20,
                   }),
                 ],
-                spacing: { after: 100 },
+                spacing: { after: H2_AFTER },
               }),
             ] : []),
           ] : []),

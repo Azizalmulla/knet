@@ -22,13 +22,33 @@ async function seedAdmin() {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
     
-    // Insert admin user
-    await sql`
-      INSERT INTO admin_users (org_id, email, password_hash, role)
-      VALUES (${orgId}::uuid, ${email}, ${passwordHash}, 'admin')
-      ON CONFLICT (org_id, email_lc) 
-      DO UPDATE SET password_hash = EXCLUDED.password_hash
+    // Check which column name exists (org_id vs organization_id)
+    const colCheck = await sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'admin_users' 
+      AND column_name IN ('org_id', 'organization_id')
+      LIMIT 1
     `;
+    
+    const orgColumn = colCheck.rows[0]?.column_name || 'organization_id';
+    
+    // Insert admin user (dynamic column name)
+    if (orgColumn === 'org_id') {
+      await sql`
+        INSERT INTO admin_users (org_id, email, password_hash, role)
+        VALUES (${orgId}::uuid, ${email}, ${passwordHash}, 'admin')
+        ON CONFLICT (org_id, email_lc) 
+        DO UPDATE SET password_hash = EXCLUDED.password_hash
+      `;
+    } else {
+      await sql`
+        INSERT INTO admin_users (organization_id, email, password_hash, role)
+        VALUES (${orgId}::uuid, ${email}, ${passwordHash}, 'admin')
+        ON CONFLICT (organization_id, email_lc) 
+        DO UPDATE SET password_hash = EXCLUDED.password_hash
+      `;
+    }
     
     console.log(`Admin user created for org '${orgSlug}':`);
     console.log(`Email: ${email}`);

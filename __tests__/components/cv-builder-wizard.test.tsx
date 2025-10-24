@@ -204,7 +204,7 @@ describe('CVBuilderWizard', () => {
     test('validates only current step fields', () => {
       // This tests that stepFields are correctly defined with numeric indices
       expect(stepFields[0]).toEqual(['fullName', 'email', 'phone', 'location'])
-      expect(stepFields[1]).toEqual(['education.0.institution', 'education.0.degree', 'education.0.fieldOfStudy', 'education.0.graduationDate'])
+      expect(stepFields[1]).toEqual(['education.0.institution', 'education.0.degree', 'education.0.fieldOfStudy', 'education.0.startDate'])
       // After merging Experience & Projects into one step, stepFields for that step is managed in-component
       expect(stepFields[2]).toEqual([])
       expect(stepFields[3]).toEqual([])

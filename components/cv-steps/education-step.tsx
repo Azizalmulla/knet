@@ -11,7 +11,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
 
 export function EducationStep() {
-  const { register, control, formState: { errors }, setValue, watch } = useFormContext();
+  const { register, control, formState: { errors }, setValue, watch, setError, clearErrors } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'education',
@@ -23,7 +23,7 @@ export function EducationStep() {
       institution: '',
       degree: '',
       fieldOfStudy: '',
-      graduationDate: '',
+      startDate: '',
       endDate: '',
       currentlyStudying: false,
       gpa: '',
@@ -44,6 +44,7 @@ export function EducationStep() {
                 size="sm"
                 onClick={() => remove(index)}
                 className="text-destructive hover:text-destructive/90"
+                aria-label="Remove education"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -56,7 +57,7 @@ export function EducationStep() {
                 <Input
                   id={`institution-${index}`}
                   {...register(`education.${index}.institution`)}
-                  placeholder="GUST"
+                  placeholder={t('edu_institution_placeholder')}
                   aria-invalid={!!(errors.education as any)?.[index]?.institution}
                   aria-describedby={(errors.education as any)?.[index]?.institution ? `institution-${index}-error` : undefined}
                   data-testid={`field-education-${index}-institution`}
@@ -72,7 +73,7 @@ export function EducationStep() {
                 <Input
                   id={`degree-${index}`}
                   {...register(`education.${index}.degree`)}
-                  placeholder="Bachelor of Computer Science"
+                  placeholder={t('edu_degree_placeholder')}
                   aria-invalid={!!(errors.education as any)?.[index]?.degree}
                   aria-describedby={(errors.education as any)?.[index]?.degree ? `degree-${index}-error` : undefined}
                   data-testid={`field-education-${index}-degree`}
@@ -91,7 +92,7 @@ export function EducationStep() {
                 <Input
                   id={`field-${index}`}
                   {...register(`education.${index}.fieldOfStudy`)}
-                  placeholder="Computer Science"
+                  placeholder={t('edu_field_placeholder')}
                   aria-invalid={!!(errors.education as any)?.[index]?.fieldOfStudy}
                   aria-describedby={(errors.education as any)?.[index]?.fieldOfStudy ? `field-${index}-error` : undefined}
                   data-testid={`field-education-${index}-field`}
@@ -107,18 +108,18 @@ export function EducationStep() {
                 <Input
                   id={`startDate-${index}`}
                   type="month"
-                  {...register(`education.${index}.graduationDate`)}
+                  {...register(`education.${index}.startDate`)}
                   placeholder={t('edu_start_placeholder')}
-                  aria-invalid={!!(errors.education as any)?.[index]?.graduationDate}
-                  aria-describedby={(errors.education as any)?.[index]?.graduationDate ? `startDate-${index}-error` : undefined}
+                  aria-invalid={!!(errors.education as any)?.[index]?.startDate}
+                  aria-describedby={(errors.education as any)?.[index]?.startDate ? `startDate-${index}-error` : undefined}
                   data-testid={`field-education-${index}-startDate`}
                 />
-                {(errors.education as any)?.[index]?.graduationDate && (
+                {(errors.education as any)?.[index]?.startDate && (
                   <p id={`startDate-${index}-error`} role="alert" className="text-sm text-destructive mt-1" data-testid={`error-education-${index}-startDate`}>
-                    {(errors.education as any)[index]?.graduationDate?.message}
+                    {(errors.education as any)[index]?.startDate?.message}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">Format: month/year</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('date_format_hint')}</p>
               </div>
               <div />
             </div>
@@ -135,6 +136,7 @@ export function EducationStep() {
                         setValue(`education.${index}.endDate`, checked ? 'Present' : '');
                       },
                     })}
+                    className="ltr:mr-2 rtl:ml-2"
                     data-testid={`field-education-${index}-current`}
                   />
                   <Label htmlFor={`current-${index}`}>{t('edu_currently_studying')}</Label>
@@ -146,7 +148,19 @@ export function EducationStep() {
                     <Input
                       id={`endDate-${index}`}
                       type="month"
-                      {...register(`education.${index}.endDate`)}
+                      {...register(`education.${index}.endDate`, {
+                        onBlur: () => {
+                          try {
+                            const s = (watch(`education.${index}.startDate`) || '').toString();
+                            const e = (watch(`education.${index}.endDate`) || '').toString();
+                            if (s && e && s > e) {
+                              setError(`education.${index}.endDate` as any, { type: 'validate', message: t('date_range_invalid') });
+                            } else {
+                              clearErrors(`education.${index}.endDate` as any);
+                            }
+                          } catch {}
+                        }
+                      })}
                       placeholder={t('edu_end_placeholder')}
                       aria-invalid={!!(errors.education as any)?.[index]?.endDate}
                       aria-describedby={(errors.education as any)?.[index]?.endDate ? `endDate-${index}-error` : undefined}
@@ -157,14 +171,14 @@ export function EducationStep() {
                         {(errors.education as any)[index]?.endDate?.message}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">Format: month/year</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('date_format_hint')}</p>
                   </>
                 )}
               </div>
             </div>
 
             <details className="mt-2">
-              <summary className="cursor-pointer text-sm text-muted-foreground">Add GPA & Achievements (optional)</summary>
+              <summary className="cursor-pointer text-sm text-muted-foreground">{t('edu_gpa_achievements_label')}</summary>
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor={`gpa-${index}`}>{t('edu_gpa')}</Label>
@@ -188,7 +202,7 @@ export function EducationStep() {
                     id={`description-${index}`}
                     aria-label="Description"
                     {...register(`education.${index}.description`)}
-                    placeholder="Dean’s List, Honors in Math, Senior Project on AI."
+                    placeholder={t('edu_achievements_placeholder')}
                     rows={3}
                     data-testid={`field-education-${index}-description`}
                   />

@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS candidate_embeddings (
   org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   candidate_id UUID UNIQUE REFERENCES candidates(id) ON DELETE CASCADE,
   embedding vector(1536),
+  model VARCHAR(100) DEFAULT 'text-embedding-3-small',
   content_summary TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()

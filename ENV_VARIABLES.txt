@@ -1,0 +1,176 @@
+# Environment Variables for Email Auto-Import Feature
+# Copy these to your Vercel Dashboard: Settings → Environment Variables
+
+# ====================================
+# EXISTING VARIABLES (Keep these)
+# ====================================
+
+POSTGRES_URL=your-postgres-url
+DATABASE_URL=your-database-url
+OPENAI_API_KEY=sk-...
+BLOB_READ_WRITE_TOKEN=vercel_blob_...
+ADMIN_KEY=your-admin-key
+JWT_SECRET=your-jwt-secret
+
+
+# ====================================
+# NEW VARIABLES (Add these for Email Import)
+# ====================================
+
+# Resend API Key
+# Get from: https://resend.com/api-keys
+# Sign up at resend.com if you don't have an account
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Resend From Email
+# Must be a verified domain in Resend dashboard
+# Default: Use your domain or subdomain
+RESEND_FROM=noreply@wathefni.ai
+
+# Internal API Token
+# Used to securely trigger CV parsing from email webhook
+# Generate with: openssl rand -base64 32
+# Or use: https://generate-secret.vercel.app/32
+INTERNAL_API_TOKEN=your-random-secure-token-here-replace-this
+
+# App URL
+# Your production domain (without trailing slash)
+NEXT_PUBLIC_APP_URL=https://cv-saas-1xu63cfj1-azizalmulla16-gmailcoms-projects.vercel.app
+
+
+# ====================================
+# RESEND WEBHOOK SECRET (Optional but Recommended)
+# ====================================
+
+# Webhook secret to verify requests are from Resend
+# Set this in Resend dashboard when creating inbound route
+# Then add the same value here
+RESEND_WEBHOOK_SECRET=your-webhook-secret-here
+
+
+# ====================================
+# HOW TO ADD TO VERCEL
+# ====================================
+
+1. Go to: https://vercel.com/your-team/cv-saas/settings/environment-variables
+
+2. Add each variable:
+   - Name: RESEND_API_KEY
+   - Value: re_xxxxxxxxxxxxxxxxxxxxxxxxxx
+   - Environment: Production, Preview, Development (check all)
+   - Click "Save"
+
+3. Repeat for all NEW VARIABLES above
+
+4. After adding all variables, redeploy:
+   vercel --prod
+
+
+# ====================================
+# GENERATE INTERNAL_API_TOKEN
+# ====================================
+
+Run this command to generate a secure token:
+
+  openssl rand -base64 32
+
+Example output: 
+  Xk7mP3nQ9rW2sT5vY8zB1cD4fG6hJ0kL9mN2pR5tV8xA1yC3eF6gH9jK0
+
+Copy this output and use it as INTERNAL_API_TOKEN
+
+
+# ====================================
+# RESEND SETUP CHECKLIST
+# ====================================
+
+□ Sign up at https://resend.com
+□ Verify your domain (wathefni.ai)
+□ Get API key from https://resend.com/api-keys
+□ Add domain: import.wathefni.ai
+□ Add MX record to DNS:
+  - Type: MX
+  - Name: import.wathefni.ai
+  - Value: inbound-smtp.resend.com
+  - Priority: 10
+
+□ Configure Inbound Route in Resend:
+  - Match: *@import.wathefni.ai
+  - Forward to: https://your-domain.com/api/import/email
+  
+□ Test by sending email to: knet@import.wathefni.ai
+
+
+# ====================================
+# QUICK TEST AFTER DEPLOYMENT
+# ====================================
+
+1. Deploy with new env vars:
+   vercel --prod
+
+2. Run database migration:
+   psql $DATABASE_URL -f scripts/migrations/006-import-log.sql
+
+3. Send test email to: knet@import.wathefni.ai
+   - Subject: Test Application
+   - Body: Name: Test User, Phone: +965 12345678
+   - Attach a PDF CV
+
+4. Check logs:
+   vercel logs --follow
+
+5. Verify in dashboard:
+   - Go to: https://your-domain.com/knet/admin
+   - Click "Import" tab
+   - Should see test import activity
+
+
+# ====================================
+# TROUBLESHOOTING
+# ====================================
+
+If emails aren't being received:
+1. Verify DNS records: dig MX import.wathefni.ai
+2. Check Resend inbound logs: https://resend.com/logs
+3. Verify webhook URL is accessible
+4. Check organization exists in database
+
+If parsing fails:
+1. Verify INTERNAL_API_TOKEN matches in Vercel
+2. Check OPENAI_API_KEY is valid
+3. Verify BLOB_READ_WRITE_TOKEN is set
+4. Check Vercel logs for errors
+
+If confirmation email not sent:
+1. Verify RESEND_API_KEY is correct
+2. Verify RESEND_FROM domain is verified in Resend
+3. Check Resend email logs
+
+
+# ====================================
+# COST BREAKDOWN
+# ====================================
+
+Resend Pricing:
+- First 100 emails/day: FREE
+- First 3,000 emails/month: FREE
+- After that: $0.001 per email
+
+For typical usage (50 CVs/day):
+- Resend: FREE
+- OpenAI parsing: $1.50/month
+- Blob storage: $0.30/month
+- Total: ~$2/month
+
+Very affordable! 🎉
+
+
+# ====================================
+# SECURITY NOTES
+# ====================================
+
+⚠️ NEVER commit these values to git!
+⚠️ Keep INTERNAL_API_TOKEN secret
+⚠️ Rotate INTERNAL_API_TOKEN periodically
+⚠️ Use RESEND_WEBHOOK_SECRET to verify requests
+⚠️ Monitor Vercel logs for suspicious activity

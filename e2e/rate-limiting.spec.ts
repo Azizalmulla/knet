@@ -16,7 +16,7 @@ test.describe('Rate Limiting', () => {
     await page.getByTestId('field-education-0-institution').fill('Test Uni');
     await page.getByTestId('field-education-0-degree').fill('CS');
     await page.getByTestId('field-education-0-field').fill('Tech');
-    await page.getByTestId('field-education-0-graduationDate').fill('2020-09');
+    await page.getByTestId('field-education-0-startDate').fill('2020-09');
     await page.getByTestId('next-btn').click();
 
     await page.getByTestId('next-btn').click(); // Skip experience
@@ -33,7 +33,7 @@ test.describe('Rate Limiting', () => {
     const responses: any[] = [];
     
     // Intercept submit API to track requests
-    await page.route('/api/cv/submit', async (route) => {
+    await page.route('/api/submit', async (route) => {
       const url = route.request().url();
       const method = route.request().method();
       responses.push({ url, method });
@@ -89,7 +89,7 @@ test.describe('Rate Limiting', () => {
     await page.goto('/ai-builder');
 
     // Mock the submit API to always return 429
-    await page.route('/api/cv/submit', (route) => {
+    await page.route('/api/submit', (route) => {
       route.fulfill({
         status: 429,
         headers: {
@@ -156,7 +156,7 @@ test.describe('Rate Limiting', () => {
 
     let requestCount = 0;
     
-    await page.route('/api/cv/submit', (route) => {
+    await page.route('/api/submit', (route) => {
       requestCount++;
       
       if (requestCount === 1) {

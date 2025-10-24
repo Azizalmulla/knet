@@ -1,16 +1,15 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 
-export default function OrgAdminReset({ params }: { params: { org: string } }) {
+function OrgAdminResetContent({ orgSlug }: { orgSlug: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const orgSlug = params.org
   const [token, setToken] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -80,5 +79,13 @@ export default function OrgAdminReset({ params }: { params: { org: string } }) {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function OrgAdminReset({ params }: { params: { org: string } }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center px-4">Loading…</div>}>
+      <OrgAdminResetContent orgSlug={params.org} />
+    </Suspense>
   )
 }

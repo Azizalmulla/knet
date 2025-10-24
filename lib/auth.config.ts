@@ -22,9 +22,9 @@ async function sendVerificationRequest({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM || "Careerly <onboarding@resend.dev>",
+      from: process.env.RESEND_FROM || "Wathefni AI <onboarding@resend.dev>",
       to: [email],
-      subject: `Sign in to Careerly`,
+      subject: `Sign in to Wathefni AI`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -44,24 +44,24 @@ async function sendVerificationRequest({
           <body>
             <div class="container">
               <div class="header">
-                <div class="logo">Careerly</div>
+                <div class="logo">Wathefni AI</div>
               </div>
               <div class="content">
                 <h2 style="margin-top: 0;">Sign in to your account</h2>
-                <p>Click the button below to sign in to Careerly. This link will expire in 15 minutes.</p>
+                <p>Click the button below to sign in to Wathefni AI. This link will expire in 15 minutes.</p>
                 <div style="text-align: center;">
-                  <a href="${url}" class="button">Sign in to Careerly</a>
+                  <a href="${url}" class="button">Sign in to Wathefni AI</a>
                 </div>
                 <p style="color: #888; font-size: 14px;">If you didn't request this email, you can safely ignore it.</p>
               </div>
               <div class="footer">
-                <p>© ${new Date().getFullYear()} Careerly. All rights reserved.</p>
+                <p>© ${new Date().getFullYear()} Wathefni AI. All rights reserved.</p>
               </div>
             </div>
           </body>
         </html>
       `,
-      text: `Sign in to Careerly\n\nClick the link below to sign in:\n${url}\n\nThis link will expire in 15 minutes.\n\nIf you didn't request this email, you can safely ignore it.`,
+      text: `Sign in to Wathefni AI\n\nClick the link below to sign in:\n${url}\n\nThis link will expire in 15 minutes.\n\nIf you didn't request this email, you can safely ignore it.`,
     }),
   })
 
@@ -71,6 +71,7 @@ async function sendVerificationRequest({
 }
 
 export const authConfig: NextAuthConfig = {
+  trustHost: true,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

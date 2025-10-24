@@ -33,9 +33,16 @@ interface ChatMessage {
   filtersApplied?: any;
   needsClarification?: boolean;
   tips?: string[];
+  // Store structured candidate data for smart follow-ups
+  candidatesMetadata?: Array<{
+    id: string;
+    fullName: string;
+    email: string;
+    index: number; // Position in results (1-indexed for user reference)
+  }>;
 }
 
-export function AdminAIAgentPanel() {
+export function AdminAIAgentPanel({ orgSlug: orgProp }: { orgSlug?: string } = {}) {
   const { t } = useLanguage();
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +52,32 @@ export function AdminAIAgentPanel() {
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
+  // Simple markdown renderer for bold text
+  const renderMarkdown = (text: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   // Auto-retry with stored admin key if available
+  const resolveOrg = (): string | null => {
+    if (orgProp && orgProp.trim()) return orgProp.trim();
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      const qp = sp.get('org');
+      if (qp && qp.trim()) return qp.trim();
+      const ss = window.sessionStorage?.getItem('current_org');
+      if (ss && ss.trim()) return ss.trim();
+      const m = window.location.pathname.match(/^\/(.+?)\/admin/);
+      if (m && m[1]) return m[1];
+    }
+    return null;
+  };
+
   const submitInternal = async (userMessage: string, pushUserBubble = true, retryCount = 0) => {
     if (!userMessage.trim() || loading) return;
 
@@ -61,22 +93,56 @@ export function AdminAIAgentPanel() {
     }
 
     try {
-      const data = await adminFetch('/api/admin/agent/query', {
+      const org = resolveOrg();
+      if (!org) throw new Error('ADMIN_ORG_MISSING');
+      
+      // Build conversation history for context (last 6 messages)
+      // Include structured candidate metadata for smart follow-ups
+      const history = chatHistory.slice(-6).map(msg => ({
+        role: msg.role === 'system' ? 'user' : msg.role,
+        content: msg.content,
+        candidatesMetadata: msg.candidatesMetadata || []
+      }));
+      
+      const data = await adminFetch(`/api/${org}/admin/agent/query`, {
         method: 'POST',
-        body: JSON.stringify({ message: userMessage })
+        body: JSON.stringify({ 
+          message: userMessage,
+          history: history
+        })
       });
+
+      // Handle different response types
+      let assistantContent = '';
+      if (data.needsClarification) {
+        assistantContent = data.clarifyQuestion;
+      } else if (data.isAnalysis) {
+        // Analysis response - show detailed analysis about specific candidate
+        assistantContent = `**Analysis: ${data.candidateName}** (${data.candidateEmail})\n\n${data.explanation}`;
+      } else if (data.results?.length > 0) {
+        assistantContent = data.explanation || t('ai_found_matches');
+      } else {
+        assistantContent = data.explanation || 'No strong matches found.';
+      }
+
+      // Extract candidate metadata for smart follow-ups
+      const candidatesMetadata = data.results?.map((r: QueryResult, idx: number) => ({
+        id: r.id,
+        fullName: r.fullName,
+        email: r.email,
+        index: idx + 1 // 1-indexed for user reference
+      })) || [];
 
       // Add assistant response to chat
       setChatHistory(prev => [...prev, {
         role: 'assistant',
-        content: data.needsClarification ? data.clarifyQuestion : 
-                 data.results?.length > 0 ? data.explanation || t('ai_found_matches') :
-                 data.explanation || 'No strong matches found.',
-        results: data.results,
+        content: assistantContent,
+        results: data.isAnalysis ? [] : data.results, // Don't show results table for analysis
         explanation: data.explanation,
         filtersApplied: data.filtersApplied,
         needsClarification: data.needsClarification,
-        tips: data.tips
+        tips: data.tips,
+        candidatesMetadata: data.isAnalysis ? [] : candidatesMetadata
       }]);
 
     } catch (err: any) {
@@ -85,6 +151,8 @@ export function AdminAIAgentPanel() {
       if (msg.includes('ADMIN_FETCH_401')) {
         // queue retry when auth is restored
         setPendingRetryMessage(userMessage);
+      } else if (msg.includes('ADMIN_ORG_MISSING')) {
+        setPendingRetryMessage(null);
       }
       setChatHistory(prev => [...prev, {
         role: 'system',
@@ -159,8 +227,30 @@ export function AdminAIAgentPanel() {
     navigator.clipboard.writeText(text);
   };
 
+  const clearConversation = () => {
+    if (confirm('Clear conversation history?')) {
+      setChatHistory([]);
+      setError(null);
+      setMessage('');
+    }
+  };
+
   return (
     <div className="h-full w-full flex flex-col">
+      {/* Header with Clear button */}
+      {chatHistory.length > 0 && (
+        <div className="flex justify-end px-4 md:px-6 pt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={clearConversation}
+            className="border-2 border-black hover:bg-gray-100"
+          >
+            Clear Conversation
+          </Button>
+        </div>
+      )}
+
       {/* Messages list */}
       <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-6 pb-40">
         <div className="mx-auto w-full max-w-2xl space-y-4">
@@ -187,9 +277,9 @@ export function AdminAIAgentPanel() {
           // assistant
           return (
             <div key={idx} className="flex justify-start">
-              <div className="max-w-[85%] rounded-2xl bg-card border border-border px-4 py-3 shadow-sm w-fit">
+              <div className="max-w-[85%] rounded-2xl bg-white border-[3px] border-black px-4 py-3 shadow-[6px_6px_0_#111] w-fit">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{t('role_ai_agent')}</div>
-                <p className="whitespace-pre-wrap text-sm mb-3">{msg.content}</p>
+                <p className="whitespace-pre-wrap text-sm mb-3">{renderMarkdown(msg.content)}</p>
 
                 {/* Action buttons inline inside the AI bubble */}
                 {msg.results && msg.results.length > 0 && (
@@ -205,7 +295,7 @@ export function AdminAIAgentPanel() {
 
                 {/* Results Table within the bubble */}
                 {msg.results && msg.results.length > 0 && (
-                  <div className="overflow-x-auto rounded-lg border border-border">
+                  <div className="overflow-x-auto rounded-[16px] border-[3px] border-black">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -316,7 +406,7 @@ export function AdminAIAgentPanel() {
         {/* Loading indicator bubble */}
         {loading && (
           <div className="flex justify-start">
-            <div className="rounded-xl bg-card border border-border px-3 py-2 text-sm flex items-center gap-2">
+            <div className="rounded-2xl bg-white border-[3px] border-black px-3 py-2 text-sm flex items-center gap-2 shadow-[6px_6px_0_#111]">
               <Loader2 className="h-4 w-4 animate-spin" /> {t('thinking')}
             </div>
           </div>
@@ -336,10 +426,10 @@ export function AdminAIAgentPanel() {
       </div>
 
       {/* Composer - fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-[4px] border-black shadow-[0_-8px_0_#111]">
         <div className="mx-auto w-full max-w-2xl px-4 py-3">
           <div className="flex items-end gap-2">
-            <div className="flex w-full items-end gap-2 rounded-2xl ring-1 ring-border bg-card shadow-sm px-3 py-2 focus-within:ring-2 focus-within:ring-primary transition">
+            <div className="flex w-full items-end gap-2 rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111] px-3 py-2 transition-transform focus-within:-translate-y-0.5">
               <Textarea
                 placeholder={t('chat_placeholder')}
                 value={message}

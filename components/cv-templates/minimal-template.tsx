@@ -103,7 +103,7 @@ export function MinimalTemplate({ data }: MinimalTemplateProps) {
               <div className="flex justify-between items-start mb-1">
                 <h3 className="font-semibold text-[13px] text-foreground tracking-tight">{edu.degree}{(edu as any).fieldOfStudy ? ` in ${(edu as any).fieldOfStudy}` : ''}</h3>
                 <span className="text-[11px] text-[#6b7280] rounded-full bg-[#F7FAFC] px-2 py-0.5">
-                  {(((edu as any).startDate) || (edu as any).graduationDate || '')} - {edu.endDate || 'Present'}
+                  {(((edu as any).startDate) || (edu as any).graduationDate || '')} - {edu.endDate || ((edu as any).currentlyStudying ? 'Present' : '')}
                 </span>
               </div>
               <p className="text-[#6b7280] text-[12px]">{edu.institution}</p>

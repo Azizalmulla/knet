@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@vercel/postgres'
 import jwt from 'jsonwebtoken'
 
+// Ensure @vercel/postgres uses the same connection as other routes
+if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
+  process.env.POSTGRES_URL = process.env.DATABASE_URL
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
 
 // Verify super admin middleware
@@ -20,30 +25,40 @@ function verifySuperAdmin(request: NextRequest) {
 
 // GET /api/super-admin/organizations
 export async function GET(request: NextRequest) {
-  const admin = verifySuperAdmin(request)
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Trust header injected by middleware for allowlisted emails
+  const isSuperHeader = (request.headers.get('x-superadmin') || '').toLowerCase() === 'true'
+  if (!isSuperHeader) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   
   try {
     const result = await sql`
+      WITH cols AS (
+        SELECT 
+          EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' AND table_name = 'organizations' AND column_name = 'is_public'
+          ) AS has_is_public,
+          EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' AND table_name = 'organizations' AND column_name = 'company_code'
+          ) AS has_company_code,
+          EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' AND table_name = 'organizations' AND column_name = 'logo_url'
+          ) AS has_logo_url
+      )
       SELECT 
         o.id::text,
         o.name,
         o.slug,
-        o.is_public,
-        o.company_code,
-        o.logo_url,
-        o.enable_ai_builder,
-        o.enable_exports,
-        o.enable_analytics,
-        o.created_at,
-        COUNT(DISTINCT au.id) as admin_count
+        CASE WHEN c.has_is_public THEN COALESCE(o.is_public, true) ELSE true END AS is_public,
+        CASE WHEN c.has_company_code THEN o.company_code ELSE NULL END AS company_code,
+        CASE WHEN c.has_logo_url THEN o.logo_url ELSE NULL END AS logo_url,
+        0 as admin_count
       FROM organizations o
-      LEFT JOIN admin_users au ON au.organization_id = o.id
-      WHERE o.deleted_at IS NULL
-      GROUP BY o.id
-      ORDER BY o.created_at DESC
+      CROSS JOIN cols c
+      ORDER BY o.name ASC NULLS LAST
     `
     
     return NextResponse.json({ 
@@ -63,10 +78,22 @@ export async function POST(request: NextRequest) {
   }
   
   try {
-    const { name, slug, is_public, company_code, logo_url, domains } = await request.json()
+    const body = await request.json()
+    const { name, slug, is_public, company_code, logo_url, domains } = body
+    
+    console.log('[CREATE ORG] Request body:', { name, slug, is_public, company_code, logo_url, domains })
+    
+    // Validate required fields
+    if (!name || !slug) {
+      console.error('[CREATE ORG] Missing required fields:', { name, slug })
+      return NextResponse.json({ 
+        error: 'Name and slug are required.' 
+      }, { status: 400 })
+    }
     
     // Validate slug format
     if (!/^[a-z0-9-]+$/.test(slug)) {
+      console.error('[CREATE ORG] Invalid slug format:', slug)
       return NextResponse.json({ 
         error: 'Invalid slug format. Use lowercase letters, numbers, and hyphens only.' 
       }, { status: 400 })
@@ -78,6 +105,7 @@ export async function POST(request: NextRequest) {
     `
     
     if (existing.rows.length > 0) {
+      console.error('[CREATE ORG] Slug already exists:', slug)
       return NextResponse.json({ 
         error: 'Organization with this slug already exists' 
       }, { status: 400 })

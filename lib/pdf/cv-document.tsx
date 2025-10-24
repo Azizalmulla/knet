@@ -1,14 +1,12 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Circle, Rect, Path } from '@/lib/pdf/react-pdf-shim'
 
-export type CVTemplate = 'minimal' | 'modern' | 'creative'
+export type CVTemplate = 'professional' | 'brutalist'
 
 type Palette = { accent: string; border: string; subtle: string; bg?: string; onAccent?: string }
-// KNET brand: blue #0A5D86, yellow #FFE200, gray #E6EEF5
 const paletteByTemplate: Record<CVTemplate, Palette> = {
-  minimal: { accent: '#0A5D86', border: '#E6EEF5', subtle: '#6b7280' },
-  modern: { accent: '#0A5D86', border: '#E6EEF5', subtle: '#4b5563', bg: '#F7FAFC', onAccent: '#ffffff' },
-  creative: { accent: '#0A5D86', border: '#E6EEF5', subtle: '#6b7280', bg: '#0A5D86', onAccent: '#ffffff' },
+  professional: { accent: '#334155', border: '#E5E7EB', subtle: '#6b7280', bg: '#ffffff' },
+  brutalist: { accent: '#111111', border: '#000000', subtle: '#111111', bg: '#ffffff', onAccent: '#000000' },
 }
 
 function safeArray<T>(v: any): T[] { return Array.isArray(v) ? v : [] }
@@ -18,274 +16,43 @@ const pickFont = (rtl: boolean) => {
   return rtl ? (families['NotoKufiArabic'] ? 'NotoKufiArabic' : 'Helvetica') : (families['Inter'] ? 'Inter' : 'Helvetica')
 }
 
-// Minimal: centered, clean top header, simple sections
-export function MinimalPDFTemplate({ cv, language }: { cv: any; language?: string }) {
+// (Removed legacy MinimalPDFTemplate)
+
+// Professional: polished two-column layout (left rail meta, right content)
+export function ProfessionalPDFTemplate({ cv, language, density }: { cv: any; language?: string; density?: 'comfortable' | 'compact' }) {
   const rtl = isRTLLang(language || cv?.language)
+  const dens = density === 'compact' ? 0.92 : 1
+  const p = paletteByTemplate.professional
   const s = StyleSheet.create({
-    page: { padding: 36, fontSize: 11, lineHeight: 1.4, fontFamily: pickFont(rtl) },
-    header: { paddingBottom: 10, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#E6EEF5', borderBottomStyle: 'solid' },
-    name: { fontSize: 22, fontWeight: 700, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.6 },
-    contact: { color: '#6b7280', marginTop: 4, textAlign: 'center' },
-    section: { marginTop: 14 },
-    sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    yellowDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#FFE200' },
-    sectionTitle: { fontSize: 12, fontWeight: 700, color: '#0A5D86', textTransform: 'uppercase', letterSpacing: 0.5 },
-    rule: { height: 1, backgroundColor: '#E6EEF5', marginTop: 8 },
-    item: { marginBottom: 6 },
-    itemTitle: { fontSize: 11.5, fontWeight: 600 },
-    itemSub: { color: '#6b7280' },
-    bullets: { marginTop: 4, paddingLeft: rtl ? 0 : 10, paddingRight: rtl ? 10 : 0 },
-    bullet: { marginBottom: 3, textAlign: rtl ? 'right' : 'left' },
-    chipsRow: { flexDirection: 'row', flexWrap: 'wrap' },
-    chip: { borderWidth: 1, borderColor: '#E6EEF5', borderStyle: 'solid', backgroundColor: '#F7FAFC', paddingHorizontal: 6, paddingVertical: 2, fontSize: 9, borderRadius: 8, marginRight: 4, marginBottom: 4, color: '#374151' },
-  })
-  const name = cv.fullName || cv?.personalInfo?.fullName || 'Unnamed Candidate'
-  const email = cv.email || cv?.personalInfo?.email || ''
-  const phone = cv.phone || cv?.personalInfo?.phone || ''
-  const summary = cv.summary || cv?.personalInfo?.summary || ''
-  const education = safeArray<any>(cv.education)
-  const experience = safeArray<any>(cv.experience || (cv.experienceProjects || []).filter((it: any) => !it.type || it.type === 'experience'))
-  const projects = safeArray<any>(cv.projects || (cv.experienceProjects || []).filter((it: any) => it.type === 'project'))
-  const tech = safeArray<string>(cv?.skills?.technical)
-  const langs = safeArray<string>(cv?.skills?.languages)
-  const soft = safeArray<string>(cv?.skills?.soft)
-
-  return (
-    <Document>
-      <Page size="A4" style={s.page}>
-        <View style={s.header}>
-          <Text style={s.name}>{name}</Text>
-          {(email || phone) && <Text style={s.contact}>{[email, phone].filter(Boolean).join(' • ')}</Text>}
-          {summary ? <Text style={{ color: '#374151' }}>{summary}</Text> : null}
-        </View>
-
-        {experience.length > 0 && (
-          <View style={s.section}>
-            <View style={s.sectionTitleRow}>
-              <View style={s.yellowDot} />
-              <Text style={s.sectionTitle}>Experience</Text>
-            </View>
-            {experience.map((e: any, idx: number) => (
-              <View key={idx} style={s.item}>
-                <Text style={s.itemTitle}>{[e.position || e.title, e.company].filter(Boolean).join(' • ')}</Text>
-                <Text style={s.itemSub}>{[e.location, [e.startDate, e.endDate || (e.current ? 'Present' : '')].filter(Boolean).join(' - ')].filter(Boolean).join(' • ')}</Text>
-                {safeArray<string>(e.bullets).slice(0, 6).length > 0 && (
-                  <View style={s.bullets}>
-                    {safeArray<string>(e.bullets).slice(0, 6).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
-                  </View>
-                )}
-              </View>
-            ))}
-            <View style={s.rule} />
-          </View>
-        )}
-
-        {education.length > 0 && (
-          <View style={s.section}>
-            <View style={s.sectionTitleRow}>
-              <View style={s.yellowDot} />
-              <Text style={s.sectionTitle}>Education</Text>
-            </View>
-            {education.map((e: any, idx: number) => (
-              <View key={idx} style={s.item}>
-                <Text style={s.itemTitle}>{[e.degree, e.institution].filter(Boolean).join(' • ')}</Text>
-                <Text style={s.itemSub}>{[e.location, [e.startDate, e.endDate].filter(Boolean).join(' - ')].filter(Boolean).join(' • ')}</Text>
-                {safeArray<string>(e.details).slice(0, 5).length > 0 && (
-                  <View style={s.bullets}>
-                    {safeArray<string>(e.details).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
-                  </View>
-                )}
-              </View>
-            ))}
-            <View style={s.rule} />
-          </View>
-        )}
-
-        {projects.length > 0 && (
-          <View style={s.section}>
-            <View style={s.sectionTitleRow}>
-              <View style={s.yellowDot} />
-              <Text style={s.sectionTitle}>Projects</Text>
-            </View>
-            {projects.map((p: any, idx: number) => (
-              <View key={idx} style={s.item}>
-                <Text style={s.itemTitle}>{p.name}</Text>
-                {p.description ? <Text style={s.itemSub}>{p.description}</Text> : null}
-                {safeArray<string>(p.bullets).slice(0, 5).length > 0 && (
-                  <View style={s.bullets}>
-                    {safeArray<string>(p.bullets).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
-                  </View>
-                )}
-                {safeArray<string>(p.technologies).length > 0 && (
-                  <View style={s.chipsRow}>
-                    {safeArray<string>(p.technologies).map((t, ti) => (<Text key={ti} style={s.chip}>{t}</Text>))}
-                  </View>
-                )}
-              </View>
-            ))}
-            <View style={s.rule} />
-          </View>
-        )}
-
-        {(tech.length || langs.length || soft.length) > 0 && (
-          <View style={s.section}>
-            <View style={s.sectionTitleRow}>
-              <View style={s.yellowDot} />
-              <Text style={s.sectionTitle}>Skills</Text>
-            </View>
-            {tech.length > 0 && <Text>Technical: {tech.join(', ')}</Text>}
-            {langs.length > 0 && <Text>Languages: {langs.join(', ')}</Text>}
-            {soft.length > 0 && <Text>Soft: {soft.join(', ')}</Text>}
-          </View>
-        )}
-      </Page>
-    </Document>
-  )
-}
-
-// Modern: top header with accent bar
-export function ModernPDFTemplate({ cv, language }: { cv: any; language?: string }) {
-  const rtl = isRTLLang(language || cv?.language)
-  const p = paletteByTemplate.modern
-  const s = StyleSheet.create({
-    page: { padding: 0, fontSize: 11, lineHeight: 1.4, fontFamily: pickFont(rtl) },
-    header: { backgroundColor: p.accent, color: '#fff', paddingVertical: 14, paddingHorizontal: 24 },
-    hName: { fontSize: 22, fontWeight: 700, color: '#fff' },
-    hContact: { color: '#fff', marginTop: 3 },
-    content: { padding: 24 },
-    row: { flexDirection: 'row', gap: 12 },
-    left: { width: '65%', paddingRight: 6 },
-    right: { width: '35%', paddingLeft: 6, backgroundColor: p.bg || '#F7FAFC', borderRadius: 8, padding: 12 },
-    section: { marginTop: 12 },
-    title: { fontSize: 12, fontWeight: 700, color: p.accent, textTransform: 'uppercase', letterSpacing: 0.5 },
-    rule: { height: 1, backgroundColor: p.border, marginTop: 8 },
-    item: { marginTop: 6 },
+    page: { padding: 40 * dens, fontSize: 10.2 * dens, lineHeight: 1.45, fontFamily: pickFont(rtl) },
+    header: { marginBottom: 14 * dens },
+    nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+    name: { fontSize: 26 * dens, fontWeight: 700, letterSpacing: 0.2, color: '#111827' },
     sub: { color: p.subtle },
-    bullets: { marginTop: 4, paddingLeft: rtl ? 0 : 10, paddingRight: rtl ? 10 : 0 },
-    bullet: { marginBottom: 3, textAlign: rtl ? 'right' : 'left' },
-    chip: { backgroundColor: '#fff', color: p.accent, borderWidth: 1, borderColor: p.border, borderStyle: 'solid', paddingHorizontal: 6, paddingVertical: 2, fontSize: 9, borderRadius: 9999, marginRight: 4, marginBottom: 4 },
+    contact: { color: p.subtle, marginTop: 4 },
+    rule: { height: 1, backgroundColor: p.border, marginTop: 10, marginBottom: 4 },
+    grid: { flexDirection: rtl ? 'row-reverse' : 'row', gap: 14 },
+    left: { width: '34%', paddingRight: rtl ? 0 : 8, paddingLeft: rtl ? 8 : 0 },
+    right: { width: '66%', paddingLeft: rtl ? 0 : 8, paddingRight: rtl ? 8 : 0 },
+    section: { marginTop: 12 * dens },
+    title: { fontSize: 12, fontWeight: 700, color: p.accent, textTransform: 'uppercase', letterSpacing: 0.6 },
+    item: { marginTop: 6 * dens },
+    row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+    role: { fontWeight: 600, color: '#111827' },
+    bullets: { marginTop: 3 * dens, paddingLeft: rtl ? 0 : 10, paddingRight: rtl ? 10 : 0 },
+    bullet: { marginBottom: 2.8 * dens, textAlign: rtl ? 'right' : 'left' },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
+    chip: { borderWidth: 1, borderColor: p.border, borderStyle: 'solid', paddingHorizontal: 6, paddingVertical: 2, fontSize: 9, borderRadius: 8, marginRight: 4, marginBottom: 4, color: '#374151' },
   })
+
+  // Normalize data
   const name = cv.fullName || cv?.personalInfo?.fullName || 'Unnamed Candidate'
-  const email = cv.email || cv?.personalInfo?.email || ''
-  const phone = cv.phone || cv?.personalInfo?.phone || ''
-  const summary = cv.summary || cv?.personalInfo?.summary || ''
-  const education = safeArray<any>(cv.education)
-  const experience = safeArray<any>(cv.experience || (cv.experienceProjects || []).filter((it: any) => !it.type || it.type === 'experience'))
-  const projects = safeArray<any>(cv.projects || (cv.experienceProjects || []).filter((it: any) => it.type === 'project'))
-
-  return (
-    <Document>
-      <Page size="A4" style={s.page}>
-        <View style={s.header}>
-          <Text style={s.hName}>{name}</Text>
-          {(email || phone) && <Text style={s.hContact}>{[email, phone].filter(Boolean).join(' • ')}</Text>}
-          {summary ? <Text style={{ color: '#F3F4F6', marginTop: 4 }}>{summary}</Text> : null}
-        </View>
-
-        <View style={s.content}>
-          <View style={s.row}>
-            <View style={s.left}>
-              {experience.length > 0 && (
-                <View style={s.section}>
-                  <Text style={s.title}>Experience</Text>
-                  {experience.map((e: any, i: number) => (
-                    <View key={i} style={s.item}>
-                      <Text>{[e.position || e.title, e.company].filter(Boolean).join(' • ')}</Text>
-                      <Text style={s.sub}>{[e.location, [e.startDate, e.endDate || (e.current ? 'Present' : '')].filter(Boolean).join(' - ')].filter(Boolean).join(' • ')}</Text>
-                      {safeArray<string>(e.bullets).slice(0, 6).length > 0 && (
-                        <View style={s.bullets}>
-                          {safeArray<string>(e.bullets).slice(0, 6).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                  <View style={s.rule} />
-                </View>
-              )}
-
-              {projects.length > 0 && (
-                <View style={s.section}>
-                  <Text style={s.title}>Projects</Text>
-                  {projects.map((p: any, i: number) => (
-                    <View key={i} style={s.item}>
-                      <Text>{p.name}</Text>
-                      {p.description ? <Text style={s.sub}>{p.description}</Text> : null}
-                      {safeArray<string>(p.bullets).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <View style={s.right}>
-              {(safeArray<string>(cv?.skills?.technical).length > 0) && (
-                <View style={s.section}>
-                  <Text style={s.title}>Skills</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                    {safeArray<string>(cv?.skills?.technical).map((t, i) => (
-                      <Text key={i} style={s.chip}>{t}</Text>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {(safeArray<string>(cv?.skills?.languages).length > 0) && (
-                <View style={s.section}>
-                  <Text style={s.title}>Languages</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                    {safeArray<string>(cv?.skills?.languages).map((t, i) => (
-                      <Text key={i} style={s.chip}>{t}</Text>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {education.length > 0 && (
-                <View style={s.section}>
-                  <Text style={s.title}>Education</Text>
-                  {education.map((e: any, i: number) => (
-                    <View key={i} style={s.item}>
-                      <Text>{[e.degree, e.institution].filter(Boolean).join(' • ')}</Text>
-                      <Text style={s.sub}>{[e.location, [e.startDate, e.endDate].filter(Boolean).join(' - ')].filter(Boolean).join(' • ')}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </Page>
-    </Document>
-  )
-}
-
-// Creative: left sidebar with accent background; right content
-export function CreativePDFTemplate({ cv, language }: { cv: any; language?: string }) {
-  const rtl = isRTLLang(language || cv?.language)
-  const p = paletteByTemplate.creative
-  const s = StyleSheet.create({
-    page: { padding: 0, fontSize: 11, lineHeight: 1.4, fontFamily: pickFont(rtl) },
-    row: { flexDirection: 'row' },
-    sidebar: { width: '30%', backgroundColor: p.accent, color: p.onAccent || '#fff', padding: 18, minHeight: '100%' },
-    main: { width: '70%', padding: 24 },
-    name: { fontSize: 22, fontWeight: 700, color: p.onAccent || '#fff' },
-    pill: { backgroundColor: '#ffffff', color: p.accent, borderRadius: 9999, paddingHorizontal: 8, paddingVertical: 2, fontSize: 9, marginRight: 6, marginTop: 6 },
-    label: { fontSize: 11, color: p.onAccent || '#fff', textTransform: 'uppercase', marginTop: 10, marginBottom: 4 },
-    chipContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffffff', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, marginRight: 4, marginBottom: 4 },
-    chipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#FFE200', marginRight: 4 },
-    chipText: { fontSize: 9, color: p.accent },
-    section: { marginTop: 14 },
-    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    yellowDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#FFE200' },
-    title: { fontSize: 12, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: 0.5 },
-    bullets: { marginTop: 4, paddingLeft: rtl ? 0 : 10, paddingRight: rtl ? 10 : 0 },
-    bullet: { marginBottom: 3, textAlign: rtl ? 'right' : 'left' },
-    sub: { color: '#6b7280' },
-  })
-  const name = cv.fullName || cv?.personalInfo?.fullName || 'Unnamed Candidate'
+  const title = cv.title || cv?.personalInfo?.title || ''
   const email = cv.email || cv?.personalInfo?.email || ''
   const phone = cv.phone || cv?.personalInfo?.phone || ''
   const location = cv.location || cv?.personalInfo?.location || ''
+  const photo = cv.photoUrl || cv?.personalInfo?.photoUrl || cv?.avatarUrl || cv?.personalInfo?.avatarUrl
+  const links = (cv?.links || cv?.personalInfo?.links || {}) as Record<string, string>
   const summary = cv.summary || cv?.personalInfo?.summary || ''
   const education = safeArray<any>(cv.education)
   const experience = safeArray<any>(cv.experience || (cv.experienceProjects || []).filter((it: any) => !it.type || it.type === 'experience'))
@@ -294,56 +61,92 @@ export function CreativePDFTemplate({ cv, language }: { cv: any; language?: stri
   const langs = safeArray<string>(cv?.skills?.languages)
   const soft = safeArray<string>(cv?.skills?.soft)
 
+  const dateRange = (start?: string, end?: string, current?: boolean) => {
+    const s = (start || '').toString().trim()
+    const e = (end || '').toString().trim()
+    return [s, (e || (current ? 'Present' : ''))].filter(Boolean).join(' — ')
+  }
+
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        <View style={s.row}>
-          <View style={s.sidebar}>
+        {/* Header */}
+        <View style={s.header}>
+          <View style={s.nameRow}>
             <Text style={s.name}>{name}</Text>
-            {location ? <Text>{location}</Text> : null}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              {email ? <Text style={s.pill}>{email}</Text> : null}
-              {phone ? <Text style={s.pill}>{phone}</Text> : null}
-            </View>
-            {(tech.length > 0 || langs.length > 0 || soft.length > 0) && (
-              <View>
-                <Text style={s.label}>Skills</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                  {tech.slice(0, 24).map((t, i) => (
-                    <View key={i} style={s.chipContainer}>
-                      <View style={s.chipDot} />
-                      <Text style={s.chipText}>{t}</Text>
-                    </View>
+            {title ? <Text style={s.sub}>{title}</Text> : null}
+          </View>
+          {(email || phone || location) && (
+            <Text style={s.contact}>{[email, phone, location].filter(Boolean).join(' • ')}</Text>
+          )}
+          <View style={s.rule} />
+        </View>
+
+        {/* Grid */}
+        <View style={s.grid}>
+          {/* Left rail */}
+          <View style={s.left}>
+            {(Object.keys(links).length > 0) && (
+              <View style={s.section}>
+                <Text style={s.title}>Links</Text>
+                <View style={s.chips}>
+                  {Object.entries(links).slice(0, 6).map(([k, v], i) => (
+                    <Text key={i} style={s.chip}>{(k || v).toString().replace(/^https?:\/\//,'')}</Text>
                   ))}
                 </View>
-                {langs.length > 0 && <Text style={{ color: p.onAccent || '#fff', marginTop: 6 }}>Languages: {langs.join(', ')}</Text>}
+              </View>
+            )}
+
+            {tech.length > 0 && (
+              <View style={s.section}>
+                <Text style={s.title}>Skills</Text>
+                <View style={s.chips}>
+                  {tech.map((t, i) => (<Text key={i} style={s.chip}>{t}</Text>))}
+                </View>
+              </View>
+            )}
+
+            {langs.length > 0 && (
+              <View style={s.section}>
+                <Text style={s.title}>Languages</Text>
+                <View style={s.chips}>
+                  {langs.map((t, i) => (<Text key={i} style={s.chip}>{t}</Text>))}
+                </View>
+              </View>
+            )}
+
+            {soft.length > 0 && (
+              <View style={s.section}>
+                <Text style={s.title}>Soft Skills</Text>
+                <View style={s.chips}>
+                  {soft.map((t, i) => (<Text key={i} style={s.chip}>{t}</Text>))}
+                </View>
               </View>
             )}
           </View>
-          <View style={s.main}>
+
+          {/* Right content */}
+          <View style={s.right}>
             {summary ? (
               <View style={s.section}>
-                <View style={s.titleRow}>
-                  <View style={s.yellowDot} />
-                  <Text style={s.title}>Professional Summary</Text>
-                </View>
+                <Text style={s.title}>Summary</Text>
                 <Text style={s.sub}>{summary}</Text>
               </View>
             ) : null}
 
             {experience.length > 0 && (
               <View style={s.section}>
-                <View style={s.titleRow}>
-                  <View style={s.yellowDot} />
-                  <Text style={s.title}>Experience</Text>
-                </View>
+                <Text style={s.title}>Experience</Text>
                 {experience.map((e: any, i: number) => (
-                  <View key={i} style={{ marginTop: 6 }}>
-                    <Text>{[e.position || e.title, e.company].filter(Boolean).join(' • ')}</Text>
-                    <Text style={s.sub}>{[e.location, [e.startDate, e.endDate || (e.current ? 'Present' : '')].filter(Boolean).join(' - ')].filter(Boolean).join(' • ')}</Text>
-                    {safeArray<string>(e.bullets).slice(0, 6).length > 0 && (
+                  <View key={i} style={s.item}>
+                    <View style={s.row}>
+                      <Text style={s.role}>{[e.position || e.title, e.company].filter(Boolean).join(' • ')}</Text>
+                      <Text style={s.sub}>{dateRange(e.startDate, e.endDate, e.current)}</Text>
+                    </View>
+                    {e.location ? <Text style={s.sub}>{e.location}</Text> : null}
+                    {safeArray<string>(e.bullets).slice(0, 5).length > 0 && (
                       <View style={s.bullets}>
-                        {safeArray<string>(e.bullets).slice(0, 6).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
+                        {safeArray<string>(e.bullets).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
                       </View>
                     )}
                   </View>
@@ -353,15 +156,24 @@ export function CreativePDFTemplate({ cv, language }: { cv: any; language?: stri
 
             {projects.length > 0 && (
               <View style={s.section}>
-                <View style={s.titleRow}>
-                  <View style={s.yellowDot} />
-                  <Text style={s.title}>Projects</Text>
-                </View>
+                <Text style={s.title}>Projects</Text>
                 {projects.map((p: any, i: number) => (
-                  <View key={i} style={{ marginTop: 6 }}>
-                    <Text>{p.name}</Text>
+                  <View key={i} style={s.item}>
+                    <View style={s.row}>
+                      <Text style={s.role}>{p.name}</Text>
+                      <Text style={s.sub}>{dateRange(p.startDate, p.endDate, p.current)}</Text>
+                    </View>
                     {p.description ? <Text style={s.sub}>{p.description}</Text> : null}
-                    {safeArray<string>(p.bullets).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
+                    {safeArray<string>(p.bullets).slice(0, 5).length > 0 && (
+                      <View style={s.bullets}>
+                        {safeArray<string>(p.bullets).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
+                      </View>
+                    )}
+                    {safeArray<string>(p.technologies).length > 0 && (
+                      <View style={s.chips}>
+                        {safeArray<string>(p.technologies).map((t, ti) => (<Text key={ti} style={s.chip}>{t}</Text>))}
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
@@ -369,14 +181,19 @@ export function CreativePDFTemplate({ cv, language }: { cv: any; language?: stri
 
             {education.length > 0 && (
               <View style={s.section}>
-                <View style={s.titleRow}>
-                  <View style={s.yellowDot} />
-                  <Text style={s.title}>Education</Text>
-                </View>
+                <Text style={s.title}>Education</Text>
                 {education.map((e: any, i: number) => (
-                  <View key={i} style={{ marginTop: 6 }}>
-                    <Text>{[e.degree, e.institution].filter(Boolean).join(' • ')}</Text>
-                    <Text style={s.sub}>{[e.location, [e.startDate, e.endDate].filter(Boolean).join(' - ')].filter(Boolean).join(' • ')}</Text>
+                  <View key={i} style={s.item}>
+                    <View style={s.row}>
+                      <Text style={s.role}>{[e.degree, e.institution].filter(Boolean).join(' • ')}</Text>
+                      <Text style={s.sub}>{dateRange(e.startDate || e.graduationDate, e.endDate, e.currentlyStudying)}</Text>
+                    </View>
+                    {e.location ? <Text style={s.sub}>{e.location}</Text> : null}
+                    {safeArray<string>(e.details).slice(0, 4).length > 0 && (
+                      <View style={s.bullets}>
+                        {safeArray<string>(e.details).slice(0, 4).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
@@ -388,15 +205,222 @@ export function CreativePDFTemplate({ cv, language }: { cv: any; language?: stri
   )
 }
 
-export function createCVDocument(cv: any = {}, template: CVTemplate = 'minimal', language?: string) {
-  const chosen: CVTemplate = (cv?.template as CVTemplate) || template || 'minimal'
-  switch (chosen) {
-    case 'modern':
-      return <ModernPDFTemplate cv={cv} language={language} />
-    case 'creative':
-      return <CreativePDFTemplate cv={cv} language={language} />
-    case 'minimal':
-    default:
-      return <MinimalPDFTemplate cv={cv} language={language} />
+// Neo‑Brutalist: thick borders, bold headings, tag chips with outlines
+export function BrutalistPDFTemplate({ cv, language, density }: { cv: any; language?: string; density?: 'comfortable' | 'compact' }) {
+  const rtl = isRTLLang(language || cv?.language)
+  const dens = density === 'compact' ? 0.94 : 1
+  const p = paletteByTemplate.brutalist
+  const s = StyleSheet.create({
+    page: { padding: 24 * dens, fontSize: 10.5 * dens, lineHeight: 1.45, fontFamily: pickFont(rtl), backgroundColor: '#F6F7F2' },
+    pageFrame: { backgroundColor: '#A9B8FF', borderWidth: 4, borderColor: '#000', borderRadius: 14, padding: 14 * dens },
+    content: { position: 'relative' },
+    // Decorative shapes
+    shape: { position: 'absolute', top: 0, left: 0 },
+    // Header card with photo
+    headerCard: { backgroundColor: '#fff', borderWidth: 4, borderColor: '#000', borderRadius: 16, padding: 12 * dens, flexDirection: rtl ? 'row-reverse' : 'row' },
+    photoWrap: { width: 110, height: 110, borderRadius: 14, overflow: 'hidden', borderWidth: 4, borderColor: '#000' },
+    headerTextCol: { flex: 1, paddingLeft: rtl ? 0 : 12, paddingRight: rtl ? 12 : 0, justifyContent: 'center' },
+    name: { fontSize: 28 * dens, fontWeight: 900, color: '#000' },
+    titlePill: { alignSelf: 'flex-start', marginTop: 6, backgroundColor: '#FBE36A', borderWidth: 4, borderColor: '#000', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 8, fontSize: 11, fontWeight: 700 },
+    summary: { marginTop: 8, color: '#111' },
+    // Cards
+    card: { backgroundColor: '#fff', borderWidth: 4, borderColor: '#000', borderRadius: 16, padding: 10 * dens },
+    pillWrap: { alignItems: rtl ? 'flex-end' : 'flex-start', marginBottom: 6 },
+    pillPurple: { backgroundColor: '#E9CCFF', borderWidth: 4, borderColor: '#000', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10, fontSize: 11, fontWeight: 800, color: '#000' },
+    pillYellow: { backgroundColor: '#FBE36A', borderWidth: 4, borderColor: '#000', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10, fontSize: 11, fontWeight: 800, color: '#000' },
+    pillGreen: { backgroundColor: '#C9F8A3', borderWidth: 4, borderColor: '#000', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10, fontSize: 11, fontWeight: 800, color: '#000' },
+    // Grid
+    gridRow: { flexDirection: rtl ? 'row-reverse' : 'row', gap: 10, marginTop: 10 },
+    leftCol: { width: '38%', gap: 10 },
+    rightCol: { width: '62%', gap: 10 },
+    // Items
+    item: { marginTop: 6, padding: 8, borderWidth: 3, borderColor: '#000', borderRadius: 12 },
+    row: { flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between' },
+    role: { fontSize: 12, fontWeight: 800, color: '#000' },
+    meta: { fontSize: 10, color: '#111' },
+    bullets: { marginTop: 6, paddingLeft: rtl ? 0 : 10, paddingRight: rtl ? 10 : 0 },
+    bullet: { marginBottom: 3.2, color: '#000' },
+    chipsRow: { flexDirection: rtl ? 'row-reverse' : 'row', flexWrap: 'wrap', marginTop: 6 },
+    chip: { borderWidth: 3, borderColor: '#000', paddingVertical: 3, paddingHorizontal: 6, borderRadius: 9999, fontSize: 9.5, color: '#000', marginRight: rtl ? 0 : 6, marginLeft: rtl ? 6 : 0, marginBottom: 6 },
+    contactRow: { flexDirection: rtl ? 'row-reverse' : 'row', flexWrap: 'wrap' },
+    contactTag: { borderWidth: 3, borderColor: '#000', paddingVertical: 3, paddingHorizontal: 6, borderRadius: 8, fontSize: 9.5, color: '#000', marginRight: rtl ? 0 : 6, marginLeft: rtl ? 6 : 0, marginBottom: 6 },
+  })
+
+  const name = cv.fullName || cv?.personalInfo?.fullName || 'Unnamed Candidate'
+  const title = cv.title || cv?.personalInfo?.title || ''
+  const email = cv.email || cv?.personalInfo?.email || ''
+  const phone = cv.phone || cv?.personalInfo?.phone || ''
+  const location = cv.location || cv?.personalInfo?.location || ''
+  const photo = cv.photoUrl || cv?.personalInfo?.photoUrl || cv?.avatarUrl || cv?.personalInfo?.avatarUrl
+  const links = (cv?.links || cv?.personalInfo?.links || {}) as Record<string, string>
+  const summary = cv.summary || cv?.personalInfo?.summary || ''
+  const education = safeArray<any>(cv.education)
+  const experience = safeArray<any>(cv.experience || (cv.experienceProjects || []).filter((it: any) => !it.type || it.type === 'experience'))
+  const projects = safeArray<any>(cv.projects || (cv.experienceProjects || []).filter((it: any) => it.type === 'project'))
+  const tech = safeArray<string>(cv?.skills?.technical)
+  const langs = safeArray<string>(cv?.skills?.languages)
+  const soft = safeArray<string>(cv?.skills?.soft)
+
+  const dateRange = (start?: string, end?: string, current?: boolean) => {
+    const s = (start || '').toString().trim()
+    const e = (end || '').toString().trim()
+    return [s, (e || (current ? 'Present' : ''))].filter(Boolean).join(' — ')
   }
+
+  return (
+    <Document>
+      <Page size="A4" style={s.page}>
+        <View style={s.pageFrame}>
+          <View style={s.content}>
+            {/* Decorative shapes */}
+            <Svg style={[s.shape, { top: -6, left: -6 }]} width={40} height={40}>
+              <Rect x={2} y={2} width={36} height={36} fill="#FBE36A" stroke="#000" strokeWidth={4} rx={8} />
+            </Svg>
+            <Svg style={[s.shape, { top: 6, right: 6, left: 'auto' }]} width={26} height={26}>
+              <Circle cx={13} cy={13} r={11} fill="#C9F8A3" stroke="#000" strokeWidth={4} />
+            </Svg>
+
+            {/* Header card */}
+            <View style={s.headerCard}>
+              {photo ? (
+                <View style={s.photoWrap}>
+                  <Image src={photo} style={{ width: '100%', height: '100%' }} />
+                </View>
+              ) : (
+                <View style={[s.photoWrap, { alignItems: 'center', justifyContent: 'center', backgroundColor: '#EEE' }]}>
+                  <Text style={{ fontSize: 10 }}>No Photo</Text>
+                </View>
+              )}
+              <View style={s.headerTextCol}>
+                <Text style={s.name}>{name}</Text>
+                {title ? <Text style={s.titlePill}>{title}</Text> : null}
+                {summary ? <Text style={s.summary}>{summary}</Text> : null}
+              </View>
+            </View>
+
+            {/* Grid */}
+            <View style={s.gridRow}>
+              {/* Left column */}
+              <View style={s.leftCol}>
+                {/* Education */}
+                {education.length > 0 ? (
+                  <View style={s.card}>
+                    <View style={s.pillWrap}><Text style={s.pillYellow}>Education</Text></View>
+                    {education.map((e: any, i: number) => (
+                      <View key={i} style={s.item}>
+                        <View style={s.row}>
+                          <Text style={s.role}>{[e.degree, e.institution].filter(Boolean).join(' • ')}</Text>
+                          <Text style={s.meta}>{dateRange(e.startDate || e.graduationDate, e.endDate, e.currentlyStudying)}</Text>
+                        </View>
+                        {e.location ? <Text style={s.meta}>{e.location}</Text> : null}
+                        {safeArray<string>(e.details).slice(0, 4).length > 0 && (
+                          <View style={s.bullets}>
+                            {safeArray<string>(e.details).slice(0, 4).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                {/* Skills */}
+                {(tech.length > 0 || soft.length > 0) ? (
+                  <View style={s.card}>
+                    <View style={s.pillWrap}><Text style={s.pillPurple}>Skills</Text></View>
+                    <View style={s.chipsRow}>
+                      {tech.map((t, i) => (<Text key={`t-${i}`} style={s.chip}>{t}</Text>))}
+                      {soft.map((t, i) => (<Text key={`s-${i}`} style={s.chip}>{t}</Text>))}
+                    </View>
+                  </View>
+                ) : null}
+
+                {/* Languages */}
+                {langs.length > 0 ? (
+                  <View style={s.card}>
+                    <View style={s.pillWrap}><Text style={s.pillGreen}>Languages</Text></View>
+                    <View style={s.chipsRow}>
+                      {langs.map((t, i) => (<Text key={`l-${i}`} style={s.chip}>{t}</Text>))}
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* Right column */}
+              <View style={s.rightCol}>
+                {/* Experience */}
+                {experience.length > 0 ? (
+                  <View style={s.card}>
+                    <View style={s.pillWrap}><Text style={s.pillPurple}>Experience</Text></View>
+                    {experience.map((e: any, i: number) => (
+                      <View key={i} style={s.item}>
+                        <View style={s.row}>
+                          <Text style={s.role}>{[e.position || e.title, e.company].filter(Boolean).join(' • ')}</Text>
+                          <Text style={s.meta}>{dateRange(e.startDate, e.endDate, e.current)}</Text>
+                        </View>
+                        {e.location ? <Text style={s.meta}>{e.location}</Text> : null}
+                        {safeArray<string>(e.bullets).slice(0, 5).length > 0 && (
+                          <View style={s.bullets}>
+                            {safeArray<string>(e.bullets).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                {/* Projects */}
+                {projects.length > 0 ? (
+                  <View style={s.card}>
+                    <View style={s.pillWrap}><Text style={s.pillYellow}>Projects</Text></View>
+                    {projects.map((p: any, i: number) => (
+                      <View key={i} style={s.item}>
+                        <View style={s.row}>
+                          <Text style={s.role}>{p.name}</Text>
+                          <Text style={s.meta}>{dateRange(p.startDate, p.endDate, p.current)}</Text>
+                        </View>
+                        {p.description ? <Text style={s.meta}>{p.description}</Text> : null}
+                        {safeArray<string>(p.technologies).length > 0 ? (
+                          <View style={s.chipsRow}>
+                            {safeArray<string>(p.technologies).map((t, ti) => (<Text key={ti} style={s.chip}>{t}</Text>))}
+                          </View>
+                        ) : null}
+                        {safeArray<string>(p.bullets).slice(0, 5).length > 0 && (
+                          <View style={s.bullets}>
+                            {safeArray<string>(p.bullets).slice(0, 5).map((b, bi) => (<Text key={bi} style={s.bullet}>• {b}</Text>))}
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            </View>
+
+            {/* Contact card at bottom */}
+            {(email || phone || location || Object.keys(links).length > 0) ? (
+              <View style={[s.card, { marginTop: 12 }] }>
+                <View style={s.pillWrap}><Text style={s.pillYellow}>Contact</Text></View>
+                <View style={s.contactRow}>
+                  {[email, phone, location].filter(Boolean).map((v, i) => (
+                    <Text key={i} style={s.contactTag}>{String(v)}</Text>
+                  ))}
+                  {Object.entries(links).slice(0, 6).map(([k, v], i) => (
+                    <Text key={`c-${i}`} style={s.contactTag}>{(k || v).toString().replace(/^https?:\/\//,'')}</Text>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </Page>
+    </Document>
+  )
+}
+
+export function createCVDocument(cv: any = {}, _template?: any, language?: string, _density: 'comfortable' | 'compact' = 'comfortable') {
+  return <ProfessionalPDFTemplate cv={cv} language={language} density={'comfortable'} />
+}
+
+export function createBrutalistDocument(cv: any = {}, language?: string, density: 'comfortable' | 'compact' = 'comfortable') {
+  return <BrutalistPDFTemplate cv={cv} language={language} density={density} />
 }

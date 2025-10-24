@@ -58,7 +58,7 @@ curl https://your-app.vercel.app/api/health
 # Expected: 200 OK
 
 # Check rate limiting is active
-curl -X POST https://your-app.vercel.app/api/cv/submit -H "Content-Type: application/json" -d '{}'
+curl -X POST https://your-app.vercel.app/api/submit -H "Content-Type: application/json" -d '{}'
 # Expected: 400 or rate limit response
 ```
 

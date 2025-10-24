@@ -122,7 +122,7 @@ curl -H "Authorization: Bearer wrong_key" https://app.knet.kw/admin
 ### Rate Limiting Test
 ```bash
 for i in {1..6}; do
-  curl -X POST https://app.knet.kw/api/cv/submit -d '{}' -H "Content-Type: application/json"
+  curl -X POST https://app.knet.kw/api/submit -d '{}' -H "Content-Type: application/json"
 done
 # Expected: 6th request returns 429
 ```

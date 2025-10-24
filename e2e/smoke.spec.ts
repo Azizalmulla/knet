@@ -75,7 +75,7 @@ test.describe('Production Smoke Tests', () => {
   test('rate limiting is active', async ({ request }) => {
     // Make multiple rapid requests to test rate limiting
     const promises = Array.from({ length: 3 }, () => 
-      request.post(`${base}/api/cv/submit`, {
+      request.post(`${base}/api/submit`, {
         data: { test: 'data' }
       })
     );
@@ -84,7 +84,7 @@ test.describe('Production Smoke Tests', () => {
     
     // At least one should succeed (200) or be rate limited (429)
     const statusCodes = responses.map(r => r.status());
-    const hasValidResponse = statusCodes.some(code => code === 200 || code === 429 || code === 400);
+    const hasValidResponse = statusCodes.some(code => code === 200 || code === 429 || code === 400 || code === 401);
     expect(hasValidResponse).toBe(true);
   });
 

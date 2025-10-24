@@ -15,7 +15,7 @@ export const educationSchema = z.object({
     institution: z.string().min(1, 'Institution is required'),
     degree: z.string().min(1, 'Degree is required'),
     fieldOfStudy: z.string().min(1, 'Field of study is required'),
-    graduationDate: z.string().min(1, 'Graduation date is required'),
+    startDate: z.string().min(1, 'Start date is required'),
     endDate: z.string().optional(),
     currentlyStudying: z.boolean().default(false),
     gpa: z.string().optional(),
@@ -42,6 +42,9 @@ export const experienceProjectsSchema = z.object({
       description: z.string().min(1, 'Required'),
       technologies: z.array(z.string()).default([]),
       url: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      current: z.boolean().default(false).optional(),
       bullets: z.array(z.string()).default([]),
     }),
   ])).default([]),
@@ -88,14 +91,15 @@ export const cvSchema = z.object({
   experience: z.array(z.any()).default([]),
   projects: z.array(z.any()).default([]),
   ...skillsSchema.shape,
-  template: z.enum(['minimal', 'modern', 'creative']).default('minimal'),
+  links: z.record(z.string()).optional(),
+  template: z.literal('professional').default('professional'),
   language: z.enum(['en', 'ar']).default('en'),
 });
 
 // Groups of fields per step for targeted validation with trigger([...])
 export const stepFields = {
   0: ['fullName', 'email', 'phone', 'location'] as const,
-  1: ['education.0.institution', 'education.0.degree', 'education.0.fieldOfStudy', 'education.0.graduationDate'] as const,
+  1: ['education.0.institution', 'education.0.degree', 'education.0.fieldOfStudy', 'education.0.startDate'] as const,
   2: [] as const, // experienceProjects step - validation handled in component
   3: [] as const, // skills step
   4: [] as const, // review step
@@ -115,7 +119,7 @@ export const defaultCVValues: CVData = {
       institution: '',
       degree: '',
       fieldOfStudy: '',
-      graduationDate: '',
+      startDate: '',
       endDate: '',
       currentlyStudying: false,
       gpa: '',
@@ -131,7 +135,8 @@ export const defaultCVValues: CVData = {
     languages: [],
     soft: [],
   },
-  template: 'minimal',
+  links: {},
+  template: 'professional',
   language: 'en',
 };
 
@@ -156,7 +161,7 @@ export function createLocalizedCvSchema(t: (key: string) => string) {
       institution: z.string().min(1, t('required')),
       degree: z.string().min(1, t('required')),
       fieldOfStudy: z.string().min(1, t('required')),
-      graduationDate: z.string().min(1, t('required')),
+      startDate: z.string().min(1, t('required')),
       endDate: z.string().optional(),
       currentlyStudying: z.boolean().default(false),
       gpa: z.string().optional(),
@@ -182,6 +187,9 @@ export function createLocalizedCvSchema(t: (key: string) => string) {
         description: z.string().min(1, t('required')),
         technologies: z.array(z.string()).default([]),
         url: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        current: z.boolean().default(false).optional(),
         bullets: z.array(z.string()).default([]),
       }),
     ])).default([]),
@@ -220,7 +228,8 @@ export function createLocalizedCvSchema(t: (key: string) => string) {
     experience: z.array(z.any()).default([]),
     projects: z.array(z.any()).default([]),
     ...localizedSkills.shape,
-    template: z.enum(['minimal', 'modern', 'creative']).default('minimal'),
+    links: z.record(z.string()).optional(),
+    template: z.literal('professional').default('professional'),
     language: z.enum(['en', 'ar']).default('en'),
   });
 }

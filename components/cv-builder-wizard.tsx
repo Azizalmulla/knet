@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm, FormProvider, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertCircle, Save, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertCircle, Save, RotateCcw, Briefcase } from 'lucide-react';
 import { useAutosave, loadDraft, clearDraft, hasDraft, getDraftInfo } from '@/lib/autosave';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { PersonalInfoStep } from './cv-steps/personal-info-step';
@@ -27,6 +28,8 @@ const steps = [
 
 export default function CVBuilderWizard() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
+  const orgSlug = (searchParams as any)?.get?.('org') || undefined;
   const schema = useMemo(() => createLocalizedCvSchema(t), [t]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,11 +37,12 @@ export default function CVBuilderWizard() {
   const [showDraftRestore, setShowDraftRestore] = useState(false);
   const [draftInfo, setDraftInfo] = useState<{ timestamp: number; age: string } | null>(null);
   const [cvData, setCvData] = useState<CVData>(defaultCVValues);
+  const [jobContext, setJobContext] = useState<{ jobId: string; jobTitle: string; company: string } | null>(null);
 
   const onSubmit = async (data: CVData) => {
     // This is called when the user clicks "Complete" on the Review step
     console.log('Form completed:', data);
-    // The actual submit to KNET is handled by the Submit button in ReviewStep
+    // The actual submit is handled by the Submit button in ReviewStep
     // This just marks the form as complete
     clearDraft();
     console.log('✅ CV Builder completed');
@@ -51,7 +55,7 @@ export default function CVBuilderWizard() {
       case 'education':
         return t('step_education');
       case 'experienceProjects':
-        return 'Experience & Projects';
+        return t('experience_projects_title');
       case 'skills':
         return t('step_skills');
       case 'review':
@@ -71,13 +75,52 @@ export default function CVBuilderWizard() {
   // Set up autosave functionality
   useAutosave(form.watch);
 
-  // Check for existing draft on component mount
+  // Check for existing draft and job context on component mount
   useEffect(() => {
     if (hasDraft()) {
       const info = getDraftInfo();
       setDraftInfo(info);
       setShowDraftRestore(true);
     }
+    
+    // Check if user came from job application
+    if (typeof window !== 'undefined') {
+      const returnToJobData = localStorage.getItem('return_to_job');
+      if (returnToJobData) {
+        try {
+          const job = JSON.parse(returnToJobData);
+          setJobContext(job);
+        } catch {}
+      }
+    }
+  }, []);
+
+  // Listen for external step navigation requests (e.g., from Review 'Go fix')
+  useEffect(() => {
+    const handler = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent)?.detail as { id?: string } | undefined;
+        const id = detail?.id;
+        if (!id) return;
+        const idx = steps.findIndex(s => s.id === id);
+        if (idx >= 0) {
+          setCurrentStep(idx);
+          // Focus a primary field after navigation (Education)
+          if (id === 'education') {
+            setTimeout(() => {
+              try {
+                const el = document.querySelector('input[id^="institution-"]') as HTMLInputElement | null;
+                el?.focus();
+              } catch {}
+            }, 50);
+          }
+          // Scroll to top of the step card
+          setTimeout(() => { try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }, 0);
+        }
+      } catch {}
+    };
+    try { window.addEventListener('wizard:go-to', handler as any); } catch {}
+    return () => { try { window.removeEventListener('wizard:go-to', handler as any); } catch {} };
   }, []);
 
   const nextStep = async () => {
@@ -162,7 +205,7 @@ export default function CVBuilderWizard() {
 
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+    <div className="min-h-screen bg-[#eeeee4] text-neutral-900">
       <div className="mx-auto max-w-4xl px-4 py-8">
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -201,6 +244,23 @@ export default function CVBuilderWizard() {
               </Alert>
             )}
             
+            {/* Job Application Context Banner - Sticky */}
+            {jobContext && (
+              <div className="sticky top-0 z-10 mb-6 p-4 rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#ffd6a5] border-[2px] border-black flex items-center justify-center flex-shrink-0">
+                    <Briefcase className="w-5 h-5 text-black" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">Building CV for Job Application</p>
+                    <p className="text-sm text-neutral-600 truncate">
+                      {jobContext.jobTitle} at {jobContext.company}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Progress */}
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
@@ -210,20 +270,25 @@ export default function CVBuilderWizard() {
                 </span>
               </div>
             <Progress value={progress} className="h-2" />
-            <div className="flex justify-between mt-2">
+            <div className="hidden sm:flex justify-between mt-2">
               {steps.map((step, index) => (
                 <span
                   key={step.id}
-                  className={`text-xs ${index <= currentStep ? 'text-foreground' : 'text-muted-foreground'}`}
+                  className={`text-xs ${index <= currentStep ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
                 >
                   {getStepTitle(step.id)}
                 </span>
               ))}
             </div>
+            <div className="flex sm:hidden justify-center mt-2">
+              <span className="text-xs font-medium text-foreground">
+                {getStepTitle(steps[currentStep].id)}
+              </span>
+            </div>
             </div>
 
             {/* Step Content */}
-            <Card className="mb-8" onKeyDown={handleKeyDown}>
+            <Card className="mb-8 rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]" onKeyDown={handleKeyDown}>
               <CardHeader>
                 <CardTitle data-testid="step-title">{getStepTitle(steps[currentStep].id)}</CardTitle>
               </CardHeader>
@@ -236,25 +301,28 @@ export default function CVBuilderWizard() {
             </Card>
 
             {/* Navigation */}
-            <div className="flex justify-between">
+            <div className="flex flex-col sm:flex-row justify-between gap-3">
               <Button
                 variant="outline"
                 onClick={prevStep}
                 type="button"
                 disabled={currentStep === 0}
                 data-testid="prev-btn"
+                className="w-full sm:w-auto rounded-2xl border-[3px] border-black bg-white text-black shadow-[6px_6px_0_#111] hover:-translate-y-0.5 hover:bg-neutral-100 transition-transform"
               >
-                {t('previous')}
+                ← {t('previous')}
               </Button>
               {currentStep === steps.length - 1 ? (
                 <div />
               ) : (
                 <Button
+                  variant="outline"
                   onClick={nextStep}
                   type="button"
                   data-testid="next-btn"
+                  className="w-full sm:w-auto rounded-2xl border-[3px] border-black bg-white text-black shadow-[6px_6px_0_#111] hover:-translate-y-0.5 hover:bg-neutral-100 transition-transform"
                 >
-                  {t('next')}
+                  {t('next')} →
                 </Button>
               )}
             </div>

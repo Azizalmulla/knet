@@ -4,7 +4,7 @@ import { sql } from '@vercel/postgres'
 if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
   process.env.POSTGRES_URL = process.env.DATABASE_URL
 }
-import { jwtVerify } from 'jose'
+import { jwtVerify } from '@/lib/esm-compat/jose'
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
 
@@ -21,6 +21,38 @@ async function resolveOrganization(slug: string): Promise<{ id: string; slug: st
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+
+  // Early allow: all API routes except the org-scoped admin API and super-admin API should pass through
+  // e.g. /api/admin/migrate, /api/telemetry, /api/student/*, etc.
+  // NOTE: We must NOT early-return for /api/super-admin so we can inject x-superadmin headers below.
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/super-admin')) {
+    const adminApiOrgMatch = pathname.match(/^\/api\/([^\/]+)\/admin/)
+    // If not an org-scoped admin API (/api/:org/admin/*), let it pass
+    if (!adminApiOrgMatch) {
+      return NextResponse.next()
+    }
+  }
+
+  // Inject x-superadmin for API routes when email is allowlisted
+  if (pathname.startsWith('/api/super-admin')) {
+    const requestHeaders = new Headers(req.headers)
+    try {
+      const superAdminSession = req.cookies.get('super_admin_session')?.value
+      if (superAdminSession) {
+        const secret = new TextEncoder().encode(JWT_SECRET)
+        const { payload } = await jwtVerify(superAdminSession, secret)
+        const email = String((payload as any)?.email || '').toLowerCase().trim()
+        const allowEmails = (process.env.SUPERADMIN_EMAILS || '').split(',').map(s => s.toLowerCase().trim()).filter(Boolean)
+        const singleEmail = (process.env.SUPER_ADMIN_EMAIL || 'super@careerly.com').toLowerCase().trim()
+        const allow = allowEmails.length > 0 ? allowEmails : [singleEmail]
+        if (email && allow.includes(email)) {
+          requestHeaders.set('x-superadmin', 'true')
+          requestHeaders.set('x-superadmin-email', email)
+        }
+      }
+    } catch {}
+    return NextResponse.next({ request: { headers: requestHeaders } })
+  }
 
   // Handle super admin routes
   if (pathname.startsWith('/super-admin')) {
@@ -67,10 +99,12 @@ export async function middleware(req: NextRequest) {
       pathname.endsWith('/admin/login') ||
       pathname.endsWith('/admin/forgot') ||
       pathname.endsWith('/admin/reset') ||
+      pathname.endsWith('/admin/accept-invite') ||
       pathname.endsWith('/api/'+orgSlug+'/admin/login') ||
       pathname.endsWith('/api/'+orgSlug+'/admin/forgot') ||
       pathname.endsWith('/api/'+orgSlug+'/admin/reset') ||
-      pathname.endsWith('/api/'+orgSlug+'/admin/logout')
+      pathname.endsWith('/api/'+orgSlug+'/admin/logout') ||
+      pathname.endsWith('/api/'+orgSlug+'/admin/accept-invite')
     )
     
     // Resolve org from DB
@@ -94,7 +128,21 @@ export async function middleware(req: NextRequest) {
         ? NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         : (() => { const url = req.nextUrl.clone(); url.pathname = `/${orgSlug}/admin/login`; return NextResponse.redirect(url) })()
 
+      // Secondary auth path: support header admin key for API calls (legacy/global admin)
+      const providedKey = (req.headers.get('x-admin-key') || '').trim()
+      const envKey = (process.env.ADMIN_KEY || '').trim()
+      const fallbackKey = process.env.NODE_ENV !== 'production' ? 'test-admin-key' : ''
+      const allowedKeys = [envKey, fallbackKey].filter(Boolean)
+
       if (!adminSession) {
+        const internalHeader = (req.headers.get('x-internal-token') || '').trim()
+        const internalEnv = (process.env.INTERNAL_API_TOKEN || '').trim()
+        if (isApi && internalHeader && internalEnv && internalHeader === internalEnv) {
+          return NextResponse.next({ request: { headers: requestHeaders } })
+        }
+        if (isApi && providedKey && allowedKeys.includes(providedKey)) {
+          return NextResponse.next({ request: { headers: requestHeaders } })
+        }
         return unauthorized()
       }
       
@@ -150,15 +198,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // First-time visitors to root get the Careerly landing
-  if (pathname === '/') {
-    const seen = req.cookies.get('seenCareerlyLanding')?.value
-    if (!seen) {
-      const url = req.nextUrl.clone()
-      url.pathname = '/careerly'
-      return NextResponse.redirect(url)
-    }
-  }
+  // Root path: no special handling here. app/page.tsx performs redirect to /start or /career/dashboard.
 
   return NextResponse.next()
 }

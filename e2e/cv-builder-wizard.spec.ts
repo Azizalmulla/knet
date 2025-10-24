@@ -27,7 +27,7 @@ test.describe('CV Builder Wizard', () => {
       await page.getByTestId('field-education-0-institution').fill('Kuwait University');
       await page.getByTestId('field-education-0-degree').fill('Computer Science');
       await page.getByTestId('field-education-0-field').fill('Software Engineering');
-      await page.getByTestId('field-education-0-graduationDate').fill('2020-09');
+      await page.getByTestId('field-education-0-startDate').fill('2020-09');
       
       await expect(page.getByText(/required/i)).not.toBeVisible();
       await page.getByTestId('next-btn').click();

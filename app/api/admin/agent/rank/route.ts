@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
         initialScore: c.score,
       }));
       
-      const systemPrompt = `You are the KNET HR Admin Agent. You read structured CV JSON and rank candidates for a role.
+      const systemPrompt = `You are the Wathefni AI HR Admin Agent. You read structured CV JSON and rank candidates for a role.
 Your job is to rank candidates, explain why, and list gaps/risks.
 Output strict JSON only. No extra prose.
 
