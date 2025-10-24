@@ -31,8 +31,8 @@ interface WatheeftiUploadFormProps {
 
 export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProps) {
   const router = useRouter()
-  const { t, language } = useLanguage()
-  const isRTL = language === 'ar'
+  const { t, lang } = useLanguage()
+  const isRTL = lang === 'ar'
   
   // Form fields
   const [fullName, setFullName] = useState('')
@@ -162,7 +162,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
         gpa: gpa ? formatGPA(gpa) : null,
         cvBlobKey,
         cvType: 'uploaded',
-        language
+        language: lang,
       }
       
       const response = await fetch(`/api/${orgSlug}/submit`, {
@@ -294,7 +294,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
                   <SelectContent>
                     {DEGREE_OPTIONS.map(option => (
                       <SelectItem key={option.value} value={option.value}>
-                        {getFieldLabel(option.value, DEGREE_OPTIONS, language as 'en' | 'ar')}
+                        {getFieldLabel(option.value, DEGREE_OPTIONS, lang)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -315,7 +315,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
                   <SelectContent>
                     {YEARS_OF_EXPERIENCE_OPTIONS.map(option => (
                       <SelectItem key={option.value} value={option.value}>
-                        {getFieldLabel(option.value, YEARS_OF_EXPERIENCE_OPTIONS, language as 'en' | 'ar')}
+                        {getFieldLabel(option.value, YEARS_OF_EXPERIENCE_OPTIONS, lang)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -337,7 +337,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
                 <SelectContent>
                   {FIELD_OF_STUDY_OPTIONS.map(option => (
                     <SelectItem key={option.value} value={option.value}>
-                      {getFieldLabel(option.value, FIELD_OF_STUDY_OPTIONS, language as 'en' | 'ar')}
+                      {getFieldLabel(option.value, FIELD_OF_STUDY_OPTIONS, lang)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -379,7 +379,7 @@ export default function WatheeftiUploadForm({ orgSlug }: WatheeftiUploadFormProp
                 <SelectContent>
                   {AREA_OF_INTEREST_OPTIONS.map(option => (
                     <SelectItem key={option.value} value={option.value}>
-                      {getFieldLabel(option.value, AREA_OF_INTEREST_OPTIONS, language as 'en' | 'ar')}
+                      {getFieldLabel(option.value, AREA_OF_INTEREST_OPTIONS, lang)}
                     </SelectItem>
                   ))}
                 </SelectContent>
