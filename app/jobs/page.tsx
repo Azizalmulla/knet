@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Briefcase, MapPin, DollarSign, Building2, Clock, Search } from 'lucide-react'
 import { Space_Grotesk } from 'next/font/google'
+import { useLanguage } from '@/lib/language'
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"] })
 
@@ -32,6 +33,7 @@ interface Job {
 }
 
 function JobsPageContent() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -68,13 +70,13 @@ function JobsPageContent() {
   }
 
   const formatSalary = (job: Job) => {
-    if (!job.salary_min && !job.salary_max) return 'Salary not specified'
+    if (!job.salary_min && !job.salary_max) return t('salary_not_specified')
     const currency = job.salary_currency || 'KWD'
     if (job.salary_min && job.salary_max) {
       return `${currency} ${job.salary_min} - ${job.salary_max}`
     }
     if (job.salary_min) return `${currency} ${job.salary_min}+`
-    return `Up to ${currency} ${job.salary_max}`
+    return `${t('up_to')} ${currency} ${job.salary_max}`
   }
 
   const getRelativeTime = (dateString: string) => {
@@ -82,11 +84,11 @@ function JobsPageContent() {
     const now = new Date()
     const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
     
-    if (diffInDays === 0) return 'Today'
-    if (diffInDays === 1) return 'Yesterday'
-    if (diffInDays < 7) return `${diffInDays} days ago`
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`
-    return `${Math.floor(diffInDays / 30)} months ago`
+    if (diffInDays === 0) return t('today')
+    if (diffInDays === 1) return t('yesterday')
+    if (diffInDays < 7) return t('days_ago', { count: diffInDays })
+    if (diffInDays < 30) return t('weeks_ago', { count: Math.floor(diffInDays / 7) })
+    return t('months_ago', { count: Math.floor(diffInDays / 30) })
   }
 
   return (
@@ -96,10 +98,10 @@ function JobsPageContent() {
         <div className="mx-auto max-w-7xl px-4 py-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-2 inline-block border-b-[4px] border-black pb-2">
-              Find Your Next Opportunity
+              {t('find_next_opportunity')}
             </h1>
             <p className="text-lg text-neutral-600 mt-4">
-              Browse {jobs.length} open positions from top companies
+              {t('browse_latest_openings', { count: jobs.length })}
             </p>
           </div>
 
@@ -108,27 +110,27 @@ function JobsPageContent() {
             <div className="md:col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search jobs by title or keywords..."
+                placeholder={t('search_jobs_by_title_or_keywords')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
             <Input
-              placeholder="Location..."
+              placeholder={t('location')}
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
             />
             <Select value={jobTypeFilter} onValueChange={setJobTypeFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Job Type" />
+                <SelectValue placeholder={t('job_type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="full-time">Full-time</SelectItem>
-                <SelectItem value="part-time">Part-time</SelectItem>
-                <SelectItem value="contract">Contract</SelectItem>
-                <SelectItem value="internship">Internship</SelectItem>
+                <SelectItem value="all">{t('all_types')}</SelectItem>
+                <SelectItem value="full-time">{t('full_time')}</SelectItem>
+                <SelectItem value="part-time">{t('part_time')}</SelectItem>
+                <SelectItem value="contract">{t('contract')}</SelectItem>
+                <SelectItem value="internship">{t('internship')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -139,16 +141,14 @@ function JobsPageContent() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading jobs...</p>
+            <p className="text-muted-foreground">{t('loading_jobs')}</p>
           </div>
         ) : jobs.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Briefcase className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or filters
-              </p>
+              <h3 className="text-lg font-semibold mb-2">{t('no_jobs_found')}</h3>
+              <p className="text-muted-foreground">{t('try_different_filters')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -183,27 +183,27 @@ function JobsPageContent() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 text-sm text-neutral-600 mb-3">
-                        {job.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {job.location}
-                          </span>
-                        )}
-                        {job.job_type && (
-                          <Badge variant="secondary">{job.job_type}</Badge>
-                        )}
-                        {job.work_mode && (
-                          <Badge variant="outline">{job.work_mode}</Badge>
-                        )}
+                      {job.location && (
                         <span className="flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />
-                          {formatSalary(job)}
+                          <MapPin className="w-3 h-3" />
+                          {job.location}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {getRelativeTime(job.created_at)}
-                        </span>
-                      </div>
+                      )}
+                      {job.job_type && (
+                        <Badge variant="secondary">{job.job_type}</Badge>
+                      )}
+                      {job.work_mode && (
+                        <Badge variant="outline">{job.work_mode}</Badge>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3" />
+                        {formatSalary(job)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {getRelativeTime(job.created_at)}
+                      </span>
+                    </div>
 
                     <p className="line-clamp-2 text-neutral-600 text-sm">
                       {job.description}
@@ -218,7 +218,7 @@ function JobsPageContent() {
                         ))}
                         {job.skills.length > 5 && (
                           <span className="px-3 py-1 rounded-full bg-neutral-100 border-[2px] border-black text-xs font-semibold">
-                            +{job.skills.length - 5} more
+                            +{job.skills.length - 5} {t('more')}
                           </span>
                         )}
                       </div>
@@ -226,7 +226,7 @@ function JobsPageContent() {
                   </div>
 
                   <Button className="rounded-2xl border-[2px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 hover:bg-neutral-100 transition-transform">
-                    Apply Now
+                    {t('apply_now')}
                   </Button>
                 </div>
               </div>
