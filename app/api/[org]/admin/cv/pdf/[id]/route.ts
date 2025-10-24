@@ -110,6 +110,13 @@ export async function GET(req: NextRequest, { params }: { params: { org: string;
     const template = (row.cv_template as any) || 'professional'
     const language = langParam || cv.language || 'en'
 
+    // Debug logging
+    console.log('[PDF_ROUTE] Candidate ID:', id)
+    console.log('[PDF_ROUTE] cv_type from DB:', row.cv_type)
+    console.log('[PDF_ROUTE] cvType normalized:', cvType)
+    console.log('[PDF_ROUTE] cv_blob_key:', row.cv_blob_key || 'null')
+    console.log('[PDF_ROUTE] Has cv_json:', !!cv)
+
     // Ensure our shim uses the real renderer primitives in this server environment
     try {
       const mod = await import('@react-pdf/renderer')
@@ -118,6 +125,7 @@ export async function GET(req: NextRequest, { params }: { params: { org: string;
 
     // Check if it's an AI-generated CV (flexible matching for different cv_type values)
     const isAIGenerated = ['ai_generated', 'ai', 'ai_builder', 'generated'].includes(cvType)
+    console.log('[PDF_ROUTE] isAIGenerated:', isAIGenerated)
     
     // For manually uploaded CVs, skip Macchiato and return the original
     if (!isAIGenerated) {

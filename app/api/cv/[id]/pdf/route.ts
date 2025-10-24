@@ -64,6 +64,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const template = (row.cv_template as any) || 'minimal'
     const language = langParam || cv.language || row.language || 'en'
 
+    // Debug logging for legacy route
+    console.log('[LEGACY_PDF_ROUTE] Candidate ID:', id)
+    console.log('[LEGACY_PDF_ROUTE] cv_type from DB:', row.cv_type)
+    console.log('[LEGACY_PDF_ROUTE] cv_blob_key:', row.cv_blob_key || 'null')
+    console.log('[LEGACY_PDF_ROUTE] Has cv_json:', !!cv)
+
     // Fonts are registered at module load if present under public/fonts
 
     // Ensure our shim uses the real renderer primitives in this server environment
@@ -75,6 +81,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     // Check if it's an AI-generated CV (flexible matching)
     const cvType = String(row.cv_type || '').toLowerCase()
     const isAIGenerated = ['ai_generated', 'ai', 'ai_builder', 'generated'].includes(cvType)
+    console.log('[LEGACY_PDF_ROUTE] cvType normalized:', cvType)
+    console.log('[LEGACY_PDF_ROUTE] isAIGenerated:', isAIGenerated)
     
     // Only render Macchiato for AI-generated CVs
     if (!isAIGenerated) {
