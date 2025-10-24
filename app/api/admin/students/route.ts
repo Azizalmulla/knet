@@ -59,7 +59,11 @@ export async function GET(request: Request) {
           COALESCE(c.area_of_interest, '') AS area_of_interest,
           (CASE WHEN c.cv_type::text = 'ai_generated' THEN 'ai' ELSE 'uploaded' END) AS cv_type,
           '' AS cv_url,
-          (CASE WHEN NULLIF(c.cv_blob_key,'') IS NULL THEN false ELSE true END) AS has_cv,
+          (CASE 
+            WHEN NULLIF(c.cv_blob_key,'') IS NOT NULL THEN true
+            WHEN c.cv_json IS NOT NULL AND c.cv_type::text = 'ai_generated' THEN true
+            ELSE false 
+          END) AS has_cv,
           COALESCE(c.cv_json->>'suggestedVacancies', NULL) AS suggested_vacancies,
           COALESCE(
             CASE 
