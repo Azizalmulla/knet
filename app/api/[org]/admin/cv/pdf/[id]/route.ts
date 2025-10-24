@@ -116,8 +116,11 @@ export async function GET(req: NextRequest, { params }: { params: { org: string;
       setReactPdfOverride(mod as any)
     } catch {}
 
+    // Check if it's an AI-generated CV (flexible matching for different cv_type values)
+    const isAIGenerated = ['ai_generated', 'ai', 'ai_builder', 'generated'].includes(cvType)
+    
     // For manually uploaded CVs, skip Macchiato and return the original
-    if (cvType !== 'ai_generated') {
+    if (!isAIGenerated) {
       try {
         const key = String((row as any)?.cv_blob_key || '').trim()
         if (key) {
