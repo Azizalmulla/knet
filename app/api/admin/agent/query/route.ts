@@ -5,6 +5,9 @@ import { checkRateLimitWithConfig, createRateLimitResponse } from '@/lib/rateLim
 import { jwtVerify } from '@/lib/esm-compat/jose';
 import { generateQueryEmbedding, cosineSimilarity } from '@/lib/embeddings';
 
+// Increase function timeout to 60 seconds for complex AI operations
+export const maxDuration = 60;
+
 // Schema for AI plan - Made more forgiving to prevent ZodErrors
 const AIPlanSchema = z.object({
   intent: z.enum(['rank_candidates', 'filter', 'clarify', 'analyze']).default('rank_candidates'),
@@ -290,13 +293,23 @@ No markdown, no extra text, just pure JSON.`;
         { role: 'user', content: userPrompt }
       ];
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages,
-        temperature: 0.3,
-        max_tokens: 800,
-        response_format: { type: 'json_object' }
-      });
+      // Add 25-second timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('OpenAI timeout')), 25000)
+      );
+      
+      const completion = await Promise.race([
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages,
+          temperature: 0.3,
+          max_tokens: 800,
+          response_format: { type: 'json_object' }
+        }, {
+          timeout: 20000 // 20 second timeout in options
+        }),
+        timeoutPromise
+      ]) as any;
 
       const content = completion.choices?.[0]?.message?.content;
       if (content) {
@@ -998,10 +1011,18 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Agent query error:', error);
+    console.error('[AGENT_ERROR]', error);
+    
+    // Specific error messages for better UX
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT');
+    
     return NextResponse.json({ 
-      error: 'Failed to process query',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+      error: isTimeout 
+        ? 'Request timed out. Try a simpler query or try again.' 
+        : 'Failed to process query. Please try again.',
+      details: errorMessage,
+      isTimeout
+    }, { status: isTimeout ? 504 : 500 });
   }
 }
