@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, { params }: { params: { org: st
         role,
         email
       FROM admin_users 
-      WHERE organization_id = ${orgId}::uuid 
+      WHERE org_id = ${orgId}::uuid 
         AND email_lc = ${email.toLowerCase()}
       LIMIT 1
     `
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest, { params }: { params: { org: st
     // Store session in database for tracking
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
     await sql`
-      INSERT INTO admin_sessions (admin_id, organization_id, token_hash, ip_address, user_agent, expires_at)
+      INSERT INTO admin_sessions (admin_id, org_id, token_hash, ip_address, user_agent, expires_at)
       VALUES (
         ${admin.id}::uuid,
         ${orgId}::uuid,
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest, { params }: { params: { org: st
     // Log successful login to admin_activity
     try {
       await sql`
-        INSERT INTO admin_activity (admin_id, organization_id, action, metadata)
+        INSERT INTO admin_activity (admin_id, org_id, action, metadata)
         VALUES (
           ${admin.id}::uuid,
           ${orgId}::uuid,
