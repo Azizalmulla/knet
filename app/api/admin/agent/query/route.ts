@@ -470,6 +470,12 @@ async function queryDatabase(plan: AIPlan, adminMessage: string, orgSlug: string
     const useEmbeddings = !!queryEmbedding;
     
     let rows: any[] = [];
+    
+    // Add 30-second timeout for database queries to prevent hanging
+    const dbTimeout = (ms: number) => new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database query timeout')), ms)
+    );
+    
     try {
       if (useEmbeddings && queryEmbedding) {
         console.log('[AGENT] Using pgvector semantic search');
@@ -498,7 +504,10 @@ async function queryDatabase(plan: AIPlan, adminMessage: string, orgSlug: string
           LIMIT ${clampedLimit}
         `;
         params.push(vectorString);
-        const vres = await sql.query(vectorQuery, params);
+        const vres = await Promise.race([
+          sql.query(vectorQuery, params),
+          dbTimeout(30000)
+        ]) as any;
         rows = vres.rows as any[];
       } else {
         console.log('[AGENT] Using lexical search (no embeddings available)');
@@ -523,7 +532,10 @@ async function queryDatabase(plan: AIPlan, adminMessage: string, orgSlug: string
           ORDER BY c.created_at DESC
           LIMIT ${clampedLimit}
         `;
-        const vres = await sql.query(baseQuery, params);
+        const vres = await Promise.race([
+          sql.query(baseQuery, params),
+          dbTimeout(30000)
+        ]) as any;
         rows = vres.rows as any[];
       }
 
@@ -807,6 +819,7 @@ async function queryDatabase(plan: AIPlan, adminMessage: string, orgSlug: string
       filtered.sort((a: any, b: any) => b.score - a.score);
       return filtered;
     } catch (e) {
+      console.error('[AGENT] Primary query failed, using fallback:', e);
       // Fallback: basic metadata + optional parsed text from cv_analysis
       const query = `
         SELECT 
@@ -825,7 +838,13 @@ async function queryDatabase(plan: AIPlan, adminMessage: string, orgSlug: string
         ORDER BY c.created_at DESC
         LIMIT ${plan.limit}
       `;
-      const result = await sql.query(query, params);
+      const fallbackTimeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Fallback query timeout')), 15000)
+      );
+      const result = await Promise.race([
+        sql.query(query, params),
+        fallbackTimeout
+      ]) as any;
       const students = result.rows as any[];
       const scoredStudents = students.map((student: any) => {
         // GPA handling
@@ -1015,14 +1034,24 @@ export async function POST(request: NextRequest) {
     
     // Specific error messages for better UX
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT');
+    const isTimeout = errorMessage.toLowerCase().includes('timeout') || 
+                      errorMessage.includes('ETIMEDOUT') ||
+                      errorMessage.includes('ECONNABORTED');
+    
+    // Log detailed error for monitoring
+    if (isTimeout) {
+      console.error('[AGENT_TIMEOUT] Query exceeded time limits');
+    }
     
     return NextResponse.json({ 
       error: isTimeout 
-        ? 'Request timed out. Try a simpler query or try again.' 
+        ? 'Search timed out. Please try a simpler query or wait a moment and try again.' 
         : 'Failed to process query. Please try again.',
-      details: errorMessage,
-      isTimeout
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+      isTimeout,
+      suggestion: isTimeout 
+        ? 'Try searching for fewer candidates or using more specific criteria.'
+        : 'Check your connection and try again.'
     }, { status: isTimeout ? 504 : 500 });
   }
 }
