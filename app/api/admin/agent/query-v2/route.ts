@@ -10,6 +10,19 @@ import { sendEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Increase timeout for AI operations
+
+// Helper: Wrap OpenAI calls with timeout protection
+async function createCompletionWithTimeout(openai: any, params: any, timeoutMs = 25000) {
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('OpenAI request timeout')), timeoutMs)
+  );
+  
+  return Promise.race([
+    openai.chat.completions.create(params, { timeout: 20000 }),
+    timeoutPromise
+  ]);
+}
 
 // Tool definitions for OpenAI function calling
 const tools = [
@@ -1236,15 +1249,15 @@ Context: You're an adaptive AI recruiter that learns and improves with every con
     { role: 'user', content: userMessage }
   ];
 
-  // Initial GPT call with tools
-  let response = await openai.chat.completions.create({
+  // Initial GPT call with tools (with timeout protection)
+  let response = await createCompletionWithTimeout(openai, {
     model: 'gpt-4o-mini',
     messages,
     tools,
     tool_choice: 'auto',
     temperature: 0.7,
     max_tokens: 1000
-  });
+  }) as any;
 
   let assistantMessage = response.choices[0].message;
   
@@ -1307,15 +1320,15 @@ Context: You're an adaptive AI recruiter that learns and improves with every con
     // Add tool results
     messages.push(...toolResults);
     
-    // Get next response from GPT
-    response = await openai.chat.completions.create({
+    // Get next response from GPT (with timeout protection)
+    response = await createCompletionWithTimeout(openai, {
       model: 'gpt-4o-mini',
       messages,
       tools,
       tool_choice: 'auto',
       temperature: 0.7,
       max_tokens: 1000
-    });
+    }) as any;
     
     assistantMessage = response.choices[0].message;
   }
