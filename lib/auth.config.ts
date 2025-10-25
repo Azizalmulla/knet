@@ -95,19 +95,46 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Upsert student user
+      // Upsert student user with retry logic for resilience
       if (user.email) {
-        try {
-          await sql`
-            INSERT INTO student_users (email, email_lc, name, avatar_url)
-            VALUES (${user.email}, ${user.email.toLowerCase()}, ${user.name}, ${user.image})
-            ON CONFLICT (email) DO UPDATE
-            SET name = COALESCE(EXCLUDED.name, student_users.name),
-                avatar_url = COALESCE(EXCLUDED.avatar_url, student_users.avatar_url)
-          `
-        } catch (error) {
-          console.error("Failed to upsert student user:", error)
+        const maxRetries = 2;
+        let lastError: any = null;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          try {
+            // Add timeout to prevent hanging on slow DB (Neon cold starts)
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Database timeout')), 8000)
+            );
+            
+            await Promise.race([
+              sql`
+                INSERT INTO student_users (email, email_lc, name, avatar_url)
+                VALUES (${user.email}, ${user.email.toLowerCase()}, ${user.name}, ${user.image})
+                ON CONFLICT (email) DO UPDATE
+                SET name = COALESCE(EXCLUDED.name, student_users.name),
+                    avatar_url = COALESCE(EXCLUDED.avatar_url, student_users.avatar_url),
+                    last_login = now()
+              `,
+              timeoutPromise
+            ]);
+            
+            // Success - exit retry loop
+            return true;
+          } catch (error) {
+            lastError = error;
+            console.error(`[STUDENT_AUTH] DB upsert attempt ${attempt + 1} failed:`, error);
+            
+            // Wait before retry (exponential backoff)
+            if (attempt < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+            }
+          }
         }
+        
+        // All retries failed
+        console.error("[STUDENT_AUTH] All retry attempts exhausted:", lastError);
+        return false;
       }
       return true
     },
