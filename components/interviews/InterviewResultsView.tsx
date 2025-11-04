@@ -111,7 +111,7 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-6">
       {/* Header */}
-      <div className="bg-white border-2 border-black rounded-lg p-6 shadow-md">
+      <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[6px_6px_0_#111]">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold">{data.session.interview_title}</h1>
@@ -134,16 +134,18 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
       <div className="flex gap-2 overflow-x-auto pb-2">
         {data.responses.map((response, idx) => {
           const score = response.analysis?.overall_score;
+          const isSelected = selectedResponse === idx;
           return (
             <Button
               key={response.question_id}
-              variant={selectedResponse === idx ? 'default' : 'outline'}
               onClick={() => setSelectedResponse(idx)}
-              className="flex-shrink-0"
+              className={`flex-shrink-0 border-[3px] border-black shadow-[3px_3px_0_#111] hover:shadow-[1px_1px_0_#111] transition-all ${
+                isSelected ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
+              }`}
             >
               Q{idx + 1}
               {score !== null && (
-                <Badge className="ml-2" variant="secondary">
+                <Badge className="ml-2 bg-green-500 text-white border-2 border-black">
                   {score}
                 </Badge>
               )}
@@ -158,9 +160,9 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
           {/* Left: Video & Transcript */}
           <div className="space-y-4">
             {/* Question */}
-            <Card>
+            <Card className="border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#111]">
               <CardHeader>
-                <CardTitle className="text-lg">Question {selectedResponse + 1}</CardTitle>
+                <CardTitle className="text-lg font-bold">Question {selectedResponse + 1}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700">{currentResponse.question_text}</p>
@@ -168,9 +170,9 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
             </Card>
 
             {/* Video */}
-            <Card>
+            <Card className="border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#111]">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-lg flex items-center gap-2 font-bold">
                   <Play className="w-5 h-5" />
                   Video Response
                 </CardTitle>
@@ -179,7 +181,7 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
                 <video
                   src={currentResponse.video_url}
                   controls
-                  className="w-full rounded-lg"
+                  className="w-full rounded-xl border-2 border-black"
                 />
                 <p className="text-sm text-gray-500 mt-2">
                   Duration: {Math.floor(currentResponse.duration / 60)}:{(currentResponse.duration % 60).toString().padStart(2, '0')}
@@ -189,9 +191,9 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
 
             {/* Transcript */}
             {currentResponse.transcript && (
-              <Card>
+              <Card className="border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#111]">
                 <CardHeader>
-                  <CardTitle className="text-lg">Transcript</CardTitle>
+                  <CardTitle className="text-lg font-bold">Transcript</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-700 whitespace-pre-wrap">
@@ -205,7 +207,7 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
           {/* Right: AI Analysis */}
           <div className="space-y-4">
             {!hasAnalysis ? (
-              <Card>
+              <Card className="border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#111]">
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-2" />
@@ -216,9 +218,9 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
             ) : (
               <>
                 {/* Scores */}
-                <Card>
+                <Card className="border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#111]">
                   <CardHeader>
-                    <CardTitle className="text-lg">AI Scores</CardTitle>
+                    <CardTitle className="text-lg font-bold">AI Scores</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <ScoreBar label="Overall" score={currentResponse.analysis.overall_score} />
@@ -235,9 +237,9 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
                 </Card>
 
                 {/* AI Reasoning */}
-                <Card>
+                <Card className="border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#111]">
                   <CardHeader>
-                    <CardTitle className="text-lg">AI Analysis</CardTitle>
+                    <CardTitle className="text-lg font-bold">AI Analysis</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-700 whitespace-pre-wrap">
@@ -248,9 +250,9 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
 
                 {/* Strengths */}
                 {currentResponse.analysis.key_strengths.length > 0 && (
-                  <Card>
+                  <Card className="border-[3px] border-green-500 bg-green-50 rounded-2xl shadow-[4px_4px_0_#16a34a]">
                     <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-lg flex items-center gap-2 font-bold">
                         <CheckCircle2 className="w-5 h-5 text-green-600" />
                         Key Strengths
                       </CardTitle>
@@ -267,9 +269,9 @@ export function InterviewResultsView({ sessionId }: InterviewResultsViewProps) {
 
                 {/* Concerns */}
                 {currentResponse.analysis.key_concerns.length > 0 && (
-                  <Card>
+                  <Card className="border-[3px] border-red-500 bg-red-50 rounded-2xl shadow-[4px_4px_0_#dc2626]">
                     <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-lg flex items-center gap-2 font-bold">
                         <XCircle className="w-5 h-5 text-red-600" />
                         Areas for Improvement
                       </CardTitle>

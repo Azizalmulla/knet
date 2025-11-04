@@ -173,13 +173,13 @@ export function VideoRecorder({
   return (
     <div className="w-full max-w-3xl mx-auto space-y-4">
       {/* Question */}
-      <div className="bg-white border-2 border-black rounded-lg p-4 shadow-md">
-        <h3 className="font-semibold text-lg mb-2">Question:</h3>
-        <p className="text-gray-700">{questionText}</p>
+      <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[6px_6px_0_#111]">
+        <h3 className="font-bold text-xl mb-2">Question:</h3>
+        <p className="text-gray-700 text-lg">{questionText}</p>
       </div>
 
       {/* Video Preview */}
-      <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
+      <div className="relative bg-black rounded-2xl overflow-hidden aspect-video border-[3px] border-black shadow-[6px_6px_0_#111]">
         <video
           ref={videoRef}
           autoPlay
@@ -221,10 +221,10 @@ export function VideoRecorder({
           <Button
             onClick={startCountdown}
             size="lg"
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white border-[3px] border-black shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] transition-all"
             disabled={!stream}
           >
-            <Circle className="w-5 h-5 mr-2" />
+            <Circle className="w-5 h-5 mr-2 fill-current" />
             Start Recording
           </Button>
         )}
@@ -233,7 +233,7 @@ export function VideoRecorder({
           <Button
             onClick={stopRecording}
             size="lg"
-            variant="destructive"
+            className="bg-red-600 hover:bg-red-700 text-white border-[3px] border-black shadow-[4px_4px_0_#111]"
           >
             <Square className="w-5 h-5 mr-2" />
             Stop Recording
@@ -245,7 +245,7 @@ export function VideoRecorder({
             <Button
               onClick={retake}
               size="lg"
-              variant="outline"
+              className="bg-white hover:bg-gray-100 text-black border-[3px] border-black shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] transition-all"
             >
               <Video className="w-5 h-5 mr-2" />
               Retake
@@ -253,7 +253,7 @@ export function VideoRecorder({
             <Button
               onClick={handleSubmit}
               size="lg"
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-600 hover:bg-green-700 text-white border-[3px] border-black shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] transition-all"
             >
               <Upload className="w-5 h-5 mr-2" />
               Submit Response

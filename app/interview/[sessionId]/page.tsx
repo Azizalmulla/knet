@@ -130,7 +130,7 @@ export default function InterviewPage({ params }: { params: { sessionId: string 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b-2 border-black">
+      <div className="bg-white border-b-[3px] border-black shadow-[0_4px_0_#111]">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -157,30 +157,34 @@ export default function InterviewPage({ params }: { params: { sessionId: string 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Question Navigator */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {session.questions.map((q, idx) => (
-            <Button
-              key={q.id}
-              variant={currentQuestionIndex === idx ? 'default' : 'outline'}
-              onClick={() => setCurrentQuestionIndex(idx)}
-              disabled={uploading}
-              className="flex-shrink-0"
-            >
-              Q{idx + 1}
-              {q.has_response && <CheckCircle2 className="w-4 h-4 ml-1 text-green-500" />}
-            </Button>
-          ))}
+          {session.questions.map((q, idx) => {
+            const isActive = currentQuestionIndex === idx;
+            return (
+              <Button
+                key={q.id}
+                onClick={() => setCurrentQuestionIndex(idx)}
+                disabled={uploading}
+                className={`flex-shrink-0 border-[3px] border-black shadow-[3px_3px_0_#111] hover:shadow-[1px_1px_0_#111] transition-all ${
+                  isActive ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                Q{idx + 1}
+                {q.has_response && <CheckCircle2 className="w-4 h-4 ml-1 text-green-500" />}
+              </Button>
+            );
+          })}
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border-2 border-red-500 rounded-lg p-4 text-red-700">
+          <div className="mb-6 bg-red-50 border-[3px] border-red-500 rounded-2xl p-4 text-red-700 shadow-[4px_4px_0_#dc2626]">
             {error}
           </div>
         )}
 
         {/* Uploading Overlay */}
         {uploading && (
-          <div className="mb-6 bg-blue-50 border-2 border-blue-500 rounded-lg p-4">
+          <div className="mb-6 bg-blue-50 border-[3px] border-blue-500 rounded-2xl p-4 shadow-[4px_4px_0_#2563eb]">
             <div className="flex items-center gap-3">
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
               <div>
@@ -202,7 +206,7 @@ export default function InterviewPage({ params }: { params: { sessionId: string 
 
         {/* Instructions */}
         {currentQuestion.has_response && !uploading && (
-          <div className="mt-6 bg-green-50 border-2 border-green-500 rounded-lg p-4">
+          <div className="mt-6 bg-green-50 border-[3px] border-green-500 rounded-2xl p-4 shadow-[4px_4px_0_#16a34a]">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
               <div>

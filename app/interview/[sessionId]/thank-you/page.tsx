@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 export default function ThankYouPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full bg-white border-2 border-black rounded-lg shadow-[8px_8px_0_#111] p-8 text-center">
+      <div className="max-w-2xl w-full bg-white border-[3px] border-black rounded-2xl shadow-[8px_8px_0_#111] p-8 text-center">
         <div className="mb-6">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500 rounded-full mb-4">
             <CheckCircle2 className="w-12 h-12 text-white" />
@@ -16,7 +16,7 @@ export default function ThankYouPage() {
           </p>
         </div>
 
-        <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-6 mb-8">
+        <div className="bg-blue-50 border-[3px] border-blue-500 rounded-2xl shadow-[4px_4px_0_#2563eb] p-6 mb-8">
           <div className="flex items-start gap-3">
             <Sparkles className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
             <div className="text-left">
