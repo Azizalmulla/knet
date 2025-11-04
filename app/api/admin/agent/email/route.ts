@@ -215,8 +215,11 @@ export async function POST(request: NextRequest) {
       : (process.env.RESEND_FROM || 'hr@wathefni.ai');
     const fromName = resolvedOrgName ? `${resolvedOrgName} HR Team` : 'HR Team';
 
-    // Resend inbound address for replies
-    const replyToAddress = process.env.RESEND_INBOUND_EMAIL || 'admin@fresh-antlion.resend.app';
+    // Auto per-org inbound address: each org gets {orgSlug}@fresh-antlion.resend.app
+    const inboundDomain = process.env.RESEND_INBOUND_DOMAIN || 'fresh-antlion.resend.app';
+    const replyToAddress = resolvedOrgSlug 
+      ? `${resolvedOrgSlug}@${inboundDomain}`
+      : `admin@${inboundDomain}`;
 
     const result = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,

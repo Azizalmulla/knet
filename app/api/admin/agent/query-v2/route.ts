@@ -710,14 +710,15 @@ async function emailCandidate(args: any, orgSlug: string, adminEmail: string): P
         const inboxMode = orgDetailsRes.rows[0]?.inbox_mode || 'both'; // Default: both
         
         // Determine Reply-To based on org preference
-        // Use Resend inbound address to capture replies in inbox
-        const resendInboxEmail = process.env.RESEND_INBOUND_EMAIL || 'admin@fresh-antlion.resend.app';
+        // Auto per-org inbound: each org gets {orgSlug}@fresh-antlion.resend.app
+        const inboundDomain = process.env.RESEND_INBOUND_DOMAIN || 'fresh-antlion.resend.app';
+        const orgInboxEmail = `${orgSlugFromDb}@${inboundDomain}`;
         let replyToEmail: string;
         
         switch (inboxMode) {
           case 'inbox_only':
-            // All replies go to Resend inbox (captured by webhook)
-            replyToEmail = resendInboxEmail;
+            // All replies go to org-specific inbox (captured by webhook)
+            replyToEmail = orgInboxEmail;
             break;
           case 'personal_email':
             // Replies go to admin's personal email
@@ -725,8 +726,8 @@ async function emailCandidate(args: any, orgSlug: string, adminEmail: string): P
             break;
           case 'both':
           default:
-            // Reply-To Resend inbox for tracking (best for STC demo)
-            replyToEmail = resendInboxEmail;
+            // Reply-To org inbox for tracking (best for STC demo)
+            replyToEmail = orgInboxEmail;
             break;
         }
         

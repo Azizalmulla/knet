@@ -8,14 +8,19 @@ Your address: `<your-alias>@fresh-antlion.resend.app`
 
 ## ⚡️ Quick Setup (5 Steps - 10 minutes)
 
-### Step 1: Choose Your Alias
+### Step 1: Understand Auto Per-Org Addresses
 
-Replace `<your-alias>` with:
+**Each organization automatically gets their own inbox address:**
+
 ```
-admin@fresh-antlion.resend.app  ✅ RECOMMENDED
+KNET org  → knet@fresh-antlion.resend.app
+NBK org   → nbk@fresh-antlion.resend.app  
+Zain org  → zain@fresh-antlion.resend.app
 ```
 
-This will be the address where candidate replies are sent.
+**No configuration needed!** When you create a new org, it automatically uses `{orgSlug}@fresh-antlion.resend.app`
+
+This shows true multi-tenancy to STC! 🚀
 
 ---
 
@@ -25,9 +30,13 @@ Go to **Vercel Dashboard** → Your Project → **Settings** → **Environment V
 
 Add:
 ```
-Name: RESEND_INBOUND_EMAIL
-Value: admin@fresh-antlion.resend.app
+Name: RESEND_INBOUND_DOMAIN
+Value: fresh-antlion.resend.app
 ```
+
+**That's it!** The system will automatically generate per-org addresses:
+- KNET → `knet@fresh-antlion.resend.app`
+- NBK → `nbk@fresh-antlion.resend.app`
 
 Click **Save** → **Redeploy** (or it will auto-deploy on next push)
 
@@ -164,9 +173,9 @@ This is a **killer feature** to show STC:
 
 Once you get custom domain inbound from Resend:
 
-1. Update env var:
+1. Update env var (just change the domain!):
    ```
-   RESEND_INBOUND_EMAIL=admin@wathefni.ai
+   RESEND_INBOUND_DOMAIN=wathefni.ai
    ```
 
 2. Configure Resend inbound route:
@@ -175,18 +184,23 @@ Once you get custom domain inbound from Resend:
    Forward to: https://your-domain.vercel.app/api/inbox/webhook
    ```
 
-This makes replies go to `admin@wathefni.ai` instead of `fresh-antlion.resend.app` - more professional!
+**Instantly all orgs get upgraded:**
+- KNET → `knet@wathefni.ai` ✨
+- NBK → `nbk@wathefni.ai` ✨
+- Way more professional!
 
 ---
 
 ## ✅ Verification Checklist
 
 Before STC demo:
-- [ ] Environment variable `RESEND_INBOUND_EMAIL` added to Vercel
+- [ ] Environment variable `RESEND_INBOUND_DOMAIN=fresh-antlion.resend.app` added to Vercel
 - [ ] Webhook configured in Resend dashboard
 - [ ] Database tables `inbox_threads` and `inbox_messages` exist
-- [ ] Test email sent via AI agent
-- [ ] Test reply received and appears in inbox
+- [ ] Test email sent via AI agent to YOUR email
+- [ ] Verify Reply-To shows `knet@fresh-antlion.resend.app` (or your org slug)
+- [ ] Reply to test email
+- [ ] Reply appears in admin inbox within seconds
 - [ ] Inbox tab shows "Soon" badge when new messages arrive
 - [ ] Can click thread to view full conversation
 
