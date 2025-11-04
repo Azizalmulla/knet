@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { checkRateLimitWithConfig, createRateLimitResponse } from '@/lib/rateLimit'
+import { sql } from '@vercel/postgres'
 
 const JOB_SEARCH_DEBUG = process.env.JOB_SEARCH_DEBUG === '1'
 const debugLog = (...args: any[]) => {
@@ -130,7 +131,7 @@ const InputSchema = z.object({
   sessionId: z.string().min(5).max(128).optional(),
 })
 
-type JobResult = { title: string; url: string; source: string; snippet?: string; company?: string; location?: string; salary?: string; employmentType?: string; postedAt?: string }
+type JobResult = { title: string; url: string; source: string; snippet?: string; company?: string; location?: string; salary?: string; employmentType?: string; postedAt?: string; isInternal?: boolean }
 
 type SessionRecord = { results: JobResult[]; updatedAt: number }
 type DetailRecord = { salary?: string; employmentType?: string; postedAt?: string; fetchedAt: number }
@@ -507,8 +508,68 @@ const HOST_PRIORITY: Record<string, number> = {
   'indeed.com.kw': 2,
 }
 
+async function searchInternalJobs(userInput: string, lang: 'en'|'ar'): Promise<JobResult[]> {
+  try {
+    const keywords = userInput.toLowerCase()
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !GENERIC_TOKENS.has(w))
+      .slice(0, 5)
+    
+    if (!keywords.length) return []
+    
+    const searchPattern = `%${keywords.join('%')}%`
+    const result = await sql`
+      SELECT 
+        j.id, j.title, j.department, j.location, j.job_type, j.work_mode,
+        j.description, j.salary_min, j.salary_max, j.salary_currency, j.created_at,
+        o.name as company_name, o.slug as org_slug
+      FROM jobs j
+      JOIN organizations o ON o.id = j.org_id
+      WHERE j.status = 'open'
+        AND (j.title ILIKE ${searchPattern} OR j.description ILIKE ${searchPattern} OR j.department ILIKE ${searchPattern})
+      ORDER BY j.created_at DESC
+      LIMIT 5
+    `
+    
+    const jobs: JobResult[] = result.rows.map((row: any) => {
+      const salary = row.salary_min && row.salary_max 
+        ? `${row.salary_currency || 'KWD'} ${row.salary_min}-${row.salary_max}`
+        : row.salary_min ? `${row.salary_currency || 'KWD'} ${row.salary_min}+` : undefined
+      
+      const createdAt = new Date(row.created_at)
+      const daysAgo = Math.floor((Date.now() - createdAt.getTime()) / (24 * 60 * 60 * 1000))
+      const postedAt = daysAgo === 0 
+        ? (lang === 'ar' ? 'اليوم' : 'Today')
+        : daysAgo === 1 ? (lang === 'ar' ? 'أمس' : 'Yesterday')
+        : (lang === 'ar' ? `منذ ${daysAgo} يوم` : `${daysAgo} days ago`)
+      
+      return {
+        title: row.title,
+        url: `https://${process.env.NEXT_PUBLIC_APP_URL || 'wathefni.ai'}/jobs/${row.id}`,
+        source: 'Wathefni',
+        snippet: row.description?.substring(0, 150) + '...' || '',
+        company: row.company_name,
+        location: row.location || 'Kuwait',
+        salary,
+        employmentType: row.job_type || row.work_mode || undefined,
+        postedAt,
+        isInternal: true
+      }
+    })
+    
+    debugLog('internal-jobs', { query: userInput, found: jobs.length })
+    return jobs
+  } catch (err) {
+    console.error('[job-search] Internal search failed:', err)
+    return []
+  }
+}
+
 async function searchWithQueries(queries: string[], userInput: string, lang: 'en'|'ar'): Promise<JobResult[]> {
-  const gathered: JobResult[] = []
+  const internalJobs = await searchInternalJobs(userInput, lang)
+  debugLog('internal-results', { count: internalJobs.length })
+  
+  const gathered: JobResult[] = [...internalJobs]
   const roleTokens = extractRoleTokens(userInput, queries)
 
   const collect = async (clause?: string, opts?: { allowListings?: boolean }) => {
@@ -556,14 +617,39 @@ async function searchWithQueries(queries: string[], userInput: string, lang: 'en
 
   if (!filtered.length) return []
 
-  const relevanceBasis = queries.join(' ') || filtered[0].title || ''
-  const relevant = applyRelevanceFilter(relevanceBasis, filtered, roleTokens)
-  const limited = relevant.slice(0, 10)
-  debugLog('pipeline-summary', { gathered: gathered.length, filtered: filtered.length, relevant: relevant.length, limited: limited.length })
+  const internalResults = filtered.filter(j => j.isInternal)
+  const externalResults = filtered.filter(j => !j.isInternal)
+  
+  const relevanceBasis = queries.join(' ') || externalResults[0]?.title || ''
+  const relevantExternal = applyRelevanceFilter(relevanceBasis, externalResults, roleTokens)
+  
+  const combined = [...internalResults, ...relevantExternal]
+  const limited = combined.slice(0, 10)
+  debugLog('pipeline-summary', { 
+    internal: internalResults.length, 
+    external: externalResults.length,
+    gathered: gathered.length, 
+    filtered: filtered.length, 
+    limited: limited.length 
+  })
+  
   const enriched = await enrichResults(limited)
   const now = Date.now()
-  const fresh = enriched.filter(job => !isLikelyStale(job, now))
-  const finalSet = fresh.length ? fresh : enriched
+  
+  const fresh = enriched.filter(job => job.isInternal || !isLikelyStale(job, now))
+  
+  const linkedInFiltered = fresh.filter(job => {
+    if (!job.url.includes('linkedin.com')) return true
+    if (job.isInternal) return true
+    
+    const posted = parsePostedTimestamp(job.postedAt || job.snippet || job.title, now)
+    if (!posted) return false
+    
+    const daysAgo = (now - posted) / (24 * 60 * 60 * 1000)
+    return daysAgo <= 14
+  })
+  
+  const finalSet = linkedInFiltered.length ? linkedInFiltered : enriched
   
   // Sort by recency: newest first
   finalSet.sort((a, b) => {

@@ -285,14 +285,17 @@ export default function JobFinderWidget({ renderHeroButton }: { renderHeroButton
               m.type === 'results' && m.results ? (
                 <div key={idx} className="self-start w-full space-y-2">
                   {m.results.map((r, i) => (
-                    <a key={i} href={r.url} target="_blank" rel="noreferrer" className="block rounded-xl border-[2px] border-black bg-white p-3 shadow-[4px_4px_0_#111] hover:shadow-[6px_6px_0_#111] hover:-translate-y-0.5 transition-all">
+                    <a key={i} href={r.url} target="_blank" rel="noreferrer" className={`block rounded-xl border-[2px] p-3 shadow-[4px_4px_0_#111] hover:shadow-[6px_6px_0_#111] hover:-translate-y-0.5 transition-all ${(r as any).isInternal ? 'border-green-500 bg-green-50' : 'border-black bg-white'}`}>
                       {r.company ? (
                         <div className="flex items-start gap-2 mb-1">
                           <div className="flex-1">
-                            <div className="font-bold text-base">{r.company}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-bold text-base">{r.company}</div>
+                              {(r as any).isInternal ? <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500 text-white font-bold uppercase">Featured</span> : null}
+                            </div>
                             {r.location ? <div className="text-xs text-neutral-500 mt-0.5">{r.location}</div> : null}
                           </div>
-                          <div className="text-[10px] uppercase tracking-wide text-neutral-400 font-semibold">{r.source}</div>
+                          {!(r as any).isInternal ? <div className="text-[10px] uppercase tracking-wide text-neutral-400 font-semibold">{r.source}</div> : null}
                         </div>
                       ) : null}
                       <div className={r.company ? "text-sm font-semibold text-neutral-700" : "text-base font-bold"}>{r.title}</div>
