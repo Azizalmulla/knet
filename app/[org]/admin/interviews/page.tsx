@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Play, Users, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { Play, Users, CheckCircle, Clock, AlertCircle, Video, FileText } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import InterviewTemplateManager from '@/components/admin/InterviewTemplateManager'
 
 type Interview = {
   session_id: string
@@ -114,16 +116,34 @@ export default function InterviewsPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">AI Video Interviews</h1>
-          <p className="text-gray-600 mt-1">Review candidate interview recordings and AI analysis</p>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Users className="w-4 h-4" />
-          <span>{interviews.length} Total Interviews</span>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Video Interviews</h1>
+        <p className="text-gray-600">Manage interview templates and review candidate responses</p>
       </div>
+
+      <Tabs defaultValue="templates" className="w-full">
+        <TabsList className="mb-6 rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-2">
+          <TabsTrigger value="templates" className="rounded-xl border-[3px] border-transparent data-[state=active]:border-black data-[state=active]:bg-[#bde0fe] data-[state=active]:shadow-[4px_4px_0_#111] font-bold">
+            <FileText className="w-4 h-4 mr-2" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="results" className="rounded-xl border-[3px] border-transparent data-[state=active]:border-black data-[state=active]:bg-[#bde0fe] data-[state=active]:shadow-[4px_4px_0_#111] font-bold">
+            <Video className="w-4 h-4 mr-2" />
+            Interview Results
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="templates">
+          <InterviewTemplateManager orgSlug={org} />
+        </TabsContent>
+
+        <TabsContent value="results">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Users className="w-4 h-4" />
+              <span>{interviews.length} Total Interview Sessions</span>
+            </div>
+          </div>
 
       {interviews.length === 0 ? (
         <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
@@ -191,6 +211,8 @@ export default function InterviewsPage() {
           ))}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
