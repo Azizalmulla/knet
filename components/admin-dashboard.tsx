@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Search, Filter, Eye, EyeOff, Users, RefreshCw } from 'lucide-react';
+import { Download, Search, Filter, Eye, EyeOff, Users, RefreshCw, Video } from 'lucide-react';
+import Link from 'next/link';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { redactEmail, redactPhone, redactName } from '@/lib/redact';
@@ -714,6 +715,12 @@ export default function AdminDashboard({ orgSlug: orgProp }: { orgSlug?: string 
             <Download className="h-4 w-4" />
             {t('export_csv')} ({filteredStudents.length})
           </Button>
+          <Link href={`/${resolveOrg()}/admin/interviews`}>
+            <Button variant="default" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+              <Video className="h-4 w-4" />
+              AI Interviews
+            </Button>
+          </Link>
           <Button 
             onClick={() => {
               fetchStudents();
