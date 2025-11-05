@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LogOut, FileText, Building2, Calendar, Download, RefreshCw, Trash2, ChevronRight, ChevronDown, Home, Briefcase } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LogOut, FileText, Building2, Calendar, Download, RefreshCw, Trash2, ChevronRight, ChevronDown, Home, Briefcase, Video } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useEffect, useRef, useState } from "react"
 import { createClient } from "@/lib/supabase-client"
+import StudentInterviews from "@/components/StudentInterviews"
 
 // Helper: get initials for avatar fallback (e.g., "Zain Kuwait" -> "ZK")
 const getInitials = (name?: string) => {
@@ -593,6 +595,19 @@ export default function StudentDashboard({ email, submissions = [], submissionsA
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
+        <Tabs defaultValue="submissions" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="submissions" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              My Submissions
+            </TabsTrigger>
+            <TabsTrigger value="interviews" className="flex items-center gap-2">
+              <Video className="w-4 h-4" />
+              Interviews
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="submissions">
         {/* Quick Actions */}
         <div className="mb-8 flex flex-wrap gap-4">
           <Link href={selectedOrgSlug ? `/${selectedOrgSlug}/start` : "/start"}>
@@ -861,6 +876,12 @@ export default function StudentDashboard({ email, submissions = [], submissionsA
             </div>
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="interviews">
+            <StudentInterviews />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )
