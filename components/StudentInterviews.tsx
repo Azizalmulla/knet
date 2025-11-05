@@ -1,9 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Video, Clock, CheckCircle, AlertCircle, Calendar, Building2, Play } from 'lucide-react'
 import Link from 'next/link'
 
@@ -54,22 +52,22 @@ export default function StudentInterviews() {
     const configs = {
       pending: { 
         icon: <Clock className="w-3 h-3" />, 
-        className: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        className: 'bg-[#ffd6a5] text-black border-[2px] border-black',
         label: 'Pending'
       },
       in_progress: { 
         icon: <Play className="w-3 h-3" />, 
-        className: 'bg-blue-100 text-blue-800 border-blue-300',
+        className: 'bg-[#bde0fe] text-black border-[2px] border-black',
         label: 'In Progress'
       },
       completed: { 
         icon: <CheckCircle className="w-3 h-3" />, 
-        className: 'bg-green-100 text-green-800 border-green-300',
+        className: 'bg-[#a7f3d0] text-black border-[2px] border-black',
         label: 'Completed'
       },
       expired: { 
         icon: <AlertCircle className="w-3 h-3" />, 
-        className: 'bg-gray-100 text-gray-800 border-gray-300',
+        className: 'bg-gray-200 text-gray-700 border-[2px] border-black',
         label: 'Expired'
       }
     }
@@ -77,10 +75,10 @@ export default function StudentInterviews() {
     const config = configs[status as keyof typeof configs] || configs.pending
     
     return (
-      <Badge className={`inline-flex items-center gap-1 ${config.className}`}>
+      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl font-bold text-xs shadow-[3px_3px_0_#111] ${config.className}`}>
         {config.icon}
         {config.label}
-      </Badge>
+      </span>
     )
   }
 
@@ -102,12 +100,10 @@ export default function StudentInterviews() {
     return (
       <div className="space-y-4">
         {[1, 2].map(i => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            </CardContent>
-          </Card>
+          <div key={i} className="animate-pulse rounded-2xl border-[3px] border-black bg-white p-6 shadow-[6px_6px_0_#111]">
+            <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
         ))}
       </div>
     )
@@ -115,25 +111,21 @@ export default function StudentInterviews() {
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="p-6">
-          <p className="text-red-800">{error}</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border-[3px] border-red-500 bg-red-50 p-6 shadow-[6px_6px_0_#111]">
+        <p className="text-red-800 font-semibold">{error}</p>
+      </div>
     )
   }
 
   if (interviews.length === 0) {
     return (
-      <Card className="border-2 border-dashed border-gray-300">
-        <CardContent className="p-12 text-center">
-          <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Interview Invitations</h3>
-          <p className="text-gray-600">
-            When companies invite you for video interviews, they will appear here.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border-[3px] border-dashed border-black bg-white p-12 text-center shadow-[6px_6px_0_#111]">
+        <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-gray-900 mb-2">No Interview Invitations</h3>
+        <p className="text-gray-600">
+          When companies invite you for video interviews, they will appear here.
+        </p>
+      </div>
     )
   }
 
@@ -147,13 +139,12 @@ export default function StudentInterviews() {
         const canStart = isPending || isInProgress
         
         return (
-          <Card 
+          <div 
             key={interview.session_id}
-            className={`border-2 transition-all hover:shadow-lg ${
-              canStart ? 'border-blue-300 bg-blue-50/30' : 'border-gray-200'
+            className={`rounded-2xl border-[3px] border-black p-6 transition-all hover:-translate-y-1 ${
+              canStart ? 'bg-[#e0f2ff] shadow-[8px_8px_0_#111] hover:shadow-[10px_10px_0_#111]' : 'bg-white shadow-[6px_6px_0_#111] hover:shadow-[8px_8px_0_#111]'
             }`}
           >
-            <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -189,15 +180,15 @@ export default function StudentInterviews() {
                   {/* Progress indicator */}
                   {interview.responses_count > 0 && (
                     <div className="mb-3">
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600">Progress</span>
-                        <span className="font-medium">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-gray-600 font-semibold">Progress</span>
+                        <span className="font-bold">
                           {interview.responses_count} / {interview.total_questions} completed
                         </span>
                       </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-3 bg-gray-200 rounded-full overflow-hidden border-[2px] border-black">
                         <div 
-                          className="h-full bg-blue-600 transition-all"
+                          className="h-full bg-[#bde0fe] transition-all"
                           style={{ width: `${(interview.responses_count / interview.total_questions) * 100}%` }}
                         />
                       </div>
@@ -206,9 +197,9 @@ export default function StudentInterviews() {
 
                   {/* Expiring soon warning */}
                   {isExpiringSoon && canStart && (
-                    <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-100 border border-orange-300 rounded-lg px-3 py-2 mb-3">
+                    <div className="flex items-center gap-2 text-sm rounded-xl border-[3px] border-black bg-[#ffd6a5] px-4 py-2 mb-3 shadow-[3px_3px_0_#111]">
                       <AlertCircle className="w-4 h-4" />
-                      <span className="font-medium">
+                      <span className="font-bold">
                         Expires in {daysLeft} {daysLeft === 1 ? 'day' : 'days'}! Complete it soon.
                       </span>
                     </div>
@@ -233,24 +224,23 @@ export default function StudentInterviews() {
               <div className="flex items-center gap-3">
                 {canStart ? (
                   <Link href={`/interview/${interview.session_id}`}>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Button className="rounded-2xl border-[3px] border-black bg-[#bde0fe] text-black shadow-[4px_4px_0_#111] hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#111] transition-all font-bold">
                       <Play className="w-4 h-4 mr-2" />
                       {isInProgress ? 'Continue Interview' : 'Start Interview'}
                     </Button>
                   </Link>
                 ) : interview.status === 'completed' ? (
-                  <Button variant="outline" disabled>
+                  <Button className="rounded-2xl border-[3px] border-black bg-[#a7f3d0] text-black shadow-[4px_4px_0_#111] font-bold" disabled>
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Completed
                   </Button>
                 ) : (
-                  <Button variant="outline" disabled>
+                  <Button className="rounded-2xl border-[3px] border-black bg-gray-200 text-gray-600 shadow-[4px_4px_0_#111] font-bold" disabled>
                     Expired
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
+          </div>
         )
       })}
     </div>
