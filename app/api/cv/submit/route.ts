@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
 }
 
 function generateCVHTML(data: CVData & { template?: string }): string {
-  const template = data.template || 'minimal';
+  const template: string = data.template || 'minimal';
   const language = data.language || 'en';
   const isRTL = language === 'ar';
   
