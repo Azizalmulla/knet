@@ -6,7 +6,7 @@ import AdminDashboard from '@/components/admin-dashboard'
 import { useLanguage } from '@/lib/language'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Inbox, Briefcase } from 'lucide-react'
+import { Inbox, Briefcase, Calendar, BarChart3 } from 'lucide-react'
 
 export default function OrgAdminPage({ params }: { params: { org: string } }) {
   const { t } = useLanguage()
@@ -46,6 +46,24 @@ export default function OrgAdminPage({ params }: { params: { org: string } }) {
             >
               <Inbox className="w-4 h-4" />
               Inbox
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/${orgSlug}/admin/schedule`)}
+              className="flex items-center gap-2"
+            >
+              <Calendar className="w-4 h-4" />
+              Schedule
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/${orgSlug}/admin/skills-gap`)}
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Skills Gap
             </Button>
           </div>
           <div>

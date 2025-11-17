@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Upload, Sparkles, ArrowRight, Briefcase } from 'lucide-react'
+import { Upload, Sparkles, ArrowRight, Briefcase, Mic } from 'lucide-react'
 import { Space_Grotesk } from 'next/font/google'
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"] })
@@ -35,9 +35,13 @@ export default function CVChoicePage({ params }: { params: { org: string } }) {
     router.push(`/career/ai-builder?org=${orgSlug}`)
   }
 
+  const handleVoiceChoice = () => {
+    router.push(`/voice-cv?org=${orgSlug}`)
+  }
+
   return (
     <div className={`${spaceGrotesk.className} min-h-screen bg-[#eeeee4] flex items-center justify-center px-4`}>
-      <div className="max-w-4xl w-full">
+      <div className="max-w-6xl w-full">
         {/* Header */}
         {jobInfo && (
           <div className="text-center mb-8">
@@ -62,7 +66,7 @@ export default function CVChoicePage({ params }: { params: { org: string } }) {
         )}
 
         {/* Choice Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {/* Upload CV Option */}
           <Card 
             className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111] hover:-translate-y-1 hover:shadow-[8px_8px_0_#111] transition-all cursor-pointer group"
@@ -152,6 +156,55 @@ export default function CVChoicePage({ params }: { params: { org: string } }) {
               >
                 Build with AI
                 <Sparkles className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Voice-to-CV Option */}
+          <Card 
+            className="rounded-2xl border-[3px] border-black bg-gradient-to-br from-[#e0c3fc] to-[#8ec5fc] shadow-[6px_6px_0_#111] hover:-translate-y-1 hover:shadow-[8px_8px_0_#111] transition-all cursor-pointer group relative overflow-hidden"
+            onClick={handleVoiceChoice}
+          >
+            <div className="absolute top-2 right-2">
+              <span className="px-3 py-1 rounded-full bg-white border-[2px] border-black text-xs font-bold">
+                🎙️ Voice
+              </span>
+            </div>
+            <CardHeader className="text-center pb-4">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white border-[3px] border-black flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Mic className="w-8 h-8 text-black" />
+              </div>
+              <CardTitle className="text-2xl">Create with Voice</CardTitle>
+              <CardDescription className="text-base text-neutral-800">
+                Just speak - we'll handle the rest!
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <ul className="text-left space-y-3 mb-6">
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-white border-[2px] border-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                    🎙️
+                  </span>
+                  <span className="text-sm font-medium">Speak for 2-3 minutes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-white border-[2px] border-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                    🎙️
+                  </span>
+                  <span className="text-sm font-medium">AI creates your CV instantly</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-white border-[2px] border-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                    🎙️
+                  </span>
+                  <span className="text-sm font-medium">Perfect for mobile & accessibility</span>
+                </li>
+              </ul>
+              <Button 
+                className="w-full rounded-2xl border-[2px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 hover:scale-105 transition-all font-bold"
+              >
+                Record Voice
+                <Mic className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           </Card>

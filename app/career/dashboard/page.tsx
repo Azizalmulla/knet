@@ -3,6 +3,8 @@ import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { sql } from '@/lib/db'
 import StudentDashboard from '@/components/student-dashboard'
+import { EnhancedStudentDashboard } from '@/components/EnhancedStudentDashboard'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -130,15 +132,32 @@ export default async function CareerDashboardPage({
   }
 
   return (
-    <Suspense fallback={<div>Loading submissions...</div>}>
-      <StudentDashboard 
-        email={user.email} 
-        submissions={submissions}
-        submissionsAll={submissionsAll}
-        selectedOrgSlug={orgSlug}
-        selectedOrgName={orgName}
-        selectedOrgLogo={orgLogo}
-      />
+    <Suspense fallback={<div>Loading...</div>}>
+      <Tabs defaultValue="dashboard" className="w-full">
+        <div className="border-b bg-card">
+          <div className="mx-auto max-w-7xl px-4 py-4">
+            <TabsList className="grid w-full max-w-md grid-cols-2 border-2 border-black">
+              <TabsTrigger value="dashboard" className="font-bold">🏠 Dashboard</TabsTrigger>
+              <TabsTrigger value="submissions" className="font-bold">📄 Submissions</TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
+        
+        <TabsContent value="dashboard">
+          <EnhancedStudentDashboard />
+        </TabsContent>
+        
+        <TabsContent value="submissions">
+          <StudentDashboard 
+            email={user.email} 
+            submissions={submissions}
+            submissionsAll={submissionsAll}
+            selectedOrgSlug={orgSlug}
+            selectedOrgName={orgName}
+            selectedOrgLogo={orgLogo}
+          />
+        </TabsContent>
+      </Tabs>
     </Suspense>
   )
 }
