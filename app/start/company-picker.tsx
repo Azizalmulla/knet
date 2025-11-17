@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Mic } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
 import { useLanguage } from '@/lib/language'
 
 interface Organization {
@@ -84,7 +84,7 @@ export default function CompanyPicker() {
 
   const clearSelection = () => setSelected({})
 
-  const proceedSubmit = (mode: 'upload' | 'ai' | 'voice') => {
+  const proceedSubmit = (mode: 'upload' | 'ai') => {
     if (selectedCount === 0) return
     if (selectedCount > MAX_BULK) {
       alert(`You can select up to ${MAX_BULK} companies at once.`)
@@ -94,17 +94,6 @@ export default function CompanyPicker() {
     if (mode === 'ai' && selectedCount === 1) {
       const slug = selectedSlugs[0]
       router.push(`/career/ai-builder?org=${encodeURIComponent(slug)}`)
-      return
-    }
-    // For Voice, if exactly one org is selected, go directly to voice CV builder
-    if (mode === 'voice' && selectedCount === 1) {
-      const slug = selectedSlugs[0]
-      router.push(`/voice-cv?org=${encodeURIComponent(slug)}`)
-      return
-    }
-    // Voice doesn't support bulk submission yet
-    if (mode === 'voice' && selectedCount > 1) {
-      alert('Voice-to-CV currently supports one company at a time. Please select only one company.')
       return
     }
     // Otherwise (upload, or AI with multiple), use bulk submit flow
@@ -220,15 +209,6 @@ export default function CompanyPicker() {
               onClick={() => proceedSubmit('ai')}
             >
               Build with AI {selectedCount > 0 && `(${selectedCount})`}
-            </Button>
-            <Button 
-              size="sm" 
-              className="rounded-2xl border-[3px] border-black bg-gradient-to-br from-[#e0c3fc] to-[#8ec5fc] text-black shadow-[6px_6px_0_#111] hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" 
-              disabled={selectedCount === 0} 
-              onClick={() => proceedSubmit('voice')}
-            >
-              <Mic className="w-4 h-4 mr-1" />
-              Voice CV {selectedCount > 0 && `(${selectedCount})`}
             </Button>
           </div>
         </div>
