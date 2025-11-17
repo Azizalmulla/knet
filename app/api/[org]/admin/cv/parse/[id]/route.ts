@@ -4,8 +4,9 @@ import { checkRateLimitWithConfig, createRateLimitResponse } from '@/lib/rateLim
 import { fetchBlobBufferAndType } from '@/lib/parse-cv'
 import { jwtVerify } from '@/lib/esm-compat/jose'
 import { generateEmbedding } from '@/lib/embeddings'
-import { v1 as documentai } from '@google-cloud/documentai'
 import mammoth from 'mammoth'
+import OpenAI from 'openai'
+import pdfParse from 'pdf-parse'
 
 // Ensure @vercel/postgres has a connection string in local/prod
 if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
@@ -15,6 +16,11 @@ if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+export const maxDuration = 60 // 60 seconds for Vision API calls
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+})
 
 interface ParsedResult {
   text: string
@@ -49,8 +55,11 @@ function avg(numbers: number[]): number | null {
   return s / numbers.length
 }
 
-async function parseWithDocumentAI(buffer: Buffer, contentType: string): Promise<ParsedResult> {
+async function parseWithGPTVision(buffer: Buffer, contentType: string): Promise<ParsedResult> {
   const lowerMime = String(contentType || '').toLowerCase()
+  let parsedText = ''
+  let pageCount: number | null = null
+  let confidence: number | null = null
   
   // Handle DOCX with Mammoth first
   const looksLikeDocx = lowerMime.includes('officedocument.wordprocessingml.document') || 
@@ -60,8 +69,9 @@ async function parseWithDocumentAI(buffer: Buffer, contentType: string): Promise
   if (looksLikeDocx) {
     try {
       const result = await mammoth.extractRawText({ buffer })
-      const parsedText = cleanText(result.value || '')
+      parsedText = cleanText(result.value || '')
       const tokens = wordCount(parsedText)
+      console.log('[PARSE] DOCX parsed with Mammoth')
       return {
         text: parsedText,
         wordCount: tokens,
@@ -70,53 +80,76 @@ async function parseWithDocumentAI(buffer: Buffer, contentType: string): Promise
         contentType
       }
     } catch (docxErr: any) {
-      console.warn('[PARSE] Mammoth failed, falling back to Document AI:', docxErr?.message)
+      console.warn('[PARSE] Mammoth failed:', docxErr?.message)
+      throw new Error('Failed to parse DOCX file')
     }
   }
 
-  // Use Google Document AI
-  const credsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || ''
-  const PROJECT_ID = process.env.DOC_AI_PROJECT_ID || process.env.PROJECT_ID || ''
-  const LOCATION = process.env.DOC_AI_LOCATION || process.env.LOCATION || 'us'
-  const PROCESSOR_ID = process.env.DOC_AI_PROCESSOR_ID || process.env.PROCESSOR_ID || ''
-  
-  if (!credsJson || !PROJECT_ID || !PROCESSOR_ID) {
-    throw new Error('Missing Google Document AI environment variables')
-  }
-
-  const credentials = JSON.parse(credsJson)
-  const client = new documentai.DocumentProcessorServiceClient({ credentials })
-  const name = `projects/${PROJECT_ID}/locations/${LOCATION}/processors/${PROCESSOR_ID}`
-
-  const requestDoc: any = {
-    name,
-    rawDocument: {
-      content: buffer,
-      mimeType: contentType || 'application/pdf',
-    },
-  }
-
-  const [result] = await client.processDocument(requestDoc as any)
-  const doc: any = (result as any)?.document || (result as any)
-  const parsedTextRaw: string = doc?.text || ''
-  const parsedText = cleanText(parsedTextRaw)
-  const pages: number = Array.isArray(doc?.pages) ? doc.pages.length : (doc?.pages?.length || 0)
-
-  // Calculate confidence from entities
-  let confidence: number | null = null
+  // Handle PDF files
+  // Try pdf-parse first (for text-based PDFs)
   try {
-    const ent = Array.isArray(doc?.entities) ? doc.entities : []
-    const confs = ent.map((e: any) => Number(e?.confidence)).filter((n: any) => Number.isFinite(n))
-    const avgConf = avg(confs)
-    confidence = avgConf != null ? Number(avgConf.toFixed(3)) : null
-  } catch {}
+    const pdfData = await pdfParse(buffer)
+    parsedText = cleanText(pdfData.text || '')
+    pageCount = pdfData.numpages || null
+    
+    // If pdf-parse extracted very little text, the PDF might be image-based
+    // Fall back to GPT Vision
+    if (parsedText.length < 100) {
+      console.log('[PARSE] PDF appears to be image-based, using GPT Vision')
+      throw new Error('PDF appears to be image-based')
+    }
+    
+    console.log(`[PARSE] PDF parsed with pdf-parse: ${parsedText.length} chars, ${pageCount} pages`)
+  } catch (pdfErr: any) {
+    // PDF is likely image-based or corrupted, use GPT Vision
+    console.log('[PARSE] Using GPT Vision for OCR:', pdfErr?.message)
+
+    try {
+      // Convert PDF to base64 and send to GPT Vision
+      const imageBase64 = buffer.toString('base64')
+      
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // Latest vision model
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Extract ALL text content from this CV/Resume document. Return the raw text exactly as it appears, preserving structure and formatting. Include all sections: personal info, education, experience, skills, projects, etc.`
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:application/pdf;base64,${imageBase64}`,
+                detail: "high" // Better OCR accuracy
+              }
+            }
+          ]
+        }],
+        max_tokens: 4000,
+        temperature: 0 // Deterministic
+      })
+
+      parsedText = cleanText(response.choices[0]?.message?.content || '')
+      confidence = 0.95 // GPT Vision is highly accurate
+      
+      console.log(`[PARSE] GPT Vision OCR complete: ${parsedText.length} chars`)
+    } catch (visionErr: any) {
+      console.error('[PARSE] GPT Vision failed:', visionErr?.message)
+      throw new Error(`Vision API failed: ${visionErr?.message || 'Unknown error'}`)
+    }
+  }
+
+  if (!parsedText || parsedText.length < 50) {
+    throw new Error('Extracted text is too short or empty')
+  }
 
   const tokens = wordCount(parsedText)
 
   return {
     text: parsedText,
     wordCount: tokens,
-    pageCount: pages || null,
+    pageCount: pageCount,
     confidence,
     contentType
   }
@@ -191,7 +224,7 @@ export async function POST(request: NextRequest, { params }: { params: { org: st
     console.log(`[PARSE] Fetching blob for key: ${key}`)
     const { buffer, contentType } = await fetchBlobBufferAndType(key, blobToken!)
     console.log(`[PARSE] Fetched ${buffer.length} bytes, type: ${contentType}`)
-    const parsed = await parseWithDocumentAI(buffer, contentType)
+    const parsed = await parseWithGPTVision(buffer, contentType)
     console.log(`[PARSE] Parsed: ${parsed.wordCount} words, ${parsed.pageCount} pages, confidence: ${parsed.confidence}`)
 
     // Sanitize text for PostgreSQL (remove null bytes and control characters)

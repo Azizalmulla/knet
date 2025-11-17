@@ -21,8 +21,6 @@
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
     "@eslint/eslintrc": "latest",
-    "@google-cloud/documentai": "^9.4.0",
-    "@google-cloud/vision": "^5.3.3",
     "@hookform/resolvers": "latest",
     "@joycostudio/v0-setup": "latest",
     "@neondatabase/serverless": "^1.0.1",
@@ -97,6 +95,7 @@
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.4",
     "resend": "^6.3.0-canary.4",
+    "sharp": "^0.33.5",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",

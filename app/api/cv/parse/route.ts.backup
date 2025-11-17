@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql, getDbInfo } from '@/lib/db';
 import { checkRateLimitWithConfig, createRateLimitResponse } from '@/lib/rateLimit';
+import { v1 as documentai } from '@google-cloud/documentai';
 import mammoth from 'mammoth';
 import { createServerClient } from '@/lib/supabase-server'
-import OpenAI from 'openai';
-import pdfParse from 'pdf-parse';
-import sharp from 'sharp';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 seconds for Vision API calls
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 // Limits (approx)
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
@@ -196,107 +189,87 @@ export async function POST(request: NextRequest) {
   // Detect default mime if still unknown
   if (!mime) mime = 'application/pdf';
 
-  // Parse CV using GPT-4 Vision
+  // Setup Document AI client
   try {
-    let parsedText = '';
-    let pages: number | null = null;
-    let confidence: number | null = null;
-    let method = 'unknown';
-
+    // If DOCX, use Mammoth to extract text and bypass Document AI
     const lowerMime = String(mime || '').toLowerCase();
     const looksLikeDocx = lowerMime.includes('officedocument.wordprocessingml.document') || lowerMime.includes('docx') || fileBuf.slice(0, 2).toString('utf8') === 'PK';
-    
-    // Handle DOCX files with Mammoth
     if (looksLikeDocx) {
       try {
         const result = await mammoth.extractRawText({ buffer: fileBuf });
-        parsedText = cleanText(result.value || '');
-        method = 'mammoth';
+        const parsedText = cleanText(result.value || '');
+        const tokens = wordCount(parsedText);
+        await sql`
+          INSERT INTO cv_text (student_id, text, pages, tokens, confidence)
+          VALUES (${studentId}, ${parsedText}, ${null}, ${tokens || null}, ${null})
+          ON CONFLICT (student_id) DO UPDATE SET
+            text = EXCLUDED.text,
+            pages = EXCLUDED.pages,
+            tokens = EXCLUDED.tokens,
+            confidence = EXCLUDED.confidence,
+            created_at = NOW()
+        `;
+        await sql`UPDATE students SET cv_parse_status = 'done' WHERE id = ${studentId}`;
         if (process.env.NODE_ENV === 'development') {
           console.log('CV_PARSE_DOCX_OK', { studentId, size: fileBuf.byteLength, mime });
         }
+        {
+          const { host: dbHost, db: dbName } = getDbInfo()
+          const res = NextResponse.json({ ok: true, parsedText, tokens, pages: null, confidence: null })
+          res.headers.set('X-DB-Host', dbHost)
+          res.headers.set('X-DB-Name', dbName)
+          res.headers.set('X-User-Email', emailLower)
+          res.headers.set('X-Org-Slug', '')
+          res.headers.set('X-Org-Id', '')
+          res.headers.set('X-Loopback-Found', 'false')
+          return res
+        }
       } catch (docxErr: any) {
+        // fall through to Document AI if Mammoth fails
         if (process.env.NODE_ENV === 'development') {
-          console.warn('MAMMOTH_FAIL', { studentId, message: String(docxErr?.message || docxErr) });
-        }
-        throw new Error('Failed to parse DOCX file');
-      }
-    }
-    // Handle PDF files
-    else {
-      // Try pdf-parse first (for text-based PDFs)
-      try {
-        const pdfData = await pdfParse(fileBuf);
-        parsedText = cleanText(pdfData.text || '');
-        pages = pdfData.numpages || null;
-        method = 'pdf-parse';
-        
-        // If pdf-parse extracted very little text, the PDF might be image-based
-        // Fall back to GPT Vision
-        if (parsedText.length < 100) {
-          throw new Error('PDF appears to be image-based, using Vision API');
-        }
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log('CV_PARSE_PDF_TEXT_OK', { studentId, size: fileBuf.byteLength, pages, textLength: parsedText.length });
-        }
-      } catch (pdfErr: any) {
-        // PDF is likely image-based or corrupted, use GPT Vision
-        if (process.env.NODE_ENV === 'development') {
-          console.log('CV_PARSE_FALLBACK_TO_VISION', { studentId, reason: pdfErr?.message });
-        }
-
-        try {
-          // Convert PDF first page to image using sharp
-          // Note: For multi-page PDFs, we'd need a library like pdf-poppler or pdf2pic
-          // For now, we'll convert to base64 and let GPT Vision handle it
-          const imageBase64 = fileBuf.toString('base64');
-          
-          const response = await openai.chat.completions.create({
-            model: "gpt-4o", // Latest vision model
-            messages: [{
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: `Extract ALL text content from this CV/Resume document. Return the raw text exactly as it appears, preserving structure and formatting. Include all sections: personal info, education, experience, skills, projects, etc.`
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:application/pdf;base64,${imageBase64}`,
-                    detail: "high" // Better OCR accuracy
-                  }
-                }
-              ]
-            }],
-            max_tokens: 4000,
-            temperature: 0 // Deterministic
-          });
-
-          parsedText = cleanText(response.choices[0]?.message?.content || '');
-          method = 'gpt-vision';
-          confidence = 0.95; // GPT Vision is highly accurate
-          
-          if (process.env.NODE_ENV === 'development') {
-            console.log('CV_PARSE_VISION_OK', { studentId, size: fileBuf.byteLength, textLength: parsedText.length });
-          }
-        } catch (visionErr: any) {
-          if (process.env.NODE_ENV === 'development') {
-            console.error('CV_PARSE_VISION_FAIL', { studentId, error: visionErr?.message });
-          }
-          throw new Error(`Vision API failed: ${visionErr?.message || 'Unknown error'}`);
+          console.warn('MAMMOTH_FAIL_FALLBACK_DAI', { studentId, message: String(docxErr?.message || docxErr) });
         }
       }
     }
 
-    if (!parsedText || parsedText.length < 50) {
-      throw new Error('Extracted text is too short or empty');
+    const credsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '';
+    const PROJECT_ID = process.env.DOC_AI_PROJECT_ID || process.env.PROJECT_ID || '';
+    const LOCATION = process.env.DOC_AI_LOCATION || process.env.LOCATION || 'us';
+    const PROCESSOR_ID = process.env.DOC_AI_PROCESSOR_ID || process.env.PROCESSOR_ID || '';
+    if (!credsJson || !PROJECT_ID || !PROCESSOR_ID) {
+      throw new Error('Missing Google Document AI env vars');
     }
+
+    const credentials = JSON.parse(credsJson);
+    const client = new documentai.DocumentProcessorServiceClient({ credentials });
+    const name = `projects/${PROJECT_ID}/locations/${LOCATION}/processors/${PROCESSOR_ID}`;
+
+    const requestDoc: any = {
+      name,
+      rawDocument: {
+        content: fileBuf,
+        mimeType: mime,
+      },
+    };
+
+    const [result] = await client.processDocument(requestDoc as any);
+    const doc: any = (result as any)?.document || (result as any);
+    const parsedTextRaw: string = doc?.text || '';
+    const parsedText = cleanText(parsedTextRaw);
+    const pages: number = Array.isArray(doc?.pages) ? doc.pages.length : (doc?.pages?.length || 0);
+
+    // Approximate confidence: average over entities if present; else null
+    let confidence: number | null = null;
+    try {
+      const ent = Array.isArray(doc?.entities) ? doc.entities : [];
+      const confs = ent.map((e: any) => Number(e?.confidence)).filter((n: any) => Number.isFinite(n));
+      const avgConf = avg(confs);
+      confidence = avgConf != null ? Number(avgConf.toFixed(3)) : null;
+    } catch {}
 
     const tokens = wordCount(parsedText);
 
-    // Persist raw text
+    // Persist
     try {
       await sql`
         INSERT INTO cv_text (student_id, text, pages, tokens, confidence)
@@ -309,32 +282,13 @@ export async function POST(request: NextRequest) {
           created_at = NOW()
       `;
       await sql`UPDATE students SET cv_parse_status = 'done' WHERE id = ${studentId}`;
-      
       if (process.env.NODE_ENV === 'development') {
-        console.log('CV_PARSE_SUCCESS', { studentId, method, size: fileBuf.byteLength, mime, pages, tokens });
+        console.log('CV_PARSE_OK', { studentId, size: fileBuf.byteLength, mime, pages, tokens });
       }
-
-      const { host: dbHost, db: dbName } = getDbInfo()
-      const res = NextResponse.json({ 
-        ok: true, 
-        parsedText, 
-        tokens, 
-        pages, 
-        confidence,
-        method 
-      })
-      res.headers.set('X-DB-Host', dbHost)
-      res.headers.set('X-DB-Name', dbName)
-      res.headers.set('X-User-Email', emailLower)
-      res.headers.set('X-Org-Slug', '')
-      res.headers.set('X-Org-Id', '')
-      res.headers.set('X-Loopback-Found', 'false')
-      res.headers.set('X-Parse-Method', method)
-      return res
     } catch (dbErr: any) {
       await sql`UPDATE students SET cv_parse_status = 'error' WHERE id = ${studentId}`;
       const { host: dbHost, db: dbName } = getDbInfo()
-      const res = NextResponse.json({ ok: false, code: 'DB_ERROR', message: dbErr?.message || 'DB error' }, { status: 502 })
+      const res = NextResponse.json({ ok: false, code: 'DOC_AI_ERROR', message: dbErr?.message || 'DB error' }, { status: 502 })
       res.headers.set('X-DB-Host', dbHost)
       res.headers.set('X-DB-Name', dbName)
       res.headers.set('X-User-Email', emailLower)
@@ -349,7 +303,7 @@ export async function POST(request: NextRequest) {
       console.error('CV_PARSE_FAIL', { studentId, size: fileBuf?.byteLength, mime, message: error?.message });
     }
     const { host: dbHost, db: dbName } = getDbInfo()
-    const res = NextResponse.json({ ok: false, code: 'PARSE_ERROR', message: error?.message || 'CV parsing failed' }, { status: 502 })
+    const res = NextResponse.json({ ok: false, code: 'DOC_AI_ERROR', message: error?.message || 'Document AI failed' }, { status: 502 })
     res.headers.set('X-DB-Host', dbHost)
     res.headers.set('X-DB-Name', dbName)
     res.headers.set('X-User-Email', emailLower)
