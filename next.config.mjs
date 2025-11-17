@@ -39,10 +39,28 @@ const nextConfig = {
   },
   experimental: {
     // Ensure CJS theme package is included server-side for route handlers
-    serverComponentsExternalPackages: ['jsonresume-theme-macchiato', 'jsonresume-theme-elegant', '@sparticuz/chromium', 'puppeteer-core'],
+    // Also exclude pdf-parse and sharp to avoid bundling their test files
+    serverComponentsExternalPackages: [
+      'jsonresume-theme-macchiato', 
+      'jsonresume-theme-elegant', 
+      '@sparticuz/chromium', 
+      'puppeteer-core',
+      'pdf-parse',
+      'sharp'
+    ],
   },
-  // Ensure route handlers also bundle the CJS package (webpack side)
-  serverExternalPackages: ['jsonresume-theme-macchiato', 'jsonresume-theme-elegant', '@sparticuz/chromium', 'puppeteer-core'],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Ignore pdf-parse test files during build
+      config.externals = config.externals || [];
+      config.externals.push({
+        'canvas': 'canvas',
+        'sharp': 'commonjs sharp',
+        'pdf-parse': 'commonjs pdf-parse'
+      });
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
