@@ -86,7 +86,7 @@ export function ReviewStep() {
     return () => { if (t) clearTimeout(t) }
   }, [density])
 
-  // Build Macchiato HTML preview via API with debounce (500ms)
+  // Build Macchiato HTML preview via API with debounce (1000ms to reduce jitter)
   useEffect(() => {
     // Clean previous timer
     if (macBuildTimer.current) clearTimeout(macBuildTimer.current)
@@ -125,7 +125,7 @@ export function ReviewStep() {
         setMacAvailable(false)
         setMacError('network-error')
       }
-    }, 500)
+    }, 1000)
     return () => {
       if (macBuildTimer.current) clearTimeout(macBuildTimer.current)
     }
@@ -169,8 +169,29 @@ export function ReviewStep() {
     if (macAvailable && macHtmlUrl) {
       return (
         <div style={{ position: 'relative' }}>
-          <div style={{ width: '100%', height: 900, border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-            <iframe src={macHtmlUrl} title="Macchiato Preview" style={{ width: '100%', height: '100%', border: 'none', background: 'white' }} />
+          <div style={{ 
+            width: '100%', 
+            height: 900, 
+            border: '1px solid var(--border)', 
+            borderRadius: 8, 
+            overflow: 'hidden',
+            transform: 'translateZ(0)',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden'
+          }}>
+            <iframe 
+              src={macHtmlUrl} 
+              title="Macchiato Preview" 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                border: 'none', 
+                background: 'white',
+                display: 'block',
+                transform: 'translateZ(0)',
+                willChange: 'contents'
+              }} 
+            />
           </div>
           {process.env.NODE_ENV !== 'production' ? (
             <div className="absolute top-2 right-2 text-xs px-2 py-1 rounded border bg-muted text-muted-foreground border-border select-none">
