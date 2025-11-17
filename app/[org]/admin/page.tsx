@@ -46,9 +46,6 @@ export default function OrgAdminPage({ params }: { params: { org: string } }) {
             >
               <Inbox className="w-4 h-4" />
               Inbox
-              <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-xs">
-                Soon
-              </Badge>
             </Button>
           </div>
           <div>
