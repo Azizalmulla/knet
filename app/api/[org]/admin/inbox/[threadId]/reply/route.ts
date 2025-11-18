@@ -78,7 +78,7 @@ export async function POST(
         ${params.threadId}::uuid,
         'admin',
         ${decoded.email || 'Admin'},
-        ${params.org}@wathefni.ai,
+        ${params.org}@inbox.wathefni.ai,
         ${content.trim()}
       )
     `
@@ -87,11 +87,11 @@ export async function POST(
     if (process.env.RESEND_API_KEY) {
       try {
         await resend.emails.send({
-          from: `${org.name} <${params.org}@wathefni.ai>`,
+          from: `${org.name} <${params.org}@inbox.wathefni.ai>`,
           to: thread.candidate_email,
           subject: `Re: ${thread.subject}`,
           text: content.trim(),
-          replyTo: `${params.org}@wathefni.ai`
+          replyTo: `${params.org}@inbox.wathefni.ai`
         })
       } catch (emailError) {
         console.error('[INBOX_REPLY] Email send failed:', emailError)

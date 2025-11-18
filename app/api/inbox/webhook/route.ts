@@ -55,9 +55,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing recipient' }, { status: 400 });
     }
 
-    const match = recipientEmail.match(/^(.+)@wathefni\.ai$/i);
+    // Support both @wathefni.ai and @inbox.wathefni.ai
+    const match = recipientEmail.match(/^(.+)@(?:inbox\.)?wathefni\.ai$/i);
     if (!match) {
-      console.error('[INBOX_WEBHOOK] Recipient domain not wathefni.ai:', recipientEmail);
+      console.error('[INBOX_WEBHOOK] Recipient domain not wathefni.ai or inbox.wathefni.ai:', recipientEmail);
       return NextResponse.json({ error: 'Recipient domain unsupported' }, { status: 400 });
     }
     const orgSlug = match[1];

@@ -126,7 +126,7 @@ export async function POST(
         ${threadId},
         'admin',
         ${adminName || org.name},
-        ${adminEmail || `${org.slug}@wathefni.ai`},
+        ${adminEmail || `${org.slug}@inbox.wathefni.ai`},
         ${content},
         TRUE
       )
@@ -141,7 +141,7 @@ export async function POST(
         const { Resend } = await import('resend');
         const resend = new Resend(process.env.RESEND_API_KEY);
 
-        const fromEmail = `${org.slug}@wathefni.ai`;
+        const fromEmail = `${org.slug}@inbox.wathefni.ai`;
         const fromName = `${org.name} HR Team`;
 
         await resend.emails.send({
