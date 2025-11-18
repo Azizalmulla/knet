@@ -306,7 +306,7 @@ export function ReviewStep() {
   const effectiveSuggested = effectiveFieldOfStudy && effectiveAreaOfInterest
     ? (matchSuggestedVacancies(effectiveFieldOfStudy, effectiveAreaOfInterest) || null)
     : null;
-  const isSubmitDisabled = isSubmitting || isSubmitted || !effectiveFieldOfStudy || !effectiveAreaOfInterest || !effectiveSuggested;
+  const isSubmitDisabled = isSubmitting || isSubmitted || !effectiveFieldOfStudy || !effectiveAreaOfInterest;
   const displaySuggested = suggestedVacancies || effectiveSuggested;
 
   // Derivations for read-only chips (Degree / Field of Study / YoE)

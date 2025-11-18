@@ -305,7 +305,7 @@ export default function UploadCVForm({ orgSlug: orgProp, orgSlugs }: { orgSlug?:
     }
   }, [cooldownSecondsLeft])
 
-  const isSubmitDisabled = isSubmitting || cooldownSecondsLeft > 0 || !fieldOfStudy || !areaOfInterest || (!isTest && !suggestedVacancies) || !schemaReady;
+  const isSubmitDisabled = isSubmitting || cooldownSecondsLeft > 0 || !fieldOfStudy || !areaOfInterest || !schemaReady;
 
   const onSubmit = async (data: UploadFormData) => {
     if (!schemaReady) {
