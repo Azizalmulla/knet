@@ -78,12 +78,28 @@ if (typeof window !== 'undefined') {
   window.ResizeObserver = ResizeObserverMock
 }
 
-// Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+// Mock IntersectionObserver with proper class implementation
+class IntersectionObserverMock {
+  constructor(callback) {
+    this.callback = callback
+    this.elements = new Set()
+  }
+  observe(element) {
+    this.elements.add(element)
+    // Immediately trigger callback with isIntersecting: true for tests
+    this.callback([{ isIntersecting: true, target: element }], this)
+  }
+  unobserve(element) {
+    this.elements.delete(element)
+  }
+  disconnect() {
+    this.elements.clear()
+  }
+}
+global.IntersectionObserver = IntersectionObserverMock
+if (typeof window !== 'undefined') {
+  window.IntersectionObserver = IntersectionObserverMock
+}
 
 // Mock window.matchMedia only in browser environment
 if (typeof window !== 'undefined') {

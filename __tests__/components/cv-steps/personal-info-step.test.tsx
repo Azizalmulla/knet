@@ -48,18 +48,15 @@ describe('PersonalInfoStep', () => {
   })
 
   test('validates email format', async () => {
-    const user = userEvent.setup()
     renderWithForm(<PersonalInfoStep />)
     
     const emailInput = screen.getByTestId('field-email')
     
-    await user.type(emailInput, 'invalid-email')
-    await user.tab()
-    
-    await waitFor(() => {
-      expect(emailInput).toHaveAttribute('aria-invalid', 'true')
-      expect(screen.getByTestId('error-email')).toBeInTheDocument()
-    })
+    // Email field is locked/readonly, so it should not allow editing
+    expect(emailInput).toHaveAttribute('readonly')
+    expect(emailInput).toBeDisabled()
+    // Since email is locked, it starts without validation errors
+    expect(emailInput).toHaveAttribute('aria-invalid', 'false')
   })
 
   test('validates phone number length', async () => {
@@ -83,30 +80,24 @@ describe('PersonalInfoStep', () => {
     renderWithForm(<PersonalInfoStep />)
     
     const fullNameInput = screen.getByTestId('field-fullName')
-    const emailInput = screen.getByTestId('field-email')
     
-    // First, trigger validation errors
+    // First, trigger validation errors on fullName
     await user.type(fullNameInput, 'test')
     await user.clear(fullNameInput)
-    await user.type(emailInput, 'invalid-email')
     await user.tab()
     
-    // Verify errors are present
+    // Verify error is present
     await waitFor(() => {
       expect(fullNameInput).toHaveAttribute('aria-invalid', 'true')
-      expect(emailInput).toHaveAttribute('aria-invalid', 'true')
     })
     
     // Enter valid data
     await user.type(fullNameInput, 'John Doe')
-    await user.clear(emailInput)
-    await user.type(emailInput, 'john@example.com')
     await user.tab()
     
-    // Verify errors are cleared
+    // Verify error is cleared
     await waitFor(() => {
       expect(fullNameInput).toHaveAttribute('aria-invalid', 'false')
-      expect(emailInput).toHaveAttribute('aria-invalid', 'false')
     })
   })
 
