@@ -716,7 +716,7 @@ export default function AdminDashboard({ orgSlug: orgProp }: { orgSlug?: string 
             {t('export_csv')} ({filteredStudents.length})
           </Button>
           <Link href={`/${resolveOrg()}/admin/interviews`}>
-            <Button variant="default" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="flex items-center gap-2 rounded-2xl border-[3px] border-black bg-gradient-to-br from-[#e0c3fc] to-[#8ec5fc] text-black font-bold shadow-[6px_6px_0_#111] hover:shadow-[4px_4px_0_#111] hover:-translate-y-0.5 transition-all">
               <Video className="h-4 w-4" />
               AI Interviews
             </Button>
