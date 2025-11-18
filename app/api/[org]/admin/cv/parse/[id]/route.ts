@@ -18,9 +18,15 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const maxDuration = 60 // 60 seconds for Vision API calls
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+// Initialize OpenAI only when needed to avoid build-time errors
+function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not configured')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  })
+}
 
 interface ParsedResult {
   text: string
@@ -108,6 +114,7 @@ async function parseWithGPTVision(buffer: Buffer, contentType: string): Promise<
       // Convert PDF to base64 and send to GPT Vision
       const imageBase64 = buffer.toString('base64')
       
+      const openai = getOpenAI()
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // Latest vision model
         messages: [{

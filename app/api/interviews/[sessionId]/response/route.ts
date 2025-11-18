@@ -6,7 +6,15 @@ import OpenAI from 'openai';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Initialize OpenAI only when needed to avoid build-time errors
+function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not configured')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  })
+}
 
 // Upload video response and trigger AI analysis
 export async function POST(
@@ -119,6 +127,8 @@ async function analyzeVideoResponse(
 ) {
   try {
     console.log('[INTERVIEW_AI] Starting analysis for:', responseId);
+    
+    const openai = getOpenAI();
 
     // Step 1: Download video for transcription
     const videoResponse = await fetch(videoUrl);

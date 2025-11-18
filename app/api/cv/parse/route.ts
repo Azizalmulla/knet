@@ -10,9 +10,15 @@ import sharp from 'sharp';
 export const runtime = 'nodejs';
 export const maxDuration = 60; // 60 seconds for Vision API calls
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Initialize OpenAI only when needed to avoid build-time errors
+function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not configured')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  })
+}
 
 // Limits (approx)
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
@@ -247,6 +253,8 @@ export async function POST(request: NextRequest) {
         }
 
         try {
+          const openai = getOpenAI();
+          
           // Convert PDF first page to image using sharp
           // Note: For multi-page PDFs, we'd need a library like pdf-poppler or pdf2pic
           // For now, we'll convert to base64 and let GPT Vision handle it
