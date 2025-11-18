@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Mic } from 'lucide-react'
 import { useLanguage } from '@/lib/language'
 
 interface Organization {
@@ -84,16 +84,20 @@ export default function CompanyPicker() {
 
   const clearSelection = () => setSelected({})
 
-  const proceedSubmit = (mode: 'upload' | 'ai') => {
+  const proceedSubmit = (mode: 'upload' | 'ai' | 'voice') => {
     if (selectedCount === 0) return
     if (selectedCount > MAX_BULK) {
       alert(`You can select up to ${MAX_BULK} companies at once.`)
       return
     }
-    // For AI, if exactly one org is selected, go directly to the AI builder with org preserved
-    if (mode === 'ai' && selectedCount === 1) {
+    // For AI or Voice, if exactly one org is selected, go directly with org preserved
+    if ((mode === 'ai' || mode === 'voice') && selectedCount === 1) {
       const slug = selectedSlugs[0]
-      router.push(`/career/ai-builder?org=${encodeURIComponent(slug)}`)
+      if (mode === 'voice') {
+        router.push(`/voice-cv?org=${encodeURIComponent(slug)}`)
+      } else {
+        router.push(`/career/ai-builder?org=${encodeURIComponent(slug)}`)
+      }
       return
     }
     // Otherwise (upload, or AI with multiple), use bulk submit flow
@@ -209,6 +213,15 @@ export default function CompanyPicker() {
               onClick={() => proceedSubmit('ai')}
             >
               Build with AI {selectedCount > 0 && `(${selectedCount})`}
+            </Button>
+            <Button 
+              size="sm" 
+              className="rounded-2xl border-[3px] border-black bg-gradient-to-br from-[#e0c3fc] to-[#8ec5fc] text-black font-bold shadow-[6px_6px_0_#111] hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" 
+              disabled={selectedCount === 0} 
+              onClick={() => proceedSubmit('voice')}
+            >
+              <Mic className="w-4 h-4 mr-1" />
+              Voice-to-CV {selectedCount > 0 && `(${selectedCount})`}
             </Button>
           </div>
         </div>
