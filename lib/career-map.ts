@@ -121,9 +121,9 @@ export const careerMapRows = [
     "Suggested Vacancies": "Network Security/Application Security"
   },
   {
-    "Field of Study": "Others",
-    "Area of Interest": "All areas",
-    "Suggested Vacancies": "Browse all available positions"
+    "Field of Study": "Others ",
+    "Area of Interest": "(as per the ebove)",
+    "Suggested Vacancies": "(to be as er the area of interest and suggested vacancy)"
   }
 ];
 

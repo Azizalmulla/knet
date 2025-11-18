@@ -98,8 +98,8 @@ describe('SkillsStep', () => {
     expect(screen.getByText('Python')).toBeInTheDocument()
     
     // Remove the first skill (JavaScript)
-    const removeButtons = screen.getAllByRole('button', { name: '' }) // X buttons have no accessible name
-    await user.click(removeButtons[0])
+    const removeButton = screen.getByRole('button', { name: /remove javascript/i })
+    await user.click(removeButton)
     
     // JavaScript should be removed, Python should remain
     expect(screen.queryByText('JavaScript')).not.toBeInTheDocument()
@@ -162,8 +162,8 @@ describe('SkillsStep', () => {
     expect(screen.getByText('Teamwork')).toBeInTheDocument()
     
     // Remove skill from technical category
-    const removeButtons = screen.getAllByRole('button', { name: '' })
-    await user.click(removeButtons[0]) // Remove React
+    const removeButton = screen.getByRole('button', { name: /remove react/i })
+    await user.click(removeButton) // Remove React
     
     // Only React should be removed
     expect(screen.queryByText('React')).not.toBeInTheDocument()

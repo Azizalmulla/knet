@@ -36,7 +36,7 @@ describe('EducationStep', () => {
     expect(screen.getByText('Education 2')).toBeInTheDocument()
     
     // Should have delete buttons for both entries
-    expect(screen.getAllByRole('button', { name: '' })).toHaveLength(2) // Trash buttons
+    expect(screen.getAllByRole('button', { name: /remove education/i })).toHaveLength(2) // Trash buttons
   })
 
   test('removes education entry when delete button is clicked', async () => {
@@ -52,7 +52,7 @@ describe('EducationStep', () => {
     expect(screen.getByText('Education 2')).toBeInTheDocument()
     
     // Remove the second entry
-    const deleteButtons = screen.getAllByRole('button', { name: '' })
+    const deleteButtons = screen.getAllByRole('button', { name: /remove education/i })
     await user.click(deleteButtons[1])
     
     // Should only have Education 1 left
@@ -64,7 +64,7 @@ describe('EducationStep', () => {
     renderWithForm(<EducationStep />)
     
     // Should not have delete button with only one entry
-    expect(screen.queryByRole('button', { name: '' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /remove education/i })).not.toBeInTheDocument()
   })
 
   test('validates required fields', async () => {
@@ -209,7 +209,7 @@ describe('EducationStep', () => {
     await user.type(screen.getByTestId('field-education-2-institution'), 'University C')
     
     // Remove middle entry
-    const deleteButtons = screen.getAllByRole('button', { name: '' })
+    const deleteButtons = screen.getAllByRole('button', { name: /remove education/i })
     await user.click(deleteButtons[1])
     
     // Verify remaining entries maintain their data

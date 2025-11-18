@@ -78,6 +78,7 @@ export function SkillsStep() {
                     type="button"
                     onClick={() => removeSkill(key, index)}
                     className="ltr:ml-2 rtl:mr-2 text-muted-foreground hover:text-foreground"
+                    aria-label={`Remove ${skill}`}
                   >
                     <X className="h-3 w-3" />
                   </button>

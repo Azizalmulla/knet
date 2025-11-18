@@ -4,6 +4,11 @@ import '@testing-library/jest-dom'
 process.env.NEXT_PUBLIC_DISABLE_AUTOSAVE = '1'
 process.env.NEXT_PUBLIC_E2E = '1'
 
+/** Mock Supabase environment variables for tests */
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key-mock-for-testing-purposes-only'
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key-mock-for-testing'
+
 /** Prefer modern user-event (only load in jsdom) */
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   // Lazy-require to avoid importing user-event in Node env tests
@@ -147,3 +152,44 @@ if (typeof window !== 'undefined' && window.navigator) {
     })
   } catch {}
 }
+
+// Mock Supabase client
+jest.mock('@supabase/ssr', () => ({
+  createBrowserClient: jest.fn(() => ({
+    auth: {
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      signInWithPassword: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      signOut: jest.fn().mockResolvedValue({ error: null }),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+    storage: {
+      from: jest.fn(() => ({
+        upload: jest.fn().mockResolvedValue({ data: {}, error: null }),
+        download: jest.fn().mockResolvedValue({ data: null, error: null }),
+        getPublicUrl: jest.fn(() => ({ data: { publicUrl: 'https://test.supabase.co/test.pdf' } })),
+      })),
+    },
+  })),
+  createServerClient: jest.fn(() => ({
+    auth: {
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  })),
+}))
