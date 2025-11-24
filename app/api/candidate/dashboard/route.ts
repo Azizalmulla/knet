@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
         c.email,
         c.phone,
         c.cv_json,
-        c.cv_data,
         c.field_of_study,
         c.area_of_interest,
         c.years_of_experience,
@@ -118,7 +117,7 @@ export async function GET(request: NextRequest) {
     // Parse CV data
     let cvData: any = {};
     try {
-      const rawData = profile.cv_json || profile.cv_data;
+      const rawData = profile.cv_json;
       if (typeof rawData === 'string') {
         cvData = JSON.parse(rawData);
       } else if (rawData) {
