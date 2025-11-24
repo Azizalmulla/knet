@@ -184,7 +184,6 @@ export async function GET(request: NextRequest) {
           o.slug as org_slug,
           o.logo_url,
           COALESCE(d.status, 'pending') as decision_status,
-          d.notes as decision_notes,
           d.updated_at as decision_date
         FROM candidates c
         LEFT JOIN organizations o ON c.org_id = o.id
@@ -208,7 +207,6 @@ export async function GET(request: NextRequest) {
             o.slug as org_slug,
             o.logo_url,
             'pending' as decision_status,
-            NULL as decision_notes,
             NULL as decision_date
           FROM candidates c
           LEFT JOIN organizations o ON c.org_id = o.id
@@ -243,7 +241,6 @@ export async function GET(request: NextRequest) {
       orgLogo: app.logo_url,
       appliedAt: app.created_at,
       status: app.decision_status,
-      notes: app.decision_notes,
       decidedAt: app.decision_date,
     }));
 
