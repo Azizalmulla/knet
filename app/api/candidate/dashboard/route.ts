@@ -253,30 +253,31 @@ export async function GET(request: NextRequest) {
           j.title,
           j.description,
           j.location,
-          j.salary_range,
+          j.salary_min,
+          j.salary_max,
+          j.salary_currency,
           j.job_type,
-          j.experience_level,
-          j.skills_required,
+          j.work_mode,
+          j.skills,
           j.created_at,
           o.name as company_name,
           o.slug as company_slug,
           o.logo_url
         FROM jobs j
         JOIN organizations o ON j.org_id = o.id
-        WHERE j.status = 'active'
-        AND j.deleted_at IS NULL
+        WHERE j.status = 'open'
         ORDER BY j.created_at DESC
         LIMIT 20
       `;
     } catch (error) {
-      console.log('[Dashboard] Jobs table not found or error, skipping job matching');
+      console.error('[Dashboard] Error fetching jobs:', error);
       jobsRes = { rows: [] };
     }
 
     // Simple matching: check if candidate skills match job requirements
     const matchedJobs = jobsRes.rows
       .map((job: any) => {
-        const jobSkills = job.skills_required || [];
+        const jobSkills = job.skills || [];
         const matchedSkills = jobSkills.filter((skill: string) =>
           topSkills.some(candSkill => 
             candSkill.toLowerCase().includes(skill.toLowerCase()) ||
@@ -288,10 +289,24 @@ export async function GET(request: NextRequest) {
           ? Math.round((matchedSkills.length / jobSkills.length) * 100)
           : 50;
 
+        // Format salary range
+        let salaryRange = 'Competitive';
+        if (job.salary_min || job.salary_max) {
+          const currency = job.salary_currency || 'KWD';
+          if (job.salary_min && job.salary_max) {
+            salaryRange = `${job.salary_min}-${job.salary_max} ${currency}`;
+          } else if (job.salary_min) {
+            salaryRange = `${job.salary_min}+ ${currency}`;
+          } else if (job.salary_max) {
+            salaryRange = `Up to ${job.salary_max} ${currency}`;
+          }
+        }
+
         return {
           ...job,
           matchScore,
           matchedSkills,
+          salaryRange,
         };
       })
       .filter((job: any) => job.matchScore >= 30) // At least 30% match
@@ -304,8 +319,9 @@ export async function GET(request: NextRequest) {
         companySlug: job.company_slug,
         companyLogo: job.logo_url,
         location: job.location,
-        salaryRange: job.salary_range,
+        salaryRange: job.salaryRange,
         jobType: job.job_type,
+        workMode: job.work_mode,
         matchScore: job.matchScore,
         matchedSkills: job.matchedSkills,
         postedAt: job.created_at,
