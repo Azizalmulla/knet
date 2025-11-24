@@ -273,12 +273,10 @@ export default function UploadCVForm({ orgSlug: orgProp, orgSlugs }: { orgSlug?:
         // Debounced telemetry tracking
         debouncedTelemetry({ field: fieldOfStudy, area: areaOfInterest, action: 'selection' });
       } else {
+        // No matching vacancies found, but we allow submission anyway
         setSuggestedVacancies(null);
         setVacancies([]);
-        if (!showInvalidComboToast) {
-          toast.error(t('invalid_combo'));
-          setShowInvalidComboToast(true);
-        }
+        setShowInvalidComboToast(false); // Don't show error - submission is allowed
       }
     } else {
       setSuggestedVacancies(null);
@@ -315,11 +313,8 @@ export default function UploadCVForm({ orgSlug: orgProp, orgSlugs }: { orgSlug?:
       toast.error(msg)
       return
     }
+    // Removed validation check for suggested vacancies - allow submission regardless
     const effectiveSuggestedAtSubmit = suggestedVacancies || matchSuggestedVacancies(fieldOfStudy, areaOfInterest);
-    if (!isTest && !effectiveSuggestedAtSubmit) {
-      toast.error('Please select both Field of Study and Area of Interest with valid suggested vacancies.');
-      return;
-    }
 
     // Require an organization selection (single or bulk)
     if (!isTest && !orgSlug && (!Array.isArray(orgSlugs) || orgSlugs.length === 0)) {

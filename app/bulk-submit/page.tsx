@@ -59,6 +59,13 @@ export default async function BulkSubmitPage({ searchParams }: { searchParams: {
               Open AI CV Builder
             </Link>
           </div>
+        ) : mode === 'voice' ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">You chose Voice-to-CV. Continue to record your voice, then your CV will be submitted to all selected companies.</p>
+            <Link href={`/voice-cv?orgs=${encodeURIComponent(slugs.join(','))}`} className="inline-block bg-gradient-to-br from-[#e0c3fc] to-[#8ec5fc] text-black font-bold px-4 py-2 rounded border border-black">
+              Open Voice-to-CV
+            </Link>
+          </div>
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Upload your CV once; we will submit it to all selected companies.</p>
