@@ -74,14 +74,12 @@ export function EnhancedStudentDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
+      <div className="min-h-screen bg-[#eeeee4] p-8">
         <div className="max-w-7xl mx-auto">
-          <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-12 text-center">
-              <RefreshCw className="w-12 h-12 animate-spin mx-auto mb-4" />
-              <p className="text-lg font-bold">Loading your dashboard...</p>
-            </CardContent>
-          </Card>
+          <div className="rounded-[28px] border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-12 text-center">
+            <RefreshCw className="w-12 h-12 animate-spin mx-auto mb-4 text-black" />
+            <p className="text-lg font-extrabold text-black">Loading your dashboard...</p>
+          </div>
         </div>
       </div>
     );
@@ -89,19 +87,17 @@ export function EnhancedStudentDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
+      <div className="min-h-screen bg-[#eeeee4] p-8">
         <div className="max-w-7xl mx-auto">
-          <Card className="border-4 border-red-500 shadow-[8px_8px_0px_0px_rgba(239,68,68,1)]">
-            <CardContent className="p-12 text-center">
-              <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-black mb-2">Failed to Load Dashboard</h3>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={fetchDashboard} className="bg-black text-white hover:bg-gray-800">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="rounded-[28px] border-[3px] border-black bg-[#ffcccb] shadow-[6px_6px_0_#111] p-12 text-center">
+            <XCircle className="w-16 h-16 text-black mx-auto mb-4" />
+            <h3 className="text-2xl font-extrabold mb-2 text-black">Failed to Load Dashboard</h3>
+            <p className="text-neutral-700 mb-4">{error}</p>
+            <Button onClick={fetchDashboard} className="rounded-2xl border-[3px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 hover:bg-zinc-100 transition-transform font-bold">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -110,29 +106,27 @@ export function EnhancedStudentDashboard() {
   // Show empty state if no data
   if (!data || data.profile.profileStrength === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
+      <div className="min-h-screen bg-[#eeeee4] p-8">
         <div className="max-w-7xl mx-auto">
-          <Card className="border-4 border-blue-500 shadow-[8px_8px_0px_0px_rgba(59,130,246,1)]">
-            <CardContent className="p-12 text-center">
-              <Sparkles className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-black mb-2">Welcome to Your Career Dashboard!</h3>
-              <p className="text-gray-600 mb-6">Get started by uploading your CV or building one with AI</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild className="bg-black text-white hover:bg-gray-800">
-                  <Link href="/upload">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Upload CV
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="border-2 border-black">
-                  <Link href="/ai-builder">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Build with AI
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-[28px] border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-12 text-center">
+            <Sparkles className="w-16 h-16 text-black mx-auto mb-4" />
+            <h3 className="text-2xl font-extrabold mb-2 text-black">Welcome to Your Career Dashboard!</h3>
+            <p className="text-neutral-600 mb-6">Get started by uploading your CV or building one with AI</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild className="rounded-2xl border-[3px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 hover:bg-zinc-100 transition-transform font-bold">
+                <Link href="/start">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Upload CV
+                </Link>
+              </Button>
+              <Button asChild className="rounded-2xl border-[3px] border-black bg-[#ffd6a5] text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
+                <Link href="/career/ai-builder">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Build with AI
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -159,19 +153,18 @@ export function EnhancedStudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4 md:p-8">
+    <div className="min-h-screen bg-[#eeeee4] p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-black mb-2">Your Career Dashboard</h1>
-            <p className="text-gray-600">Track your progress and discover opportunities</p>
+            <h1 className="text-4xl font-extrabold mb-2 text-black border-b-[4px] border-black inline-block pr-2">Your Career Dashboard</h1>
+            <p className="text-neutral-600 mt-4">Track your progress and discover opportunities</p>
           </div>
           <Button
             onClick={fetchDashboard}
-            variant="outline"
-            className="border-2 border-black"
+            className="rounded-2xl border-[3px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 hover:bg-zinc-100 transition-transform font-bold"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
@@ -179,191 +172,168 @@ export function EnhancedStudentDashboard() {
         </div>
 
         {/* Profile Strength Card */}
-        <Card className="border-4 border-purple-500 shadow-[8px_8px_0px_0px_rgba(168,85,247,1)] bg-gradient-to-br from-purple-50 to-purple-100">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <Target className="w-6 h-6 text-purple-500" />
+        <div className="rounded-[28px] border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-6">
+          <div className="mb-4">
+            <h2 className="flex items-center gap-2 text-2xl font-extrabold text-black">
+              <Target className="w-6 h-6 text-black" />
               Profile Strength: {data.profile.profileStrength}%
-            </CardTitle>
-            <CardDescription>Complete your profile to get better matches</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Progress 
-              value={data.profile.profileStrength} 
-              className="h-4 border-2 border-black"
-            />
+            </h2>
+            <p className="text-neutral-600 mt-1">Complete your profile to get better matches</p>
+          </div>
+          <div className="space-y-4">
+            <div className="relative h-6 bg-neutral-200 rounded-full border-[3px] border-black overflow-hidden">
+              <div 
+                className="absolute inset-y-0 left-0 bg-black transition-all duration-500"
+                style={{ width: `${data.profile.profileStrength}%` }}
+              />
+            </div>
             
             {data.profile.completionTips.length > 0 && (
-              <div className="space-y-2">
-                <p className="font-bold flex items-center gap-2">
+              <div className="space-y-2 mt-4">
+                <p className="font-extrabold flex items-center gap-2 text-black">
                   <Sparkles className="w-4 h-4" />
                   Quick Wins:
                 </p>
                 {data.profile.completionTips.map((tip, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm">
-                    <ArrowRight className="w-4 h-4 text-purple-500" />
+                  <div key={idx} className="flex items-center gap-2 text-sm text-neutral-700">
+                    <ArrowRight className="w-4 h-4 text-black" />
                     <span>{tip}</span>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="pt-4 border-t-2 border-black">
-              <p className="font-bold mb-2">Your Top Skills:</p>
+            <div className="pt-4 border-t-[3px] border-black">
+              <p className="font-extrabold mb-2 text-black">Your Top Skills:</p>
               <div className="flex flex-wrap gap-2">
                 {data.profile.topSkills.map((skill, idx) => (
-                  <Badge key={idx} className="bg-purple-500 text-white font-bold">
+                  <span key={idx} className="px-3 py-1 rounded-full border-[2px] border-black bg-[#ffd6a5] text-black font-bold text-sm">
                     {skill}
-                  </Badge>
+                  </span>
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card className="border-4 border-blue-500 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-blue-500" />
-                Total Applied
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black">{data.applications.total}</div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border-[3px] border-black bg-[#a8dadc] shadow-[4px_4px_0_#111] p-4">
+            <div className="text-sm font-bold text-black mb-2 flex items-center gap-2">
+              <Briefcase className="w-4 h-4" />
+              Total Applied
+            </div>
+            <div className="text-4xl font-extrabold text-black">{data.applications.total}</div>
+          </div>
 
-          <Card className="border-4 border-yellow-500 shadow-[4px_4px_0px_0px_rgba(245,158,11,1)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="w-5 h-5 text-yellow-500" />
-                Under Review
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black">{data.applications.reviewing + data.applications.pending}</div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border-[3px] border-black bg-[#ffd6a5] shadow-[4px_4px_0_#111] p-4">
+            <div className="text-sm font-bold text-black mb-2 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Under Review
+            </div>
+            <div className="text-4xl font-extrabold text-black">{data.applications.reviewing + data.applications.pending}</div>
+          </div>
 
-          <Card className="border-4 border-purple-500 shadow-[4px_4px_0px_0px_rgba(168,85,247,1)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Video className="w-5 h-5 text-purple-500" />
-                Interviewed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black">{data.applications.interviewed}</div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border-[3px] border-black bg-[#e0c3fc] shadow-[4px_4px_0_#111] p-4">
+            <div className="text-sm font-bold text-black mb-2 flex items-center gap-2">
+              <Video className="w-4 h-4" />
+              Interviewed
+            </div>
+            <div className="text-4xl font-extrabold text-black">{data.applications.interviewed}</div>
+          </div>
 
-          <Card className="border-4 border-green-500 shadow-[4px_4px_0px_0px_rgba(34,197,94,1)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                Accepted
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black">{data.applications.accepted}</div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border-[3px] border-black bg-[#d4f1dd] shadow-[4px_4px_0_#111] p-4">
+            <div className="text-sm font-bold text-black mb-2 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Accepted
+            </div>
+            <div className="text-4xl font-extrabold text-black">{data.applications.accepted}</div>
+          </div>
 
-          <Card className="border-4 border-red-500 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-red-500" />
-                Rejected
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black">{data.applications.rejected}</div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border-[3px] border-black bg-[#ffcccb] shadow-[4px_4px_0_#111] p-4">
+            <div className="text-sm font-bold text-black mb-2 flex items-center gap-2">
+              <XCircle className="w-4 h-4" />
+              Rejected
+            </div>
+            <div className="text-4xl font-extrabold text-black">{data.applications.rejected}</div>
+          </div>
         </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="matched-jobs" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 border-2 border-black">
-            <TabsTrigger value="matched-jobs" className="font-bold">
-              🎯 Matched Jobs ({data.matchedJobs.length})
+          <div className="grid w-full grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <TabsTrigger value="matched-jobs" className="rounded-2xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform data-[state=active]:bg-black data-[state=active]:text-white font-bold p-3">
+              🎯 Jobs ({data.matchedJobs.length})
             </TabsTrigger>
-            <TabsTrigger value="interviews" className="font-bold">
+            <TabsTrigger value="interviews" className="rounded-2xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform data-[state=active]:bg-black data-[state=active]:text-white font-bold p-3">
               📅 Interviews ({data.upcomingInterviews.length})
             </TabsTrigger>
-            <TabsTrigger value="applications" className="font-bold">
-              📋 Applications ({data.applications.recentApplications.length})
+            <TabsTrigger value="applications" className="rounded-2xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform data-[state=active]:bg-black data-[state=active]:text-white font-bold p-3">
+              📋 Apps ({data.applications.recentApplications.length})
             </TabsTrigger>
-            <TabsTrigger value="insights" className="font-bold">
-              💡 Career Insights
+            <TabsTrigger value="insights" className="rounded-2xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform data-[state=active]:bg-black data-[state=active]:text-white font-bold p-3">
+              💡 Insights
             </TabsTrigger>
-          </TabsList>
+          </div>
 
           {/* Matched Jobs Tab */}
           <TabsContent value="matched-jobs">
             {data.matchedJobs.length === 0 ? (
-              <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                <CardContent className="p-12 text-center">
-                  <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold mb-2">No matched jobs yet</h3>
-                  <p className="text-gray-600 mb-4">
-                    Complete your profile to get personalized job matches
-                  </p>
-                  <Button asChild className="bg-black text-white hover:bg-gray-800">
-                    <Link href="/jobs">Browse All Jobs</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="rounded-[28px] border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-12 text-center">
+                <Briefcase className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-extrabold mb-2 text-black">No matched jobs yet</h3>
+                <p className="text-neutral-600 mb-4">
+                  Complete your profile to get personalized job matches
+                </p>
+                <Button asChild className="rounded-2xl border-[3px] border-black bg-black text-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
+                  <Link href="/jobs">Browse All Jobs</Link>
+                </Button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {data.matchedJobs.map((job: any) => (
-                  <Card key={job.id} className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-xl mb-2">{job.title}</CardTitle>
-                          <CardDescription className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4" />
-                            {job.company}
-                          </CardDescription>
-                        </div>
-                        <Badge className="bg-green-500 text-white font-bold">
-                          {job.matchScore}% Match
-                        </Badge>
+                  <div key={job.id} className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111] hover:shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-all p-6 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-extrabold text-black mb-1">{job.title}</h3>
+                        <p className="text-neutral-600 flex items-center gap-2 text-sm">
+                          <Building2 className="w-4 h-4" />
+                          {job.company}
+                        </p>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {job.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
-                          {job.salaryRange || 'Competitive'}
-                        </span>
+                      <span className="px-3 py-1 rounded-full border-[2px] border-black bg-[#d4f1dd] text-black font-bold text-sm">
+                        {job.matchScore}% Match
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-sm text-neutral-700">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {job.location}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        {job.salaryRange || 'Competitive'}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-bold mb-2 text-black">Matched Skills:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {job.matchedSkills.slice(0, 5).map((skill: string, idx: number) => (
+                          <span key={idx} className="px-2 py-1 rounded-lg border-[2px] border-black bg-neutral-100 text-black text-xs font-medium">
+                            {skill}
+                          </span>
+                        ))}
                       </div>
-                      
-                      <div>
-                        <p className="text-sm font-bold mb-1">Matched Skills:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {job.matchedSkills.slice(0, 5).map((skill: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                    </div>
 
-                      <Button asChild className="w-full bg-black text-white hover:bg-gray-800">
-                        <Link href={`/jobs/${job.id}`}>
-                          View Job <ArrowRight className="w-4 h-4 ml-2" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
+                    <Button asChild className="w-full rounded-2xl border-[3px] border-black bg-black text-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
+                      <Link href={`/jobs/${job.id}`}>
+                        View Job <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
                 ))}
               </div>
             )}
