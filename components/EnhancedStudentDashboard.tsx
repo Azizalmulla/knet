@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Target, TrendingUp, Briefcase, Calendar, Clock, CheckCircle2,
   XCircle, AlertCircle, Sparkles, Award, BookOpen, MapPin,
@@ -258,7 +258,7 @@ export function EnhancedStudentDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="matched-jobs" className="w-full">
-          <div className="grid w-full grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-3 mb-6 bg-transparent h-auto">
             <TabsTrigger value="matched-jobs" className="rounded-2xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform data-[state=active]:bg-black data-[state=active]:text-white font-bold p-3">
               🎯 Jobs ({data.matchedJobs.length})
             </TabsTrigger>
@@ -271,7 +271,7 @@ export function EnhancedStudentDashboard() {
             <TabsTrigger value="insights" className="rounded-2xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform data-[state=active]:bg-black data-[state=active]:text-white font-bold p-3">
               💡 Insights
             </TabsTrigger>
-          </div>
+          </TabsList>
 
           {/* Matched Jobs Tab */}
           <TabsContent value="matched-jobs">
