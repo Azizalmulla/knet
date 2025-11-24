@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Target, TrendingUp, Briefcase, Calendar, Clock, CheckCircle2,
   XCircle, AlertCircle, Sparkles, Award, BookOpen, MapPin,
-  DollarSign, Video, ArrowRight,
-  Star, Zap, Building2, FileText, RefreshCw
+  DollarSign, Video, ExternalLink, RefreshCw, ArrowRight,
+  Star, Zap, Users, Building2, FileText, Mail, Phone
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -131,11 +134,11 @@ export function EnhancedStudentDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'accepted': return 'bg-[#d4f1dd]';
-      case 'rejected': return 'bg-[#ffcccb]';
-      case 'interviewed': return 'bg-[#a8dadc]';
-      case 'reviewing': return 'bg-[#ffd6a5]';
-      default: return 'bg-neutral-200';
+      case 'accepted': return 'bg-green-500';
+      case 'rejected': return 'bg-red-500';
+      case 'interviewed': return 'bg-blue-500';
+      case 'reviewing': return 'bg-yellow-500';
+      default: return 'bg-gray-400';
     }
   };
 
@@ -339,58 +342,62 @@ export function EnhancedStudentDashboard() {
           {/* Upcoming Interviews Tab */}
           <TabsContent value="interviews">
             {data.upcomingInterviews.length === 0 ? (
-              <div className="rounded-[28px] border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-12 text-center">
-                <Calendar className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-extrabold mb-2 text-black">No upcoming interviews</h3>
-                <p className="text-neutral-600">
-                  Keep applying! Your next interview could be just around the corner.
-                </p>
-              </div>
+              <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <CardContent className="p-12 text-center">
+                  <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold mb-2">No upcoming interviews</h3>
+                  <p className="text-gray-600">
+                    Keep applying! Your next interview could be just around the corner.
+                  </p>
+                </CardContent>
+              </Card>
             ) : (
               <div className="space-y-4">
                 {data.upcomingInterviews.map((interview: any) => (
-                  <div key={interview.id} className="rounded-2xl border-[3px] border-black bg-[#a8dadc] shadow-[6px_6px_0_#111] p-6">
-                    <div className="flex items-start justify-between flex-wrap gap-4">
-                      <div className="space-y-3 flex-1">
-                        <div>
-                          <h3 className="text-xl font-extrabold text-black mb-1">{interview.position}</h3>
-                          <p className="text-neutral-700 flex items-center gap-2">
-                            <Building2 className="w-4 h-4" />
-                            {interview.company}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-sm text-neutral-700">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(interview.startTime).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {new Date(interview.startTime).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
+                  <Card key={interview.id} className="border-4 border-blue-500 shadow-[8px_8px_0px_0px_rgba(59,130,246,1)]">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-3 flex-1">
+                          <div>
+                            <h3 className="text-xl font-black mb-1">{interview.position}</h3>
+                            <p className="text-gray-600 flex items-center gap-2">
+                              <Building2 className="w-4 h-4" />
+                              {interview.company}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {new Date(interview.startTime).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                month: 'long',
+                                day: 'numeric',
+                              })}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {new Date(interview.startTime).toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+
+                          <Badge className="bg-blue-500 text-white">
+                            {interview.type} Interview
+                          </Badge>
                         </div>
 
-                        <span className="inline-block px-3 py-1 rounded-full border-[2px] border-black bg-white text-black font-bold text-sm">
-                          {interview.type} Interview
-                        </span>
+                        <Button asChild className="bg-blue-500 text-white hover:bg-blue-600">
+                          <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer">
+                            <Video className="w-4 h-4 mr-2" />
+                            Join Meeting
+                          </a>
+                        </Button>
                       </div>
-
-                      <Button asChild className="rounded-2xl border-[3px] border-black bg-black text-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
-                        <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer">
-                          <Video className="w-4 h-4 mr-2" />
-                          Join Meeting
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
@@ -398,133 +405,153 @@ export function EnhancedStudentDashboard() {
 
           {/* Applications Tab */}
           <TabsContent value="applications">
-            <div className="rounded-[28px] border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-6">
-              <h2 className="text-2xl font-extrabold mb-2 text-black">Recent Applications</h2>
-              <p className="text-neutral-600 mb-6">Track your application status</p>
-              <div className="space-y-3">
-                {data.applications.recentApplications.map((app: any) => {
-                  const StatusIcon = getStatusIcon(app.status);
-                  return (
-                    <div key={app.id} className="flex items-center justify-between p-4 rounded-2xl border-[3px] border-black bg-neutral-50">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl border-[3px] border-black ${getStatusColor(app.status)} flex items-center justify-center`}>
-                          <StatusIcon className="w-6 h-6 text-black" />
+            <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <CardHeader>
+                <CardTitle>Recent Applications</CardTitle>
+                <CardDescription>Track your application status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {data.applications.recentApplications.map((app: any) => {
+                    const StatusIcon = getStatusIcon(app.status);
+                    return (
+                      <div key={app.id} className="flex items-center justify-between p-4 border-2 border-black rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-lg border-2 border-black ${getStatusColor(app.status)} flex items-center justify-center`}>
+                            <StatusIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold">{app.orgName}</p>
+                            <p className="text-sm text-gray-600">
+                              Applied {new Date(app.appliedAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-extrabold text-black">{app.orgName}</p>
-                          <p className="text-sm text-neutral-600">
-                            Applied {new Date(app.appliedAt).toLocaleDateString()}
-                          </p>
-                        </div>
+                        <Badge className={`${getStatusColor(app.status)} text-white font-bold`}>
+                          {app.status}
+                        </Badge>
                       </div>
-                      <span className={`px-3 py-1 rounded-full border-[2px] border-black ${getStatusColor(app.status)} text-black font-bold text-sm capitalize`}>
-                        {app.status}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Career Insights Tab */}
           <TabsContent value="insights">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Skills to Learn */}
-              <div className="rounded-2xl border-[3px] border-black bg-[#ffd6a5] shadow-[6px_6px_0_#111] p-6">
-                <h3 className="flex items-center gap-2 text-xl font-extrabold text-black mb-2">
-                  <BookOpen className="w-5 h-5" />
-                  Skills to Learn
-                </h3>
-                <p className="text-neutral-700 text-sm mb-4">Trending skills for your career</p>
-                <div className="space-y-2">
-                  {data.recommendations.skillsToLearn.map((skill, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border-[2px] border-black">
-                      <Zap className="w-4 h-4 text-black" />
-                      <span className="font-bold text-black">{skill}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Card className="border-4 border-orange-500 shadow-[8px_8px_0px_0px_rgba(249,115,22,1)]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-orange-500" />
+                    Skills to Learn
+                  </CardTitle>
+                  <CardDescription>Trending skills for your career</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {data.recommendations.skillsToLearn.map((skill, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border-2 border-orange-500">
+                        <Zap className="w-4 h-4 text-orange-500" />
+                        <span className="font-bold">{skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Career Paths */}
-              <div className="rounded-2xl border-[3px] border-black bg-[#d4f1dd] shadow-[6px_6px_0_#111] p-6">
-                <h3 className="flex items-center gap-2 text-xl font-extrabold text-black mb-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Career Paths
-                </h3>
-                <p className="text-neutral-700 text-sm mb-4">Potential career directions</p>
-                <div className="space-y-2">
-                  {data.recommendations.careerPaths.map((path, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border-[2px] border-black">
-                      <Star className="w-4 h-4 text-black" />
-                      <span className="font-bold text-black">{path}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Card className="border-4 border-green-500 shadow-[8px_8px_0px_0px_rgba(34,197,94,1)]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-green-500" />
+                    Career Paths
+                  </CardTitle>
+                  <CardDescription>Potential career directions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {data.recommendations.careerPaths.map((path, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border-2 border-green-500">
+                        <Star className="w-4 h-4 text-green-500" />
+                        <span className="font-bold">{path}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Improvement Tips */}
-              <div className="rounded-2xl border-[3px] border-black bg-[#e0c3fc] shadow-[6px_6px_0_#111] p-6">
-                <h3 className="flex items-center gap-2 text-xl font-extrabold text-black mb-2">
-                  <Award className="w-5 h-5" />
-                  Pro Tips
-                </h3>
-                <p className="text-neutral-700 text-sm mb-4">Actionable improvements</p>
-                <div className="space-y-2">
-                  {data.recommendations.improvementTips.map((tip, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border-[2px] border-black">
-                      <Sparkles className="w-4 h-4 text-black" />
-                      <span className="text-sm font-medium text-black">{tip}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Card className="border-4 border-purple-500 shadow-[8px_8px_0px_0px_rgba(168,85,247,1)]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-purple-500" />
+                    Pro Tips
+                  </CardTitle>
+                  <CardDescription>Actionable improvements</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {data.recommendations.improvementTips.map((tip, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg border-2 border-purple-500">
+                        <Sparkles className="w-4 h-4 text-purple-500" />
+                        <span className="text-sm">{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
 
         {/* Quick Actions */}
-        <div className="rounded-[28px] border-[3px] border-black bg-white shadow-[6px_6px_0_#111] p-6">
-          <h2 className="text-2xl font-extrabold mb-6 text-black">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button asChild className="h-auto p-6 rounded-2xl border-[3px] border-black bg-[#e0c3fc] text-black shadow-[4px_4px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
-              <Link href="/jobs">
-                <div className="flex flex-col items-center gap-2">
-                  <Briefcase className="w-8 h-8" />
-                  <span className="text-sm">Browse Jobs</span>
-                </div>
-              </Link>
-            </Button>
-            
-            <Button asChild className="h-auto p-6 rounded-2xl border-[3px] border-black bg-[#a8dadc] text-black shadow-[4px_4px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
-              <Link href="/career/ai-builder">
-                <div className="flex flex-col items-center gap-2">
-                  <FileText className="w-8 h-8" />
-                  <span className="text-sm">Build CV</span>
-                </div>
-              </Link>
-            </Button>
-            
-            <Button asChild className="h-auto p-6 rounded-2xl border-[3px] border-black bg-[#d4f1dd] text-black shadow-[4px_4px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
-              <Link href="/start">
-                <div className="flex flex-col items-center gap-2">
-                  <TrendingUp className="w-8 h-8" />
-                  <span className="text-sm">Upload CV</span>
-                </div>
-              </Link>
-            </Button>
-            
-            <Button asChild className="h-auto p-6 rounded-2xl border-[3px] border-black bg-[#ffd6a5] text-black shadow-[4px_4px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
-              <Link href="/career-assistant">
-                <div className="flex flex-col items-center gap-2">
-                  <Sparkles className="w-8 h-8" />
-                  <span className="text-sm">AI Assistant</span>
-                </div>
-              </Link>
-            </Button>
-          </div>
-        </div>
+        <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Button asChild className="h-auto p-6 bg-purple-500 hover:bg-purple-600 text-white">
+                <Link href="/jobs">
+                  <div className="flex flex-col items-center gap-2">
+                    <Briefcase className="w-8 h-8" />
+                    <span className="font-bold">Browse Jobs</span>
+                  </div>
+                </Link>
+              </Button>
+              
+              <Button asChild className="h-auto p-6 bg-blue-500 hover:bg-blue-600 text-white">
+                <Link href="/ai-builder">
+                  <div className="flex flex-col items-center gap-2">
+                    <FileText className="w-8 h-8" />
+                    <span className="font-bold">Build CV</span>
+                  </div>
+                </Link>
+              </Button>
+              
+              <Button asChild className="h-auto p-6 bg-green-500 hover:bg-green-600 text-white">
+                <Link href="/upload">
+                  <div className="flex flex-col items-center gap-2">
+                    <TrendingUp className="w-8 h-8" />
+                    <span className="font-bold">Upload CV</span>
+                  </div>
+                </Link>
+              </Button>
+              
+              <Button asChild className="h-auto p-6 bg-orange-500 hover:bg-orange-600 text-white">
+                <Link href="/career-assistant">
+                  <div className="flex flex-col items-center gap-2">
+                    <Sparkles className="w-8 h-8" />
+                    <span className="font-bold">AI Assistant</span>
+                  </div>
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
