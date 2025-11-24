@@ -66,11 +66,11 @@ export async function GET(request: NextRequest) {
         c.area_of_interest,
         c.years_of_experience,
         c.created_at,
-        c.organization_id,
+        c.org_id,
         o.name as org_name,
         o.slug as org_slug
       FROM candidates c
-      LEFT JOIN organizations o ON c.organization_id = o.id
+      LEFT JOIN organizations o ON c.org_id = o.id
       WHERE LOWER(c.email) = ${candidateEmail}
       AND c.deleted_at IS NULL
       ORDER BY c.created_at DESC
@@ -188,7 +188,7 @@ export async function GET(request: NextRequest) {
           d.notes as decision_notes,
           d.updated_at as decision_date
         FROM candidates c
-        LEFT JOIN organizations o ON c.organization_id = o.id
+        LEFT JOIN organizations o ON c.org_id = o.id
         LEFT JOIN candidate_decisions d ON d.candidate_id = c.id
         WHERE LOWER(c.email) = ${candidateEmail}
         AND c.deleted_at IS NULL
@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
             NULL as decision_notes,
             NULL as decision_date
           FROM candidates c
-          LEFT JOIN organizations o ON c.organization_id = o.id
+          LEFT JOIN organizations o ON c.org_id = o.id
           WHERE LOWER(c.email) = ${candidateEmail}
           AND c.deleted_at IS NULL
           ORDER BY c.created_at DESC
@@ -266,7 +266,7 @@ export async function GET(request: NextRequest) {
           o.slug as company_slug,
           o.logo_url
         FROM jobs j
-        JOIN organizations o ON j.organization_id = o.id
+        JOIN organizations o ON j.org_id = o.id
         WHERE j.status = 'active'
         AND j.deleted_at IS NULL
         ORDER BY j.created_at DESC
