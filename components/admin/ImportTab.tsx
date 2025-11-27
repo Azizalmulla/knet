@@ -8,6 +8,7 @@ import { Copy, Mail, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-reac
 import { toast } from 'sonner'
 import { adminFetch } from '@/lib/admin-fetch'
 import CSVUpload from './CSVUpload'
+import BulkCVUpload from './BulkCVUpload'
 
 interface ImportActivity {
   id: string
@@ -22,7 +23,7 @@ interface ImportActivity {
 interface ImportStats {
   email_imports: number
   csv_imports: number
-  pdf_imports: number
+  bulk_cv_imports: number
   total_imported: number
   total_failed: number
 }
@@ -32,7 +33,7 @@ export default function ImportTab({ orgSlug }: { orgSlug: string }) {
   const [stats, setStats] = useState<ImportStats>({
     email_imports: 0,
     csv_imports: 0,
-    pdf_imports: 0,
+    bulk_cv_imports: 0,
     total_imported: 0,
     total_failed: 0
   })
@@ -67,8 +68,8 @@ export default function ImportTab({ orgSlug }: { orgSlug: string }) {
         return <Badge variant="default" className="bg-blue-500"><Mail className="w-3 h-3 mr-1" /> Email</Badge>
       case 'csv_import':
         return <Badge variant="secondary">CSV</Badge>
-      case 'pdf_bulk_import':
-        return <Badge variant="outline">PDF Bulk</Badge>
+      case 'bulk_import':
+        return <Badge className="bg-purple-500 text-white">Bulk CV</Badge>
       default:
         return <Badge>{source}</Badge>
     }
@@ -113,7 +114,10 @@ export default function ImportTab({ orgSlug }: { orgSlug: string }) {
         </Card>
       </div>
 
-      {/* CSV Bulk Upload */}
+      {/* Bulk CV Upload (PDFs with AI Parsing) */}
+      <BulkCVUpload orgSlug={orgSlug} onSuccess={fetchActivity} />
+
+      {/* CSV Metadata Import */}
       <CSVUpload orgSlug={orgSlug} onSuccess={fetchActivity} />
 
       {/* Email Auto-Import Setup */}

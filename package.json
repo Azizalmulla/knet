@@ -76,6 +76,7 @@
     "jsonresume-theme-elegant": "^1.16.1",
     "jsonresume-theme-macchiato": "^1.1.0",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.454.0",
     "mammoth": "^1.10.0",
     "motion": "^12.23.22",
