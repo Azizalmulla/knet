@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { type, data } = body || {};
     console.log('[INBOX_WEBHOOK] Event type:', type);
-    console.log('[INBOX_WEBHOOK] Data:', JSON.stringify(data, null, 2));
+    console.log('[INBOX_WEBHOOK] Data keys:', Object.keys(data || {}));
+    console.log('[INBOX_WEBHOOK] Full data:', JSON.stringify(data, null, 2));
 
     if (type !== 'email.received') {
       console.log('[INBOX_WEBHOOK] Ignoring non-email event');
@@ -33,13 +34,34 @@ export async function POST(req: NextRequest) {
     }
 
     const {
-      from, // { name: string, email: string } or string
-      to,   // [{ email: string, name?: string }] | string
+      from,
+      to,
       subject,
-      text,
-      html,
-      headers,
+      text: webhookText,
+      html: webhookHtml,
+      email_id,
     } = data || {};
+    
+    // Resend webhook may not include body - fetch it via API if missing
+    let text = webhookText;
+    let html = webhookHtml;
+    
+    if ((!text && !html) && email_id && process.env.RESEND_API_KEY) {
+      console.log('[INBOX_WEBHOOK] Body missing, fetching via API for email_id:', email_id);
+      try {
+        const res = await fetch(`https://api.resend.com/emails/${email_id}`, {
+          headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}` }
+        });
+        if (res.ok) {
+          const emailData = await res.json();
+          text = emailData.text || '';
+          html = emailData.html || '';
+          console.log('[INBOX_WEBHOOK] Fetched body, text length:', text?.length || 0);
+        }
+      } catch (err) {
+        console.error('[INBOX_WEBHOOK] Failed to fetch email body:', err);
+      }
+    }
 
     // Normalize sender fields
     const candidateEmail = typeof from === 'string' ? from : from?.email;
