@@ -9,9 +9,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Mic, Square, Play, Pause, Download, FileText, Sparkles,
+  Mic, Square, Play, Pause, Download, FileText, Zap,
   CheckCircle2, AlertCircle, Loader2, Volume2, RefreshCw,
-  MessageCircle, Keyboard, ChevronRight
+  MessageCircle, Keyboard, ChevronRight, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -498,7 +498,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
     <div className="space-y-6">
       {/* Recording Card */}
       <Card className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
-        <CardHeader className="bg-[#FFEACC] border-b-[3px] border-black rounded-t-2xl">
+        <CardHeader className="bg-[#e0d6cb] border-b-[3px] border-black rounded-t-2xl">
           <CardTitle className="text-2xl font-black flex items-center gap-2">
             <Mic className="w-6 h-6" />
             Voice-to-CV Builder
@@ -511,8 +511,8 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
           
           {/* Instructions (before recording) */}
           {!isRecording && !audioBlob && !cvData && (
-            <Alert className="rounded-xl border-[3px] border-black bg-[#FFEACC] shadow-[4px_4px_0_#111]">
-              <Sparkles className="w-4 h-4 text-black" />
+            <Alert className="rounded-xl border-[3px] border-black bg-[#d5ddd8] shadow-[4px_4px_0_#111]">
+              <Zap className="w-4 h-4 text-black" />
               <AlertDescription>
                 <p className="font-bold mb-2">What to say:</p>
                 <ul className="space-y-1 text-sm">
@@ -623,7 +623,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                     onClick={() => generateCV()}
                     size="lg"
                     disabled={isProcessing}
-                    className="rounded-2xl border-[3px] border-black bg-[#FFEACC] hover:bg-[#FFD699] text-black font-bold px-8 shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
+                    className="rounded-2xl border-[3px] border-black bg-black hover:bg-neutral-800 text-white font-bold px-8 shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                   >
                     {isProcessing ? (
                       <>
@@ -632,7 +632,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-5 h-5 mr-2" />
+                        <ArrowRight className="w-5 h-5 mr-2" />
                         Generate CV
                       </>
                     )}
@@ -756,7 +756,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
       {/* Results Card */}
       {cvData && !showMissingFieldsForm && processingStage === 'done' && (
         <Card className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
-          <CardHeader className="bg-[#a7f3d0] border-b-[3px] border-black rounded-t-2xl">
+          <CardHeader className="bg-[#d2dbd5] border-b-[3px] border-black rounded-t-2xl">
             <CardTitle className="text-2xl font-black flex items-center gap-2">
               <CheckCircle2 className="w-6 h-6 text-black" />
               CV Generated Successfully!
@@ -818,7 +818,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
             <div className="flex flex-wrap gap-4">
               <Button
                 onClick={downloadPDF}
-                className="flex-1 rounded-2xl border-[3px] border-black bg-[#bde0fe] hover:bg-[#a5d4f5] text-black font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
+                className="flex-1 rounded-2xl border-[3px] border-black bg-[#e0d6cb] hover:bg-[#d5ccc1] text-black font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download PDF
@@ -826,7 +826,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
               {orgSlug && (
                 <Button
                   onClick={submitCV}
-                  className="flex-1 rounded-2xl border-[3px] border-black bg-[#a7f3d0] hover:bg-[#86efac] text-black font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
+                  className="flex-1 rounded-2xl border-[3px] border-black bg-black hover:bg-neutral-800 text-white font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Submit to {orgSlug}
@@ -836,7 +836,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                 onClick={() => router.push(`/ai-builder?prefill=${encodeURIComponent(JSON.stringify(cvData))}`)}
                 className="rounded-2xl border-[3px] border-black bg-white hover:bg-gray-50 text-black font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
+                <FileText className="w-4 h-4 mr-2" />
                 Edit in Builder
               </Button>
             </div>
