@@ -7,8 +7,8 @@ import { ArrowRight, Shield, Lock, Globe2, Upload, Sparkles, LayoutDashboard, Fi
 import { AppleCardsCarouselDemo } from "@/components/benefits/AppleCardsCarouselDemo"
 import { Space_Grotesk } from "next/font/google"
 import EnrollForm from "@/components/enroll/enroll-form"
-import careerlyLogo from "../images/ChatGPT Image Oct 4, 2025, 12_38_29 PM.png"
-import heroCard from "../images/ChatGPT Image Oct 4, 2025, 12_38_29 PM.png"
+import careerlyLogo from "../images/ChatGPT Image Nov 27, 2025, 07_23_23 AM.png"
+import heroCard from "../images/ChatGPT Image Nov 27, 2025, 07_23_23 AM.png"
 import JobFinderWidget from "@/components/jobs/JobFinderWidget"
 import { useLanguage } from "@/lib/language"
 
