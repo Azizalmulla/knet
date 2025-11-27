@@ -10,9 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Sparkles, Upload, Mic, FileText, CheckCircle2, AlertCircle,
+  Upload, Mic, FileText, CheckCircle2, AlertCircle,
   Loader2, ChevronRight, User, Mail, Phone, GraduationCap, Briefcase,
-  Code, ArrowRight
+  Code, ArrowRight, Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -280,12 +280,12 @@ export function SmartCVEntry({ onComplete, orgSlug }: SmartCVEntryProps) {
       {/* Main Input Card */}
       {stage === 'input' && (
         <Card className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
-          <CardHeader className="bg-gradient-to-r from-violet-500 to-purple-600 text-white border-b-[3px] border-black rounded-t-2xl">
-            <CardTitle className="text-2xl font-black flex items-center gap-2">
-              <Sparkles className="w-6 h-6" />
+          <CardHeader className="bg-[#e0d6cb] border-b-[3px] border-black rounded-t-2xl">
+            <CardTitle className="text-2xl font-black flex items-center gap-2 text-neutral-900">
+              <Zap className="w-6 h-6" />
               Smart CV Builder
             </CardTitle>
-            <CardDescription className="text-violet-100 text-base">
+            <CardDescription className="text-neutral-700 text-base">
               Paste anything about yourself - AI does the rest
             </CardDescription>
           </CardHeader>
@@ -314,7 +314,7 @@ export function SmartCVEntry({ onComplete, orgSlug }: SmartCVEntryProps) {
                 onClick={handleExtract}
                 disabled={isLoading || inputText.length < 10}
                 size="lg"
-                className="flex-1 rounded-2xl border-[3px] border-black bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-bold text-lg py-6 shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
+                className="flex-1 rounded-2xl border-[3px] border-black bg-black hover:bg-neutral-800 text-white font-bold text-lg py-6 shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
               >
                 {isLoading ? (
                   <>
@@ -323,7 +323,7 @@ export function SmartCVEntry({ onComplete, orgSlug }: SmartCVEntryProps) {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-5 h-5 mr-2" />
+                    <ArrowRight className="w-5 h-5 mr-2" />
                     Generate My CV
                   </>
                 )}
@@ -385,8 +385,8 @@ export function SmartCVEntry({ onComplete, orgSlug }: SmartCVEntryProps) {
         <Card className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
           <CardContent className="p-12">
             <div className="text-center space-y-6">
-              <div className="w-24 h-24 mx-auto rounded-full border-4 border-black bg-violet-100 flex items-center justify-center">
-                <Loader2 className="w-12 h-12 text-violet-600 animate-spin" />
+              <div className="w-24 h-24 mx-auto rounded-full border-4 border-black bg-[#e8e4dc] flex items-center justify-center">
+                <Loader2 className="w-12 h-12 text-neutral-700 animate-spin" />
               </div>
               <div>
                 <h3 className="text-2xl font-black">Analyzing your information...</h3>
@@ -481,9 +481,9 @@ export function SmartCVEntry({ onComplete, orgSlug }: SmartCVEntryProps) {
       {/* Generating Stage */}
       {stage === 'generating' && cvData && (
         <Card className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
-          <CardHeader className="bg-gradient-to-r from-violet-500 to-purple-600 text-white border-b-[3px] border-black rounded-t-2xl">
-            <CardTitle className="text-2xl font-black flex items-center gap-2">
-              <Sparkles className="w-6 h-6" />
+          <CardHeader className="bg-[#d5ddd8] border-b-[3px] border-black rounded-t-2xl">
+            <CardTitle className="text-2xl font-black flex items-center gap-2 text-neutral-900">
+              <Loader2 className="w-6 h-6 animate-spin" />
               Building Your CV...
             </CardTitle>
           </CardHeader>
@@ -504,14 +504,14 @@ export function SmartCVEntry({ onComplete, orgSlug }: SmartCVEntryProps) {
                         generatingSections.includes(section) 
                           ? 'border-green-500 bg-green-50' 
                           : currentSection === section
-                          ? 'border-violet-500 bg-violet-50'
+                          ? 'border-neutral-500 bg-neutral-100'
                           : 'border-gray-200 bg-gray-50 opacity-50'
                       }`}
                     >
                       {generatingSections.includes(section) ? (
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                       ) : currentSection === section ? (
-                        <Loader2 className="w-5 h-5 text-violet-500 animate-spin" />
+                        <Loader2 className="w-5 h-5 text-neutral-600 animate-spin" />
                       ) : (
                         <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
                       )}
