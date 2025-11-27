@@ -26,7 +26,11 @@ const steps = [
   { id: 'review', title: 'Review' },
 ];
 
-export default function CVBuilderWizard() {
+interface CVBuilderWizardProps {
+  initialData?: CVData | null;
+}
+
+export default function CVBuilderWizard({ initialData }: CVBuilderWizardProps = {}) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const orgSlug = (searchParams as any)?.get?.('org') || undefined;
@@ -36,8 +40,12 @@ export default function CVBuilderWizard() {
   const [submitResult, setSubmitResult] = useState<{ success: boolean; cvUrl?: string; id?: string } | null>(null);
   const [showDraftRestore, setShowDraftRestore] = useState(false);
   const [draftInfo, setDraftInfo] = useState<{ timestamp: number; age: string } | null>(null);
-  const [cvData, setCvData] = useState<CVData>(defaultCVValues);
+  // Use initialData if provided, otherwise use defaultCVValues
+  const [cvData, setCvData] = useState<CVData>(initialData || defaultCVValues);
   const [jobContext, setJobContext] = useState<{ jobId: string; jobTitle: string; company: string } | null>(null);
+  
+  // Skip draft restore prompt if we have initialData
+  const skipDraftRestore = !!initialData;
 
   const onSubmit = async (data: CVData) => {
     // This is called when the user clicks "Complete" on the Review step
@@ -77,7 +85,8 @@ export default function CVBuilderWizard() {
 
   // Check for existing draft and job context on component mount
   useEffect(() => {
-    if (hasDraft()) {
+    // Skip draft restore if we have initialData from smart entry
+    if (!skipDraftRestore && hasDraft()) {
       const info = getDraftInfo();
       setDraftInfo(info);
       setShowDraftRestore(true);
