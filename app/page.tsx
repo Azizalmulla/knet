@@ -21,7 +21,7 @@ export default function Home() {
       {/* Ambient gradients */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-gradient-to-br from-zinc-700/30 via-zinc-900/0 to-zinc-900/0 blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 h-[520px] w-[520px] rounded-full bg-gradient-to-br from-emerald-600/25 to-cyan-600/10 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 h-[520px] w-[520px] rounded-full bg-gradient-to-br from-stone-400/20 to-stone-300/10 blur-3xl" />
       </div>
 
       {/* Header */}
@@ -67,7 +67,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/student/login?redirectTo=/career/dashboard">
-                <Button size="lg" className="rounded-2xl px-6 border-2 border-black bg-[#ffd6a5] text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform">
+                <Button size="lg" className="rounded-2xl px-6 border-2 border-black bg-[#e0d6cb] text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform">
                   {t('career_dashboard')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -130,7 +130,7 @@ export default function Home() {
       <section aria-labelledby="audiences" className="mt-16">
         <div className="mx-auto max-w-7xl px-4">
           {/* Band frame */}
-          <div className="relative overflow-hidden rounded-[28px] border-[3px] md:border-[4px] border-black bg-[#f3efdf]">
+          <div className="relative overflow-hidden rounded-[28px] border-[3px] md:border-[4px] border-black bg-[#e8e4dc]">
             {/* Offset shadow */}
             <div className="pointer-events-none absolute inset-0 translate-x-2 translate-y-2 rounded-[28px] border-[3px] md:border-[4px] border-black" aria-hidden />
 
@@ -248,7 +248,7 @@ export default function Home() {
             <div className="relative rounded-[24px] p-2 md:p-4">
               <div className="space-y-6 md:space-y-8">
                 {/* Row 1 (blue) */}
-                <div className="relative rounded-[20px] border-[3px] border-black bg-[#bde0fe] p-5 md:p-6 shadow-[6px_6px_0_#111]">
+                <div className="relative rounded-[20px] border-[3px] border-black bg-[#d5ddd8] p-5 md:p-6 shadow-[6px_6px_0_#111]">
                   <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6">
                     <div className="flex items-center gap-3 md:min-w-[220px]">
                       <div className="h-9 w-9 rounded-md bg-white border-[3px] border-black grid place-items-center" aria-hidden>
@@ -261,7 +261,7 @@ export default function Home() {
                 </div>
 
                 {/* Row 2 (peach) */}
-                <div className="relative rounded-[20px] border-[3px] border-black bg-[#ffd6a5] p-5 md:p-6 shadow-[6px_6px_0_#111]">
+                <div className="relative rounded-[20px] border-[3px] border-black bg-[#e0d6cb] p-5 md:p-6 shadow-[6px_6px_0_#111]">
                   <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6">
                     <div className="flex items-center gap-3 md:min-w-[220px]">
                       <div className="h-9 w-9 rounded-md bg-white border-[3px] border-black grid place-items-center" aria-hidden>
@@ -274,7 +274,7 @@ export default function Home() {
                 </div>
 
                 {/* Row 3 (pink) */}
-                <div className="relative rounded-[20px] border-[3px] border-black bg-[#ffdede] p-5 md:p-6 shadow-[6px_6px_0_#111]">
+                <div className="relative rounded-[20px] border-[3px] border-black bg-[#dbd6d3] p-5 md:p-6 shadow-[6px_6px_0_#111]">
                   <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6">
                     <div className="flex items-center gap-3 md:min-w-[220px]">
                       <div className="h-9 w-9 rounded-md bg-white border-[3px] border-black grid place-items-center" aria-hidden>
@@ -363,7 +363,7 @@ export default function Home() {
             </div>
 
             {/* Wathefni AI */}
-            <div className="relative rounded-[24px] border-[4px] border-black bg-[#ffd6a5] p-6 shadow-[8px_8px_0_#111]">
+            <div className="relative rounded-[24px] border-[4px] border-black bg-[#e0d6cb] p-6 shadow-[8px_8px_0_#111]">
               <div className="absolute top-2 right-2 bg-black text-white px-3 py-1 rounded-full text-xs font-bold">
                 ⭐ Best Choice
               </div>
