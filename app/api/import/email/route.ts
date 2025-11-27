@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
   
   try {
     // Parse email payload (Resend Inbound format)
-    const payload: InboundEmail = await request.json()
+    // Resend wraps email data in { type: 'email.received', data: {...} }
+    const rawPayload = await request.json()
+    const payload: InboundEmail = rawPayload.data || rawPayload
     
     console.log('[EMAIL_IMPORT] Received email:', {
       from: payload.from,
@@ -40,6 +42,16 @@ export async function POST(request: NextRequest) {
       subject: payload.subject,
       attachmentCount: payload.attachments?.length || 0
     })
+
+    // Validate required fields
+    if (!payload.to || !payload.from) {
+      console.log('[EMAIL_IMPORT] Missing required fields, skipping')
+      return NextResponse.json({ 
+        success: true, 
+        skipped: true,
+        reason: 'Missing required email fields'
+      }, { status: 200 })
+    }
 
     // Skip if this is a reply (not a CV submission)
     const subject = payload.subject || ''
@@ -56,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     // Extract organization from recipient email
     // Format: knet@import.wathefni.ai or hr@org-slug.wathefni.ai
-    const recipientEmail = payload.to.toLowerCase()
+    const recipientEmail = String(payload.to || '').toLowerCase()
     const orgSlug = extractOrgSlug(recipientEmail)
     
     if (!orgSlug) {

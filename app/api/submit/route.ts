@@ -417,19 +417,23 @@ export async function POST(request: NextRequest) {
   res.headers.set('X-Org-Id', orgId)
   res.headers.set('X-Loopback-Found', loopbackFound ? 'true' : 'false')
 
-  // Fire-and-forget: trigger parsing if enabled
-  try {
-    if (String(process.env.AUTO_PARSE_ON_UPLOAD || '').toLowerCase() === 'true') {
+  // Auto-parse uploaded CVs (always enabled for better UX)
+  // Only parse if there's a CV file to parse
+  if (cvKey && cvTypeEnum === 'uploaded') {
+    try {
       const internal = (process.env.INTERNAL_API_TOKEN || '').trim()
-      const parseUrl = new URL(`/api/${orgSlugResolved}/admin/cv/parse`, request.url).toString()
-      // Intentionally do not await
+      const parseUrl = new URL(`/api/${orgSlugResolved}/admin/cv/parse/${candidate.id}`, request.url).toString()
+      console.log('[SUBMIT] Triggering auto-parse for candidate:', candidate.id)
+      // Fire-and-forget parsing
       fetch(parseUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...(internal ? { 'x-internal-token': internal } : {}) },
-        body: JSON.stringify({ candidateId: candidate.id })
-      }).catch(() => {})
+        body: JSON.stringify({})
+      }).catch((err) => console.error('[SUBMIT] Auto-parse trigger failed:', err))
+    } catch (err) {
+      console.error('[SUBMIT] Auto-parse setup failed:', err)
     }
-  } catch {}
+  }
 
   return res
 }

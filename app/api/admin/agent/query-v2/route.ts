@@ -710,8 +710,8 @@ async function emailCandidate(args: any, orgSlug: string, adminEmail: string): P
         const inboxMode = orgDetailsRes.rows[0]?.inbox_mode || 'both'; // Default: both
         
         // Determine Reply-To based on org preference
-        // Auto per-org inbound: each org gets {orgSlug}@fresh-antlion.resend.app
-        const inboundDomain = process.env.RESEND_INBOUND_DOMAIN || 'fresh-antlion.resend.app';
+        // Auto per-org inbound: each org gets {orgSlug}@wathefni.ai
+        const inboundDomain = process.env.RESEND_INBOUND_DOMAIN || 'wathefni.ai';
         const orgInboxEmail = `${orgSlugFromDb}@${inboundDomain}`;
         let replyToEmail: string;
         
@@ -731,7 +731,8 @@ async function emailCandidate(args: any, orgSlug: string, adminEmail: string): P
             break;
         }
         
-        const fromEmail = process.env.RESEND_FROM || 'hiring@wathefni.ai';
+        // Each org sends from their own email address
+        const fromEmail = `${orgSlugFromDb}@wathefni.ai`;
         const fromName = `${orgName} Hiring`;
         
         console.log('[AI_AGENT_EMAIL] Attempting to send to:', candidate.email);

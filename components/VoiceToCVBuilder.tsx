@@ -247,36 +247,39 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
     }
 
     try {
-      // Generate PDF first
-      const pdfResponse = await fetch('/api/cv/pdf', {
+      // Build the knetProfile for watheefti taxonomy
+      const knetProfile = {
+        degreeBucket: cvData.education?.[0]?.degree || 'Others',
+        yearsOfExperienceBucket: cvData.experienceProjects?.length 
+          ? (cvData.experienceProjects.length > 3 ? '3-5 years' : '0-2 years')
+          : 'Fresh Graduate',
+        areaOfInterest: cvData.skills?.technical?.[0] || 'Technology',
+      };
+
+      // Submit using the CV submit endpoint (for AI-generated CVs)
+      const submitResponse = await fetch('/api/cv/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cv: cvData }),
+        body: JSON.stringify({
+          ...cvData,
+          orgSlug,
+          cvType: 'ai',
+          fieldOfStudy: cvData.education?.[0]?.fieldOfStudy || 'Not specified',
+          areaOfInterest: cvData.skills?.technical?.[0] || 'Technology',
+          knetProfile,
+          template: cvData.template || 'professional',
+        }),
       });
 
-      if (!pdfResponse.ok) throw new Error('Failed to generate PDF');
-      
-      const pdfBlob = await pdfResponse.blob();
-      
-      // Upload PDF
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', pdfBlob, `${cvData.fullName || 'CV'}.pdf`);
-      uploadFormData.append('email', cvData.email);
-      uploadFormData.append('name', cvData.fullName);
-      uploadFormData.append('phone', cvData.phone || '');
-      uploadFormData.append('org', orgSlug);
-      uploadFormData.append('cv_data', JSON.stringify(cvData));
-
-      const submitResponse = await fetch('/api/submit', {
-        method: 'POST',
-        body: uploadFormData,
-      });
-
-      if (!submitResponse.ok) throw new Error('Failed to submit CV');
+      if (!submitResponse.ok) {
+        const errorData = await submitResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Failed to submit CV');
+      }
 
       toast.success('CV submitted successfully! 🎉');
       router.push(`/${orgSlug}/start?submitted=true`);
     } catch (err: any) {
+      console.error('Submit CV error:', err);
       toast.error(err.message || 'Failed to submit CV');
     }
   };
@@ -291,13 +294,13 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
   return (
     <div className="space-y-6">
       {/* Recording Card */}
-      <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        <CardHeader className="bg-gradient-to-r from-purple-100 to-blue-100 border-b-4 border-black">
+      <Card className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
+        <CardHeader className="bg-[#FFEACC] border-b-[3px] border-black rounded-t-2xl">
           <CardTitle className="text-2xl font-black flex items-center gap-2">
             <Mic className="w-6 h-6" />
             Voice-to-CV Builder
           </CardTitle>
-          <CardDescription className="text-base">
+          <CardDescription className="text-base font-medium text-gray-700">
             Speak for 2-3 minutes about your background, experience, and skills
           </CardDescription>
         </CardHeader>
@@ -305,8 +308,8 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
           
           {/* Instructions (before recording) */}
           {!isRecording && !audioBlob && !cvData && (
-            <Alert className="border-2 border-blue-500 bg-blue-50">
-              <Sparkles className="w-4 h-4 text-blue-500" />
+            <Alert className="rounded-xl border-[3px] border-black bg-[#FFEACC] shadow-[4px_4px_0_#111]">
+              <Sparkles className="w-4 h-4 text-black" />
               <AlertDescription>
                 <p className="font-bold mb-2">What to say:</p>
                 <ul className="space-y-1 text-sm">
@@ -358,7 +361,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                 <Button
                   onClick={startRecording}
                   size="lg"
-                  className="bg-red-500 hover:bg-red-600 text-white font-bold text-lg px-8 py-6"
+                  className="rounded-2xl border-[3px] border-black bg-red-500 hover:bg-red-600 text-white font-bold text-lg px-8 py-6 shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                 >
                   <Mic className="w-6 h-6 mr-2" />
                   Start Recording
@@ -371,7 +374,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                     onClick={togglePause}
                     size="lg"
                     variant="outline"
-                    className="border-2 border-black font-bold"
+                    className="rounded-2xl border-[3px] border-black bg-white font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                   >
                     {isPaused ? <Play className="w-5 h-5 mr-2" /> : <Pause className="w-5 h-5 mr-2" />}
                     {isPaused ? 'Resume' : 'Pause'}
@@ -379,7 +382,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                   <Button
                     onClick={stopRecording}
                     size="lg"
-                    className="bg-black text-white hover:bg-gray-800 font-bold"
+                    className="rounded-2xl border-[3px] border-black bg-black text-white hover:bg-gray-800 font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                   >
                     <Square className="w-5 h-5 mr-2" />
                     Stop & Save
@@ -393,7 +396,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                     onClick={startRecording}
                     size="lg"
                     variant="outline"
-                    className="border-2 border-black"
+                    className="rounded-2xl border-[3px] border-black bg-white font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                   >
                     <RefreshCw className="w-5 h-5 mr-2" />
                     Re-record
@@ -402,7 +405,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
                     onClick={generateCV}
                     size="lg"
                     disabled={isProcessing}
-                    className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-8"
+                    className="rounded-2xl border-[3px] border-black bg-[#FFEACC] hover:bg-[#FFD699] text-black font-bold px-8 shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                   >
                     {isProcessing ? (
                       <>
@@ -451,31 +454,31 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
 
       {/* Results Card */}
       {cvData && (
-        <Card className="border-4 border-green-500 shadow-[8px_8px_0px_0px_rgba(34,197,94,1)]">
-          <CardHeader className="bg-green-50 border-b-4 border-green-500">
+        <Card className="rounded-2xl border-[3px] border-black bg-white shadow-[6px_6px_0_#111]">
+          <CardHeader className="bg-[#a7f3d0] border-b-[3px] border-black rounded-t-2xl">
             <CardTitle className="text-2xl font-black flex items-center gap-2">
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
+              <CheckCircle2 className="w-6 h-6 text-black" />
               CV Generated Successfully!
             </CardTitle>
-            <CardDescription>Review your information below</CardDescription>
+            <CardDescription className="font-medium text-gray-700">Review your information below</CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             
             {/* CV Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 border-2 border-black rounded-lg bg-gray-50">
+              <div className="p-4 rounded-xl border-[3px] border-black bg-[#eeeee4] shadow-[3px_3px_0_#111]">
                 <p className="text-sm text-gray-600 mb-1">Name</p>
                 <p className="font-bold">{cvData.fullName}</p>
               </div>
-              <div className="p-4 border-2 border-black rounded-lg bg-gray-50">
+              <div className="p-4 rounded-xl border-[3px] border-black bg-[#eeeee4] shadow-[3px_3px_0_#111]">
                 <p className="text-sm text-gray-600 mb-1">Email</p>
                 <p className="font-bold">{cvData.email}</p>
               </div>
-              <div className="p-4 border-2 border-black rounded-lg bg-gray-50">
+              <div className="p-4 rounded-xl border-[3px] border-black bg-[#eeeee4] shadow-[3px_3px_0_#111]">
                 <p className="text-sm text-gray-600 mb-1">Phone</p>
                 <p className="font-bold">{cvData.phone}</p>
               </div>
-              <div className="p-4 border-2 border-black rounded-lg bg-gray-50">
+              <div className="p-4 rounded-xl border-[3px] border-black bg-[#eeeee4] shadow-[3px_3px_0_#111]">
                 <p className="text-sm text-gray-600 mb-1">Location</p>
                 <p className="font-bold">{cvData.location}</p>
               </div>
@@ -483,15 +486,15 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 border-2 border-black rounded-lg">
+              <div className="text-center p-4 rounded-xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111]">
                 <p className="text-3xl font-black">{cvData.education?.length || 0}</p>
                 <p className="text-sm text-gray-600">Education</p>
               </div>
-              <div className="text-center p-4 border-2 border-black rounded-lg">
+              <div className="text-center p-4 rounded-xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111]">
                 <p className="text-3xl font-black">{cvData.experienceProjects?.length || 0}</p>
                 <p className="text-sm text-gray-600">Experience</p>
               </div>
-              <div className="text-center p-4 border-2 border-black rounded-lg">
+              <div className="text-center p-4 rounded-xl border-[3px] border-black bg-white shadow-[3px_3px_0_#111]">
                 <p className="text-3xl font-black">
                   {Object.values(cvData.skills || {}).flat().length}
                 </p>
@@ -501,7 +504,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
 
             {/* Transcript Preview */}
             {transcript && (
-              <div className="p-4 border-2 border-black rounded-lg bg-blue-50">
+              <div className="p-4 rounded-xl border-[3px] border-black bg-[#bde0fe] shadow-[3px_3px_0_#111]">
                 <p className="font-bold mb-2 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Transcript:
@@ -511,10 +514,10 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Button
                 onClick={downloadPDF}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold"
+                className="flex-1 rounded-2xl border-[3px] border-black bg-[#bde0fe] hover:bg-[#a5d4f5] text-black font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download PDF
@@ -522,7 +525,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
               {orgSlug && (
                 <Button
                   onClick={submitCV}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold"
+                  className="flex-1 rounded-2xl border-[3px] border-black bg-[#a7f3d0] hover:bg-[#86efac] text-black font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Submit to {orgSlug}
@@ -530,8 +533,7 @@ export function VoiceToCVBuilder({ onCVGenerated, orgSlug }: VoiceToCVBuilderPro
               )}
               <Button
                 onClick={() => router.push(`/ai-builder?prefill=${encodeURIComponent(JSON.stringify(cvData))}`)}
-                variant="outline"
-                className="border-2 border-black font-bold"
+                className="rounded-2xl border-[3px] border-black bg-white hover:bg-gray-50 text-black font-bold shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 Edit in Builder
