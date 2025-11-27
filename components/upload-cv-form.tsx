@@ -47,7 +47,8 @@ const incrementErrorBudget = (type: 'upload' | 'ai') => {
 };
 import { matchSuggestedVacancies } from '@/lib/career-map';
 import { WatheeftiYoEBuckets, normalizeArea } from '@/lib/watheefti-taxonomy';
-import { COMMON_FIELDS_OF_STUDY, COMMON_AREAS_OF_INTEREST } from '@/lib/field-suggestions';
+import { GROUPED_FIELDS_OF_STUDY, GROUPED_AREAS_OF_INTEREST, FIELD_TO_AREA_MAP } from '@/lib/field-suggestions';
+import { SearchableCombobox } from '@/components/ui/searchable-combobox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -657,44 +658,32 @@ export default function UploadCVForm({ orgSlug: orgProp, orgSlugs }: { orgSlug?:
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="fieldOfStudy">{t('label_field_of_study')} *</Label>
-              <Input
+              <SearchableCombobox
                 id="fieldOfStudy"
-                {...register('fieldOfStudy')}
-                placeholder="e.g., Computer Science, Business, Medicine..."
-                list="field-of-study-suggestions"
-                autoComplete="off"
-                data-testid="input-fieldOfStudy"
+                value={fieldOfStudy}
+                onValueChange={(value) => setValue('fieldOfStudy', value, { shouldValidate: true })}
+                placeholder="Select field of study..."
+                searchPlaceholder="Search fields..."
+                emptyMessage="No matching field found"
+                groupedOptions={GROUPED_FIELDS_OF_STUDY}
               />
-              <datalist id="field-of-study-suggestions">
-                {COMMON_FIELDS_OF_STUDY.map(field => (
-                  <option key={field} value={field} />
-                ))}
-              </datalist>
-              <p className="text-xs text-muted-foreground mt-1">
-                Start typing to see suggestions, or enter your own
-              </p>
               {errors.fieldOfStudy && (
                 <p className="text-sm text-destructive mt-1">{errors.fieldOfStudy.message}</p>
               )}
             </div>
             <div>
               <Label htmlFor="areaOfInterest">{t('label_area_of_interest')} *</Label>
-              <Input
+              <SearchableCombobox
                 id="areaOfInterest"
-                {...register('areaOfInterest')}
-                placeholder="e.g., Software Development, Marketing, Finance..."
-                list="area-of-interest-suggestions"
-                autoComplete="off"
-                data-testid="input-areaOfInterest"
+                value={areaOfInterest}
+                onValueChange={(value) => setValue('areaOfInterest', value, { shouldValidate: true })}
+                placeholder="Select area of interest..."
+                searchPlaceholder="Search areas..."
+                emptyMessage="No matching area found"
+                groupedOptions={GROUPED_AREAS_OF_INTEREST}
+                suggestedOptions={fieldOfStudy ? FIELD_TO_AREA_MAP[fieldOfStudy] : undefined}
+                suggestedLabel="⭐ Recommended for your field"
               />
-              <datalist id="area-of-interest-suggestions">
-                {COMMON_AREAS_OF_INTEREST.map(area => (
-                  <option key={area} value={area} />
-                ))}
-              </datalist>
-              <p className="text-xs text-muted-foreground mt-1">
-                Start typing to see suggestions, or enter your own
-              </p>
               {errors.areaOfInterest && (
                 <p className="text-sm text-destructive mt-1">{errors.areaOfInterest.message}</p>
               )}
