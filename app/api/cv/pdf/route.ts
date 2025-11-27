@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     // Render Macchiato (must match preview); no fallback
     const macchiatoBytes = await renderMacchiatoPdf(cv)
     if (macchiatoBytes) {
-      return new Response(macchiatoBytes, {
+      return new Response(new Blob([macchiatoBytes as BlobPart], { type: 'application/pdf' }), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': 'attachment; filename="CV.pdf"',
