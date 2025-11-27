@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@vercel/postgres'
-import { auth } from '@/lib/auth'
+import { createServerClient } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -8,13 +8,14 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   try {
     // Get authenticated student
-    const session = await auth()
+    const supabase = createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
     
-    if (!session?.user?.email) {
+    if (!user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const studentEmail = session.user.email
+    const studentEmail = user.email
 
     // Find candidate records for this student (across all orgs)
     const candidateResult = await sql`
