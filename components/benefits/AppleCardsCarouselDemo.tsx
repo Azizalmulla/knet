@@ -20,7 +20,7 @@ export function AppleCardsCarouselDemo() {
 }
 
 const UploadContent = () => (
-  <div className="bg-[#bde0fe] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#d5ddd8] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">Instant CV Parsing</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>Upload PDF and get structured data in seconds</li>
@@ -31,7 +31,7 @@ const UploadContent = () => (
 );
 
 const BuilderContent = () => (
-  <div className="bg-[#ffd1f4] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#ddd5d8] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold">AI CV Builder</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>Guided steps to craft an ATS-ready resume</li>
@@ -42,7 +42,7 @@ const BuilderContent = () => (
 );
 
 const AdminContent = () => (
-  <div className="bg-[#b6fce3] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#d2dbd5] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">Agentic Admin Insights</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>Search candidates with natural language queries</li>
@@ -53,7 +53,7 @@ const AdminContent = () => (
 );
 
 const StudentDashboardContent = () => (
-  <div className="bg-[#c9f0ff] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#d5d8dc] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">Student Dashboard</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>View all your submissions across organizations</li>
@@ -64,7 +64,7 @@ const StudentDashboardContent = () => (
 );
 
 const SkillGapContent = () => (
-  <div className="bg-[#ffe2c0] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#e0d6cb] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">AI Feedback & Skill Gaps</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>Actionable AI feedback on your CV (per section)</li>
@@ -75,7 +75,7 @@ const SkillGapContent = () => (
 );
 
 const DecisionsContent = () => (
-  <div className="bg-[#ffdede] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#dbd6d3] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">Decision Support</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>Centralize candidate decisions per organization</li>
@@ -86,7 +86,7 @@ const DecisionsContent = () => (
 );
 
 const CompanyPickerContent = () => (
-  <div className="bg-[#e7ffcf] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#d8ddd2] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">Company Picker</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>Public orgs or private access via company code</li>
@@ -97,7 +97,7 @@ const CompanyPickerContent = () => (
 );
 
 const SecurityContent = () => (
-  <div className="bg-[#c7b9ff] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
+  <div className="bg-[#d8d5dc] p-8 md:p-14 rounded-3xl space-y-6 border-4 border-black shadow-[8px_8px_0_0_#000]">
     <h3 className="text-xl md:text-2xl font-semibold text-neutral-800">Enterprise Security</h3>
     <ul className="list-disc pl-5 text-neutral-700 space-y-2">
       <li>Per-org isolation with JWT and scoped sessions</li>
@@ -111,7 +111,7 @@ const data = [
   {
     category: "Submission",
     title: "Upload CV. Instant parsing.",
-    bg: "#BDE0FE",
+    bg: "#d5ddd8",
     border: "#111111",
     accent: "#FF6EC7",
     Icon: Upload,
@@ -120,7 +120,7 @@ const data = [
   {
     category: "Builder",
     title: "Craft ATS-ready resumes.",
-    bg: "#FFD1F4",
+    bg: "#ddd5d8",
     border: "#111111",
     accent: "#00C2FF",
     Icon: Sparkles,
@@ -129,7 +129,7 @@ const data = [
   {
     category: "Admin",
     title: "Agentic admin insights.",
-    bg: "#B6FCE3",
+    bg: "#d2dbd5",
     border: "#111111",
     accent: "#9B5DE5",
     Icon: Shield,
@@ -138,7 +138,7 @@ const data = [
   {
     category: "Students",
     title: "All submissions in one place.",
-    bg: "#C9F0FF",
+    bg: "#d5d8dc",
     border: "#111111",
     accent: "#FF8A00",
     Icon: LayoutDashboard,
@@ -147,7 +147,7 @@ const data = [
   {
     category: "AI",
     title: "AI feedback & skill gaps.",
-    bg: "#FFE2C0",
+    bg: "#e0d6cb",
     border: "#111111",
     accent: "#39FF14",
     Icon: Lightbulb,
@@ -156,7 +156,7 @@ const data = [
   {
     category: "Hiring",
     title: "Decision support workflows.",
-    bg: "#FFDEDE",
+    bg: "#dbd6d3",
     border: "#111111",
     accent: "#2DE2E6",
     Icon: BarChart3,
@@ -165,7 +165,7 @@ const data = [
   {
     category: "Organizations",
     title: "Company picker & private codes.",
-    bg: "#E7FFCF",
+    bg: "#d8ddd2",
     border: "#111111",
     accent: "#FF6EC7",
     Icon: Building2,
@@ -174,7 +174,7 @@ const data = [
   {
     category: "Security",
     title: "Enterprise-grade security.",
-    bg: "#C7B9FF",
+    bg: "#d8d5dc",
     border: "#111111",
     accent: "#00C2FF",
     Icon: Lock,
