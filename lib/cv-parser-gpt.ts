@@ -221,17 +221,72 @@ export async function parseCV(
       };
     }
 
-    // For image-based PDFs, use Vision
-    console.log('[CV_PARSER] Using GPT-4o Vision for image-based document');
+    // For PDFs with little/no extractable text (scanned documents)
+    // Use OpenAI's native PDF support (announced March 2025)
+    if (lowerMime.includes('pdf')) {
+      console.log('[CV_PARSER] Using GPT-4o native PDF support for scanned document');
+      parseMethod = 'gpt-vision';
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: CV_EXTRACTION_PROMPT
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                file: {
+                  filename: 'cv.pdf',
+                  file_data: `data:application/pdf;base64,${base64}`
+                }
+              } as any,
+              {
+                type: 'text',
+                text: 'Extract all information from this CV/Resume PDF.'
+              }
+            ]
+          }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0,
+        max_tokens: 4000
+      });
+
+      const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+      rawText = buildRawTextFromParsed(parsed);
+
+      return {
+        ...parsed,
+        rawText,
+        confidence: 0.92,
+        parseMethod,
+        pageCount,
+        wordCount: rawText.split(/\s+/).filter(Boolean).length
+      };
+    }
+    
+    // For actual images (PNG, JPEG), use Vision with image_url
+    console.log('[CV_PARSER] Using GPT-4o Vision for image document');
     parseMethod = 'gpt-vision';
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
+          role: 'system',
+          content: CV_EXTRACTION_PROMPT
+        },
+        {
           role: 'user',
           content: [
-            { type: 'text', text: CV_EXTRACTION_PROMPT },
+            {
+              type: 'text',
+              text: 'Extract all information from this CV/Resume image.'
+            },
             {
               type: 'image_url',
               image_url: {
@@ -249,11 +304,7 @@ export async function parseCV(
 
     const content = response.choices[0]?.message?.content || '{}';
     const parsed = JSON.parse(content);
-
-    // Extract raw text from the structured data for search
-    if (!rawText) {
-      rawText = buildRawTextFromParsed(parsed);
-    }
+    rawText = buildRawTextFromParsed(parsed);
 
     return {
       ...parsed,

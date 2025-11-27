@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Target, TrendingUp, Briefcase, Calendar, Clock, CheckCircle2,
   XCircle, AlertCircle, Sparkles, Award, BookOpen, MapPin,
-  DollarSign, Video, ArrowRight,
-  Star, Zap, Building2, FileText, RefreshCw
+  DollarSign, Video, ArrowRight, MessageSquare, FileEdit,
+  Star, Zap, Building2, FileText, RefreshCw, Send, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -45,6 +45,7 @@ export function EnhancedStudentDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applyingTo, setApplyingTo] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboard();
@@ -66,6 +67,44 @@ export function EnhancedStudentDashboard() {
       toast.error(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const applyToJob = async (jobId: string, jobTitle: string) => {
+    setApplyingTo(jobId);
+    try {
+      const res = await fetch('/api/candidate/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        if (data.needsCV) {
+          toast.error('Please upload your CV first', {
+            action: {
+              label: 'Upload CV',
+              onClick: () => window.location.href = '/start'
+            }
+          });
+        } else {
+          throw new Error(data.error || 'Failed to apply');
+        }
+        return;
+      }
+      
+      if (data.alreadyApplied) {
+        toast.info(data.message);
+      } else {
+        toast.success(data.message);
+        fetchDashboard(); // Refresh to update stats
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setApplyingTo(null);
     }
   };
 
@@ -154,18 +193,32 @@ export function EnhancedStudentDashboard() {
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-4xl font-extrabold mb-2 text-black border-b-[4px] border-black inline-block pr-2">Your Career Dashboard</h1>
             <p className="text-neutral-600 mt-4">Track your progress and discover opportunities</p>
           </div>
-          <Button
-            onClick={fetchDashboard}
-            className="rounded-2xl border-[3px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 hover:bg-zinc-100 transition-transform font-bold"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild className="rounded-2xl border-[3px] border-black bg-[#FFEACC] text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
+              <Link href="/career/cv">
+                <FileEdit className="w-4 h-4 mr-2" />
+                My CV
+              </Link>
+            </Button>
+            <Button asChild className="rounded-2xl border-[3px] border-black bg-[#bde0fe] text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
+              <Link href="/career/messages">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Messages
+              </Link>
+            </Button>
+            <Button
+              onClick={fetchDashboard}
+              className="rounded-2xl border-[3px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 hover:bg-zinc-100 transition-transform font-bold"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Profile Strength Card */}
@@ -325,11 +378,27 @@ export function EnhancedStudentDashboard() {
                       </div>
                     </div>
 
-                    <Button asChild className="w-full rounded-2xl border-[3px] border-black bg-black text-white shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
-                      <Link href={`/jobs/${job.id}`}>
-                        View Job <ArrowRight className="w-4 h-4 ml-2" />
-                      </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button asChild className="flex-1 rounded-2xl border-[3px] border-black bg-white text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold">
+                        <Link href={`/jobs/${job.id}`}>
+                          View <ArrowRight className="w-4 h-4 ml-1" />
+                        </Link>
+                      </Button>
+                      <Button
+                        onClick={() => applyToJob(job.id, job.title)}
+                        disabled={applyingTo === job.id}
+                        className="flex-1 rounded-2xl border-[3px] border-black bg-[#a7f3d0] text-black shadow-[3px_3px_0_#111] hover:-translate-y-0.5 transition-transform font-bold disabled:opacity-50"
+                      >
+                        {applyingTo === job.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-1" />
+                            Apply
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

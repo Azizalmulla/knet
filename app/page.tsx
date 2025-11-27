@@ -256,7 +256,7 @@ export default function Home() {
                       </div>
                       <h3 className="text-xl md:text-2xl font-extrabold">Build Your CV</h3>
                     </div>
-                    <p className="text-neutral-900">Upload your existing CV or build a professional one from scratch with AI — get ATS-ready output in 2 minutes with multiple themes.</p>
+                    <p className="text-neutral-900">Upload any document (even scanned), record your voice, or type. AI extracts everything and builds a professional, ATS-ready CV in minutes.</p>
                   </div>
                 </div>
 
@@ -267,9 +267,9 @@ export default function Home() {
                       <div className="h-9 w-9 rounded-md bg-white border-[3px] border-black grid place-items-center" aria-hidden>
                         <Sparkles className="h-5 w-5" />
                       </div>
-                      <h3 className="text-xl md:text-2xl font-extrabold">Browse & Match Jobs</h3>
+                      <h3 className="text-xl md:text-2xl font-extrabold">Smart Job Matching</h3>
                     </div>
-                    <p className="text-neutral-900">Search 100+ real job openings from Kuwait's top companies. AI analyzes your CV and shows you the best matches for your profile.</p>
+                    <p className="text-neutral-900">AI analyzes your skills and shows personalized job matches with compatibility scores. Get career recommendations and skill suggestions tailored to you.</p>
                   </div>
                 </div>
 
@@ -280,9 +280,9 @@ export default function Home() {
                       <div className="h-9 w-9 rounded-md bg-white border-[3px] border-black grid place-items-center" aria-hidden>
                         <CheckCircle2 className="h-5 w-5" />
                       </div>
-                      <h3 className="text-xl md:text-2xl font-extrabold">Apply Everywhere</h3>
+                      <h3 className="text-xl md:text-2xl font-extrabold">Apply & Connect</h3>
                     </div>
-                    <p className="text-neutral-900">Select multiple companies and apply to all with one click. Track all your applications, interviews, and responses in your personal dashboard.</p>
+                    <p className="text-neutral-900">One-click apply to multiple companies. Message employers directly, schedule interviews, and track everything in your personal dashboard.</p>
                   </div>
                 </div>
               </div>
@@ -371,42 +371,46 @@ export default function Home() {
                 <h3 className="text-xl font-extrabold mb-2">Wathefni AI</h3>
                 <p className="text-sm text-neutral-900 font-semibold">Complete AI-Powered Platform</p>
               </div>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">AI CV builder with multiple professional themes</span>
+                  <span className="text-sm font-medium">Voice-to-CV: Just talk and AI builds your CV</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">Smart AI improvements (shorter, stronger, keywords)</span>
+                  <span className="text-sm font-medium">Smart parsing: Reads any PDF, even scanned documents</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">100+ active job listings from top Kuwait companies</span>
+                  <span className="text-sm font-medium">One-click apply to 50+ companies at once</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">Apply to 50+ companies with one click</span>
+                  <span className="text-sm font-medium">Smart job matching with % compatibility scores</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">AI recruiting agent (natural language search)</span>
+                  <span className="text-sm font-medium">Direct messaging with employers</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">Full Arabic & English support (RTL interface)</span>
+                  <span className="text-sm font-medium">AI career recommendations & skill suggestions</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">Complete application tracking dashboard</span>
+                  <span className="text-sm font-medium">Bulk CV import for HR (1000s at once)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">Built specifically for Kuwait market</span>
+                  <span className="text-sm font-medium">AI video interviews (async)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm font-medium">Post jobs & manage candidates (HR teams)</span>
+                  <span className="text-sm font-medium">Natural language recruiting assistant</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm font-medium">Full Arabic & English with RTL support</span>
                 </li>
               </ul>
             </div>

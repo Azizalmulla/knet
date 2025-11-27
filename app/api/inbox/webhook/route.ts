@@ -40,7 +40,21 @@ export async function POST(req: NextRequest) {
       text: webhookText,
       html: webhookHtml,
       email_id,
+      attachments,
     } = data || {};
+    
+    // Skip emails with CV attachments (PDF/DOCX) - those are handled by /api/inbound/cv
+    const hasCVAttachment = attachments?.some((a: any) => 
+      a?.content_type === 'application/pdf' ||
+      a?.filename?.toLowerCase().endsWith('.pdf') ||
+      a?.content_type?.includes('wordprocessingml') ||
+      a?.filename?.toLowerCase().endsWith('.docx')
+    );
+    
+    if (hasCVAttachment) {
+      console.log('[INBOX_WEBHOOK] Email has CV attachment - letting /api/inbound/cv handle it');
+      return NextResponse.json({ received: true, skipped: true, reason: 'Has CV attachment' }, { status: 200 });
+    }
     
     // Resend webhook may not include body - fetch it via API if missing
     let text = webhookText;

@@ -111,36 +111,42 @@ async function parseWithGPTVision(buffer: Buffer, contentType: string): Promise<
     console.log('[PARSE] Using GPT Vision for OCR:', pdfErr?.message)
 
     try {
-      // Convert PDF to base64 and send to GPT Vision
-      const imageBase64 = buffer.toString('base64')
+      // Use OpenAI's native PDF support (March 2025)
+      const pdfBase64 = buffer.toString('base64')
       
       const openai = getOpenAI()
       const response = await openai.chat.completions.create({
-        model: "gpt-4o", // Latest vision model
-        messages: [{
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Extract ALL text content from this CV/Resume document. Return the raw text exactly as it appears, preserving structure and formatting. Include all sections: personal info, education, experience, skills, projects, etc.`
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${imageBase64}`,
-                detail: "high" // Better OCR accuracy
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert CV/Resume text extractor. Extract ALL text content exactly as it appears, preserving structure and formatting."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "file",
+                file: {
+                  filename: "cv.pdf",
+                  file_data: `data:application/pdf;base64,${pdfBase64}`
+                }
+              } as any,
+              {
+                type: "text",
+                text: "Extract ALL text content from this CV/Resume PDF. Include all sections: personal info, education, experience, skills, projects, etc."
               }
-            }
-          ]
-        }],
+            ]
+          }
+        ],
         max_tokens: 4000,
-        temperature: 0 // Deterministic
+        temperature: 0
       })
 
       parsedText = cleanText(response.choices[0]?.message?.content || '')
-      confidence = 0.95 // GPT Vision is highly accurate
+      confidence = 0.95
       
-      console.log(`[PARSE] GPT Vision OCR complete: ${parsedText.length} chars`)
+      console.log(`[PARSE] GPT-4o PDF extraction complete: ${parsedText.length} chars`)
     } catch (visionErr: any) {
       console.error('[PARSE] GPT Vision failed:', visionErr?.message)
       throw new Error(`Vision API failed: ${visionErr?.message || 'Unknown error'}`)

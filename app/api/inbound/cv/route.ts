@@ -85,39 +85,29 @@ export async function POST(request: NextRequest) {
     console.log('[INBOUND CV] Subject:', email.subject)
     console.log('[INBOUND CV] Attachments:', email.attachments?.length || 0)
     
-    // Skip if this is a reply (not a CV submission)
-    // Replies have subjects starting with "Re:" or contain reply headers
-    const subject = email.subject || ''
-    const isReply = /^(re|fw|fwd):/i.test(subject.trim())
+    // Check for CV attachment (PDF or DOCX)
+    const cvAttachment = email.attachments?.find(
+      (a) => a.content_type === 'application/pdf' || 
+             a.filename?.toLowerCase().endsWith('.pdf') ||
+             a.content_type?.includes('wordprocessingml') ||
+             a.filename?.toLowerCase().endsWith('.docx')
+    )
     
-    if (isReply) {
-      console.log('[INBOUND CV] Skipping - this is a reply, not a CV submission')
+    // NO CV attachment → Let inbox webhook handle it (general inquiry or reply)
+    if (!cvAttachment) {
+      console.log('[INBOUND CV] No CV attachment (PDF/DOCX) - letting inbox handle this email')
       return NextResponse.json({ 
-        success: true, 
+        success: true,
         skipped: true,
-        reason: 'Email is a reply, not a CV submission'
+        reason: 'No CV attachment - routed to inbox'
       }, { status: 200 })
     }
+    
+    console.log('[INBOUND CV] Found CV attachment:', cvAttachment.filename)
     
     // Extract sender info
     const senderEmail = email.from
     const senderName = extractNameFromEmail(email.subject, senderEmail)
-    
-    // Find PDF attachment
-    const cvAttachment = email.attachments?.find(
-      (a) => a.content_type === 'application/pdf' || a.filename.toLowerCase().endsWith('.pdf')
-    )
-    
-    if (!cvAttachment) {
-      console.error('[INBOUND CV] No PDF attachment found')
-      console.error('[INBOUND CV] Available attachments:', email.attachments?.map(a => ({ filename: a.filename, type: a.content_type })))
-      await sendErrorEmail(senderEmail, senderName, 'no-pdf')
-      return NextResponse.json({ 
-        success: false,
-        error: 'No PDF attachment found',
-        message: 'Error email sent to sender'
-      }, { status: 200 }) // Return 200 so Resend knows webhook was received
-    }
     
     // Fetch attachment content via SDK: list + download_url
     console.log('[INBOUND CV] Fetching attachment content from Resend SDK...')
@@ -188,9 +178,30 @@ export async function POST(request: NextRequest) {
       }, { status: 200 })
     }
     
-    // Parse subject for org targeting (e.g., "Application - KNET - John Doe")
-    const targetedOrgSlugs = extractOrgSlugsFromSubject(email.subject)
-    console.log('[INBOUND CV] Targeted org slugs from subject:', targetedOrgSlugs)
+    // Extract org from recipient email (e.g., knet@wathefni.ai → knet)
+    const inboundDomain = process.env.RESEND_INBOUND_DOMAIN || 'wathefni.ai'
+    let targetedOrgSlugs: string[] = []
+    
+    // First, try to extract from the TO email address
+    if (email.to && email.to.length > 0) {
+      for (const toAddr of email.to) {
+        const match = toAddr.toLowerCase().match(/^([a-z0-9\-_]+)@/)
+        if (match && match[1]) {
+          const slug = match[1]
+          // Skip generic addresses like 'apply', 'cv', 'jobs', 'careers'
+          if (!['apply', 'cv', 'jobs', 'careers', 'hr', 'hiring', 'info', 'contact'].includes(slug)) {
+            targetedOrgSlugs.push(slug)
+          }
+        }
+      }
+    }
+    console.log('[INBOUND CV] Org slugs from TO address:', targetedOrgSlugs)
+    
+    // Fallback: parse subject for org targeting (e.g., "Application - KNET - John Doe")
+    if (targetedOrgSlugs.length === 0) {
+      targetedOrgSlugs = extractOrgSlugsFromSubject(email.subject)
+      console.log('[INBOUND CV] Fallback - org slugs from subject:', targetedOrgSlugs)
+    }
     
     // Get organizations (targeted or all public)
     console.log('[INBOUND CV] Loading organizations...')
@@ -326,33 +337,31 @@ export async function POST(request: NextRequest) {
     
     console.log(`[INBOUND CV] Success! Added to ${candidateIds.length} organizations`)
     
-    // Fire-and-forget: trigger CV parsing if enabled
-    if (String(process.env.AUTO_PARSE_ON_UPLOAD || '').toLowerCase() === 'true') {
-      console.log('[INBOUND CV] AUTO_PARSE_ON_UPLOAD enabled, triggering parsing...')
-      const internal = (process.env.INTERNAL_API_TOKEN || '').trim()
+    // Auto-parse CVs (always enabled for better UX)
+    console.log('[INBOUND CV] Triggering auto-parse for uploaded CVs...')
+    const internal = (process.env.INTERNAL_API_TOKEN || '').trim()
+    
+    for (let i = 0; i < orgs.rows.length; i++) {
+      const org = orgs.rows[i]
+      const candidateId = candidateIds[i]
       
-      for (let i = 0; i < orgs.rows.length; i++) {
-        const org = orgs.rows[i]
-        const candidateId = candidateIds[i]
+      try {
+        const parseUrl = new URL(`/api/${org.slug}/admin/cv/parse/${candidateId}`, request.url).toString()
+        console.log(`[INBOUND CV] Triggering parse for ${org.slug}: ${candidateId}`)
         
-        try {
-          const parseUrl = new URL(`/api/${org.slug}/admin/cv/parse`, request.url).toString()
-          console.log(`[INBOUND CV] Triggering parse for ${org.slug}: ${candidateId}`)
-          
-          // Fire-and-forget: don't await
-          fetch(parseUrl, {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              ...(internal ? { 'x-internal-token': internal } : {})
-            },
-            body: JSON.stringify({ candidateId })
-          }).catch((err) => {
-            console.error(`[INBOUND CV] Parse trigger failed for ${org.slug}:`, err)
-          })
-        } catch (err) {
-          console.error(`[INBOUND CV] Failed to trigger parse for ${org.slug}:`, err)
-        }
+        // Fire-and-forget: don't await
+        fetch(parseUrl, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            ...(internal ? { 'x-internal-token': internal } : {})
+          },
+          body: JSON.stringify({})
+        }).catch((err) => {
+          console.error(`[INBOUND CV] Parse trigger failed for ${org.slug}:`, err)
+        })
+      } catch (err) {
+        console.error(`[INBOUND CV] Failed to trigger parse for ${org.slug}:`, err)
       }
     }
     
