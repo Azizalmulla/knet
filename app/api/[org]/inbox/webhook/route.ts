@@ -46,7 +46,14 @@ export async function POST(req: NextRequest) {
 
     // Extract org slug from recipient email
     // e.g., "nbk@wathefni.ai" → "nbk"
-    const recipientEmail = Array.isArray(to) ? to[0]?.email : to;
+    // Handle both formats: ["email@domain.com"] or [{ email: "email@domain.com" }]
+    let recipientEmail: string | undefined;
+    if (Array.isArray(to)) {
+      const first = to[0];
+      recipientEmail = typeof first === 'string' ? first : first?.email;
+    } else {
+      recipientEmail = typeof to === 'string' ? to : to?.email;
+    }
     if (!recipientEmail) {
       console.error('No recipient email in webhook data');
       return NextResponse.json({ error: 'No recipient' }, { status: 400 });

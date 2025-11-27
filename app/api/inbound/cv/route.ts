@@ -84,7 +84,20 @@ export async function POST(request: NextRequest) {
     console.log('[INBOUND CV] Received email from:', email.from)
     console.log('[INBOUND CV] Subject:', email.subject)
     console.log('[INBOUND CV] Attachments:', email.attachments?.length || 0)
-    console.log('[INBOUND CV] Full payload:', JSON.stringify(webhook, null, 2))
+    
+    // Skip if this is a reply (not a CV submission)
+    // Replies have subjects starting with "Re:" or contain reply headers
+    const subject = email.subject || ''
+    const isReply = /^(re|fw|fwd):/i.test(subject.trim())
+    
+    if (isReply) {
+      console.log('[INBOUND CV] Skipping - this is a reply, not a CV submission')
+      return NextResponse.json({ 
+        success: true, 
+        skipped: true,
+        reason: 'Email is a reply, not a CV submission'
+      }, { status: 200 })
+    }
     
     // Extract sender info
     const senderEmail = email.from

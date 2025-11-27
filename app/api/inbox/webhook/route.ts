@@ -47,7 +47,14 @@ export async function POST(req: NextRequest) {
     console.log('[INBOX_WEBHOOK] From:', { candidateEmail, candidateName });
 
     // Determine recipient and org slug from recipient email
-    const recipientEmail = Array.isArray(to) ? to[0]?.email : to;
+    // Handle both formats: ["email@domain.com"] or [{ email: "email@domain.com" }]
+    let recipientEmail: string | undefined;
+    if (Array.isArray(to)) {
+      const first = to[0];
+      recipientEmail = typeof first === 'string' ? first : first?.email;
+    } else {
+      recipientEmail = typeof to === 'string' ? to : to?.email;
+    }
     console.log('[INBOX_WEBHOOK] To:', recipientEmail);
     
     if (!recipientEmail || typeof recipientEmail !== 'string') {

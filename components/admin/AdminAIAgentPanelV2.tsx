@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, SendHorizontal } from 'lucide-react';
+import { Loader2, ArrowUp } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-fetch';
 import { useLanguage } from '@/lib/language';
 
@@ -220,13 +220,12 @@ export function AdminAIAgentPanelV2({ orgSlug: orgProp }: { orgSlug?: string } =
             <Button
               onClick={submitMessage}
               disabled={loading || !message.trim()}
-              size="lg"
-              className="h-14 px-6 rounded-2xl bg-primary text-primary-foreground shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:translate-x-0.5 hover:translate-y-0.5 transition-all border-2 border-black"
+              className="h-10 w-10 rounded-full bg-black text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 transition-colors flex items-center justify-center p-0"
               >
               {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <SendHorizontal className="h-5 w-5" />
+                <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
               )}
             </Button>
           </div>

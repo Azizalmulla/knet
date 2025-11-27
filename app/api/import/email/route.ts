@@ -41,6 +41,19 @@ export async function POST(request: NextRequest) {
       attachmentCount: payload.attachments?.length || 0
     })
 
+    // Skip if this is a reply (not a CV submission)
+    const subject = payload.subject || ''
+    const isReply = /^(re|fw|fwd):/i.test(subject.trim())
+    
+    if (isReply) {
+      console.log('[EMAIL_IMPORT] Skipping - this is a reply, not a CV import')
+      return NextResponse.json({ 
+        success: true, 
+        skipped: true,
+        reason: 'Email is a reply, not a CV import'
+      }, { status: 200 })
+    }
+
     // Extract organization from recipient email
     // Format: knet@import.wathefni.ai or hr@org-slug.wathefni.ai
     const recipientEmail = payload.to.toLowerCase()

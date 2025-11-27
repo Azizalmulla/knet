@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Download, SendHorizontal, Copy, Loader2 } from 'lucide-react';
+import { Download, ArrowUp, Copy, Loader2 } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-fetch';
 import { useLanguage } from '@/lib/language';
 
@@ -451,13 +451,12 @@ export function AdminAIAgentPanel({ orgSlug: orgProp }: { orgSlug?: string } = {
               <Button
                 onClick={handleSubmit}
                 disabled={loading || !message.trim()}
-                size="icon"
-                className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow hover:shadow-md transition"
+                className="h-9 w-9 rounded-full bg-black text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 transition-colors flex items-center justify-center p-0"
                 >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <SendHorizontal className="h-4 w-4" />
+                  <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
                 )}
               </Button>
             </div>
