@@ -1,19 +1,31 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { VoiceToCVBuilder } from '@/components/VoiceToCVBuilder';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
 function VoiceCVContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const orgSlug = searchParams?.get('org') || undefined;
+  const fromPage = searchParams?.get('from') || undefined;
+
+  // Handle back navigation - use browser history or fallback to ai-builder
+  const handleBack = () => {
+    if (fromPage) {
+      router.push(fromPage);
+    } else if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(orgSlug ? `/ai-builder?org=${orgSlug}` : '/ai-builder');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4 md:p-8">
+    <div className="min-h-screen bg-[#eeeee4] p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Header */}
@@ -26,16 +38,18 @@ function VoiceCVContent() {
               Create your professional CV by speaking - no typing needed!
             </p>
           </div>
-          <Link href={orgSlug ? `/${orgSlug}/start` : '/'}>
-            <Button variant="outline" className="border-2 border-black">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleBack}
+            variant="outline" 
+            className="border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:-translate-y-0.5 transition-all"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
         </div>
 
         {/* How It Works */}
-        <Card className="border-4 border-purple-500 shadow-[8px_8px_0px_0px_rgba(168,85,247,1)] bg-gradient-to-r from-purple-50 to-blue-50">
+        <Card className="border-[3px] border-black shadow-[6px_6px_0_#111] bg-[#d5ddd8]">
           <CardContent className="p-6">
             <h2 className="text-2xl font-black mb-4">How It Works (3 Steps)</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -68,7 +82,7 @@ function VoiceCVContent() {
         <VoiceToCVBuilder orgSlug={orgSlug} />
 
         {/* Tips */}
-        <Card className="border-4 border-blue-500 shadow-[8px_8px_0px_0px_rgba(59,130,246,1)]">
+        <Card className="border-[3px] border-black shadow-[6px_6px_0_#111] bg-[#e0d6cb]">
           <CardContent className="p-6">
             <h2 className="text-xl font-black mb-4">💡 Tips for Best Results</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -101,10 +115,10 @@ function VoiceCVContent() {
         </Card>
 
         {/* Example Script */}
-        <Card className="border-4 border-green-500 shadow-[8px_8px_0px_0px_rgba(34,197,94,1)]">
+        <Card className="border-[3px] border-black shadow-[6px_6px_0_#111] bg-[#dbd6d3]">
           <CardContent className="p-6">
             <h2 className="text-xl font-black mb-4">📝 Example Script</h2>
-            <div className="p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+            <div className="p-4 bg-white border-2 border-black rounded-lg">
               <p className="text-sm italic text-gray-700 leading-relaxed">
                 "Hi, my name is Ahmed Al-Rashid, and my email is ahmed@example.com. 
                 My phone number is +965 1234 5678. I graduated from Kuwait University 
@@ -137,7 +151,7 @@ export default function VoiceCVPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <Card className="border-[3px] border-black shadow-[6px_6px_0_#111] bg-white">
           <CardContent className="p-12 text-center">
             <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
             <p className="text-lg font-bold">Loading Voice-to-CV Builder...</p>
