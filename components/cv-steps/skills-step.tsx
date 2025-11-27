@@ -4,27 +4,38 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X } from 'lucide-react';
+import { X, Award, Medal } from 'lucide-react';
 import { CVData } from '@/lib/cv-schemas';
 import { useLanguage } from '@/lib/language';
+
+type SkillCategory = 'technical' | 'frameworks' | 'tools' | 'databases' | 'cloud' | 'languages' | 'soft';
 
 export function SkillsStep() {
   const form = useFormContext<CVData>();
   const { setValue, watch } = form;
   const { t } = useLanguage();
-  const [newSkills, setNewSkills] = useState({
+  const [newSkills, setNewSkills] = useState<Record<SkillCategory, string>>({
     technical: '',
+    frameworks: '',
+    tools: '',
+    databases: '',
+    cloud: '',
     languages: '',
     soft: '',
   });
-  const [focusKey, setFocusKey] = useState<null | 'technical' | 'languages' | 'soft'>(null);
+  const [newCertification, setNewCertification] = useState('');
+  const [newAchievement, setNewAchievement] = useState('');
+  const [focusKey, setFocusKey] = useState<null | SkillCategory>(null);
 
-  const SUGGESTIONS: Record<'technical'|'languages'|'soft', string[]> = {
-    technical: ['React','TypeScript','JavaScript','Node.js','Next.js','Tailwind CSS','SQL','PostgreSQL','Python','Java','Docker','Git','AWS'],
-    languages: ['English','Arabic'],
-    soft: ['Communication','Problem Solving','Teamwork','Time Management','Adaptability','Leadership','Attention to Detail'],
+  const SUGGESTIONS: Record<SkillCategory, string[]> = {
+    technical: ['JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C#', 'Go', 'Rust', 'PHP', 'Swift', 'Kotlin', 'SQL'],
+    frameworks: ['React', 'Next.js', 'Vue.js', 'Angular', 'Node.js', 'Express', 'Django', 'Flask', 'Spring Boot', 'Laravel', '.NET'],
+    tools: ['Git', 'Docker', 'Kubernetes', 'VS Code', 'Jira', 'Figma', 'Postman', 'Linux', 'CI/CD', 'Webpack'],
+    databases: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite', 'Oracle', 'Firebase', 'DynamoDB', 'Elasticsearch'],
+    cloud: ['AWS', 'Google Cloud', 'Azure', 'Vercel', 'Heroku', 'DigitalOcean', 'Cloudflare', 'Netlify'],
+    languages: ['English', 'Arabic', 'French', 'Spanish', 'German', 'Chinese', 'Hindi', 'Japanese'],
+    soft: ['Communication', 'Problem Solving', 'Teamwork', 'Time Management', 'Adaptability', 'Leadership', 'Critical Thinking'],
   };
 
   const sendEvent = (event: string, value?: number, meta?: any) => {
@@ -37,7 +48,7 @@ export function SkillsStep() {
     } catch {}
   };
 
-  const addSkill = (category: 'technical' | 'languages' | 'soft') => {
+  const addSkill = (category: SkillCategory) => {
     const skill = newSkills[category].trim();
     if (skill) {
       const currentSkills = watch(`skills.${category}`) ?? [];
@@ -47,16 +58,50 @@ export function SkillsStep() {
     }
   };
 
-  const removeSkill = (category: 'technical' | 'languages' | 'soft', index: number) => {
+  const removeSkill = (category: SkillCategory, index: number) => {
     const currentSkills = watch(`skills.${category}`) ?? [];
     setValue(`skills.${category}`, currentSkills.filter((_: any, i: number) => i !== index));
     sendEvent('skills_removed', 1, { category });
   };
 
-  const skillCategories = [
-    { key: 'technical' as const, title: t('skills_technical_title'), placeholder: t('skills_technical_placeholder') },
-    { key: 'languages' as const, title: t('skills_languages_title'), placeholder: t('skills_languages_placeholder') },
-    { key: 'soft' as const, title: t('skills_soft_title'), placeholder: t('skills_soft_placeholder') },
+  const addCertification = () => {
+    const cert = newCertification.trim();
+    if (cert) {
+      const current = watch('certifications') ?? [];
+      setValue('certifications', [...current, cert]);
+      setNewCertification('');
+      sendEvent('certification_added', 1, { cert });
+    }
+  };
+
+  const removeCertification = (index: number) => {
+    const current = watch('certifications') ?? [];
+    setValue('certifications', current.filter((_: any, i: number) => i !== index));
+  };
+
+  const addAchievement = () => {
+    const ach = newAchievement.trim();
+    if (ach) {
+      const current = watch('achievements') ?? [];
+      setValue('achievements', [...current, ach]);
+      setNewAchievement('');
+      sendEvent('achievement_added', 1, { ach });
+    }
+  };
+
+  const removeAchievement = (index: number) => {
+    const current = watch('achievements') ?? [];
+    setValue('achievements', current.filter((_: any, i: number) => i !== index));
+  };
+
+  const skillCategories: Array<{ key: SkillCategory; title: string; placeholder: string }> = [
+    { key: 'technical', title: t('skills_technical_title') || 'Programming Languages', placeholder: t('skills_technical_placeholder') || 'e.g., JavaScript, Python' },
+    { key: 'frameworks', title: 'Frameworks & Libraries', placeholder: 'e.g., React, Node.js' },
+    { key: 'tools', title: 'Tools & Platforms', placeholder: 'e.g., Git, Docker' },
+    { key: 'databases', title: 'Databases', placeholder: 'e.g., PostgreSQL, MongoDB' },
+    { key: 'cloud', title: 'Cloud Services', placeholder: 'e.g., AWS, Azure' },
+    { key: 'languages', title: t('skills_languages_title') || 'Languages', placeholder: t('skills_languages_placeholder') || 'e.g., English, Arabic' },
+    { key: 'soft', title: t('skills_soft_title') || 'Soft Skills', placeholder: t('skills_soft_placeholder') || 'e.g., Communication' },
   ];
 
   return (
@@ -137,6 +182,98 @@ export function SkillsStep() {
           </CardContent>
         </Card>
       ))}
+
+      {/* Certifications Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Certifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {(watch('certifications') ?? []).map((cert: string, index: number) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+              >
+                {cert}
+                <button
+                  type="button"
+                  onClick={() => removeCertification(index)}
+                  className="ltr:ml-2 rtl:mr-2 text-blue-600 hover:text-blue-800"
+                  aria-label={`Remove ${cert}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={newCertification}
+              onChange={(e) => setNewCertification(e.target.value)}
+              placeholder="e.g., AWS Solutions Architect, PMP, Google Analytics"
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCertification())}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addCertification}
+              className="whitespace-nowrap"
+            >
+              + Add
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Achievements Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Medal className="h-5 w-5" />
+            Achievements & Awards
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {(watch('achievements') ?? []).map((ach: string, index: number) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+              >
+                {ach}
+                <button
+                  type="button"
+                  onClick={() => removeAchievement(index)}
+                  className="ltr:ml-2 rtl:mr-2 text-amber-600 hover:text-amber-800"
+                  aria-label={`Remove ${ach}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={newAchievement}
+              onChange={(e) => setNewAchievement(e.target.value)}
+              placeholder="e.g., Dean's List 2023, Hackathon Winner, Published Paper"
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAchievement())}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addAchievement}
+              className="whitespace-nowrap"
+            >
+              + Add
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

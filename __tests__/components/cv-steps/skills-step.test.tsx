@@ -230,9 +230,15 @@ describe('SkillsStep', () => {
       defaultValues: {
         skills: {
           technical: ['React', 'TypeScript'],
+          frameworks: [],
+          tools: [],
+          databases: [],
+          cloud: [],
           languages: ['English', 'Arabic'],
           soft: ['Leadership']
-        }
+        },
+        certifications: [],
+        achievements: []
       }
     })
     

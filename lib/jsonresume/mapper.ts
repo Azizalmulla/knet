@@ -8,6 +8,8 @@ export type JsonResume = {
   projects?: any[];
   skills?: any[];
   languages?: any[];
+  certificates?: any[];
+  awards?: any[];
 };
 
 function toArray<T>(v: any): T[] {
@@ -21,9 +23,11 @@ export function mapToJsonResume(cv: any = {}): JsonResume {
   const phone = cv.phone || cv?.personalInfo?.phone || ''
   const location = cv.location || cv?.personalInfo?.location || ''
   const summary = cv.summary || cv?.personalInfo?.summary || ''
+  const headline = cv.headline || cv?.personalInfo?.headline || ''
   const links = (cv?.links || cv?.personalInfo?.links || {}) as Record<string, string>
 
   basics.name = fullName
+  if (headline) basics.label = headline  // "Software Engineer", "Fresh Graduate"
   if (email) basics.email = email
   if (phone) basics.phone = phone
   if (summary) basics.summary = summary
@@ -136,16 +140,40 @@ export function mapToJsonResume(cv: any = {}): JsonResume {
     endDate: p?.current ? '' : normalizeDate(p?.endDate),
   }))
 
-  // Skills
+  // Skills - handle both old and new schema
   const technical = toArray<string>(cv?.skills?.technical)
-  const soft = toArray<string>(cv?.skills?.soft)
+  const frameworks = toArray<string>(cv?.skills?.frameworks || cv?.skills?.frameworksLibraries)
+  const tools = toArray<string>(cv?.skills?.tools || cv?.skills?.toolsPlatforms)
+  const databases = toArray<string>(cv?.skills?.databases)
+  const cloud = toArray<string>(cv?.skills?.cloud)
+  const soft = toArray<string>(cv?.skills?.soft || cv?.skills?.softSkills)
+  
   const skills = [] as any[]
-  if (technical.length) skills.push({ name: 'Technical', keywords: technical })
+  if (technical.length) skills.push({ name: 'Programming Languages', keywords: technical })
+  if (frameworks.length) skills.push({ name: 'Frameworks & Libraries', keywords: frameworks })
+  if (tools.length) skills.push({ name: 'Tools & Platforms', keywords: tools })
+  if (databases.length) skills.push({ name: 'Databases', keywords: databases })
+  if (cloud.length) skills.push({ name: 'Cloud Services', keywords: cloud })
   if (soft.length) skills.push({ name: 'Soft Skills', keywords: soft })
 
   // Languages
   const languages = toArray<string>(cv?.skills?.languages).map((lang) => ({ language: lang }))
 
-  const out: JsonResume = { basics, work, education, projects, skills, languages }
+  // Certifications (map to JSON Resume certificates)
+  const certifications = toArray<string>(cv?.certifications).map((name) => ({ name }))
+
+  // Achievements/Awards
+  const awards = toArray<string>(cv?.achievements).map((title) => ({ title }))
+
+  const out: JsonResume = { 
+    basics, 
+    work, 
+    education, 
+    projects, 
+    skills, 
+    languages,
+    certificates: certifications.length ? certifications : undefined,
+    awards: awards.length ? awards : undefined,
+  }
   return out
 }

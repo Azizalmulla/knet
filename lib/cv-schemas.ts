@@ -73,13 +73,19 @@ export const projectsSchema = z.object({
   })).default([]),
 });
 
-// Skills Step
+// Skills Step (unified schema matching Career Assistant)
 export const skillsSchema = z.object({
   skills: z.object({
-    technical: z.array(z.string()).default([]),
-    languages: z.array(z.string()).default([]),
-    soft: z.array(z.string()).default([]),
+    technical: z.array(z.string()).default([]),      // Programming languages
+    frameworks: z.array(z.string()).default([]),     // React, Node, etc.
+    tools: z.array(z.string()).default([]),          // Git, Docker, etc.
+    databases: z.array(z.string()).default([]),      // PostgreSQL, MongoDB, etc.
+    cloud: z.array(z.string()).default([]),          // AWS, GCP, Azure
+    languages: z.array(z.string()).default([]),      // English, Arabic, etc.
+    soft: z.array(z.string()).default([]),           // Communication, etc.
   }),
+  certifications: z.array(z.string()).default([]),   // AWS Certified, PMP, etc.
+  achievements: z.array(z.string()).default([]),     // Dean's List, Awards, etc.
 });
 
 // Complete CV Schema
@@ -91,6 +97,7 @@ export const cvSchema = z.object({
   experience: z.array(z.any()).default([]),
   projects: z.array(z.any()).default([]),
   ...skillsSchema.shape,
+  headline: z.string().optional(),  // "Software Engineer", "Fresh Graduate"
   links: z.record(z.string()).optional(),
   template: z.literal('professional').default('professional'),
   language: z.enum(['en', 'ar']).default('en'),
@@ -132,9 +139,16 @@ export const defaultCVValues: CVData = {
   projects: [],
   skills: {
     technical: [],
+    frameworks: [],
+    tools: [],
+    databases: [],
+    cloud: [],
     languages: [],
     soft: [],
   },
+  certifications: [],
+  achievements: [],
+  headline: '',
   links: {},
   template: 'professional',
   language: 'en',
@@ -228,6 +242,7 @@ export function createLocalizedCvSchema(t: (key: string) => string) {
     experience: z.array(z.any()).default([]),
     projects: z.array(z.any()).default([]),
     ...localizedSkills.shape,
+    headline: z.string().optional(),
     links: z.record(z.string()).optional(),
     template: z.literal('professional').default('professional'),
     language: z.enum(['en', 'ar']).default('en'),

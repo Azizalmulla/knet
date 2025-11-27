@@ -142,10 +142,17 @@ SCHEMA:
     }
   ],
   "skills": {
-    "technical": string[] (programming, tools, frameworks),
+    "technical": string[] (programming languages: Python, JavaScript, etc.),
+    "frameworks": string[] (React, Node.js, Django, etc.),
+    "tools": string[] (Git, Docker, VS Code, etc.),
+    "databases": string[] (PostgreSQL, MongoDB, etc.),
+    "cloud": string[] (AWS, Azure, GCP, etc.),
     "languages": string[] (English, Arabic, etc.),
     "soft": string[] (leadership, communication, etc.)
   },
+  "certifications": string[] (AWS Certified, PMP, etc.),
+  "achievements": string[] (Dean's List, Awards, etc.),
+  "headline": string (e.g., "Software Engineer", "Fresh Graduate"),
   "links": {
     "linkedin": string (optional),
     "github": string (optional),
@@ -158,7 +165,11 @@ IMPORTANT:
 - If information is missing, use reasonable defaults
 - Extract bullet points from achievements, projects, responsibilities
 - Organize information clearly
-- Ensure all required fields have values`;
+- Ensure all required fields have values
+- Categorize technical skills properly: programming languages → technical, frameworks → frameworks, tools → tools, databases → databases, cloud services → cloud
+- Extract certifications (AWS, PMP, etc.) separately
+- Extract achievements/awards separately
+- If they mention a job title/headline, include it`;
 
     const userPrompt = `Parse this voice transcript into a structured CV:
 
@@ -262,9 +273,16 @@ Return the CV data as JSON matching the schema exactly.`;
       projects: [], // Legacy field
       skills: {
         technical: cvData.skills?.technical || [],
+        frameworks: cvData.skills?.frameworks || [],
+        tools: cvData.skills?.tools || [],
+        databases: cvData.skills?.databases || [],
+        cloud: cvData.skills?.cloud || [],
         languages: cvData.skills?.languages || ['English'],
         soft: cvData.skills?.soft || [],
       },
+      certifications: cvData.certifications || [],
+      achievements: cvData.achievements || [],
+      headline: cvData.headline || '',
       links: cvData.links || {},
       template: 'professional' as const,
       language: (cvData.language || 'en') as 'en' | 'ar',

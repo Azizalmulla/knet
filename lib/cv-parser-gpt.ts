@@ -43,13 +43,23 @@ export interface ParsedCV {
     achievements?: string[];
   }>;
 
-  // Skills
+  // Skills (expanded categories)
   skills: {
-    technical: string[];
+    technical: string[];       // Programming languages
+    frameworks?: string[];     // React, Node.js, etc.
+    tools?: string[];          // Git, Docker, etc.
+    databases?: string[];      // PostgreSQL, MongoDB, etc.
+    cloud?: string[];          // AWS, GCP, Azure
     soft: string[];
     languages?: string[];
-    certifications?: string[];
   };
+
+  // Certifications & Achievements (top-level)
+  certifications?: string[];
+  achievements?: string[];
+
+  // Headline/Title
+  headline?: string;
 
   // Projects
   projects?: Array<{
@@ -111,11 +121,17 @@ Return ONLY valid JSON with this exact structure:
     }
   ],
   "skills": {
-    "technical": ["programming languages", "frameworks", "tools"],
-    "soft": ["communication", "leadership", etc],
-    "languages": ["English", "Arabic", etc] or null,
-    "certifications": ["cert names"] or null
+    "technical": ["programming languages like Python, JavaScript, Java"],
+    "frameworks": ["React, Node.js, Django, etc"] or null,
+    "tools": ["Git, Docker, Kubernetes, etc"] or null,
+    "databases": ["PostgreSQL, MongoDB, Redis, etc"] or null,
+    "cloud": ["AWS, GCP, Azure, etc"] or null,
+    "soft": ["communication", "leadership", "problem-solving"],
+    "languages": ["English", "Arabic", etc] or null
   },
+  "certifications": ["AWS Certified", "PMP", etc] or null,
+  "achievements": ["Dean's List", "Hackathon Winner", etc] or null,
+  "headline": "Software Engineer" or null,
   "projects": [
     {
       "name": "string",
@@ -132,6 +148,10 @@ IMPORTANT:
 - Parse dates in YYYY or YYYY-MM format
 - Include ALL experience entries, even internships
 - Technical skills should be specific (e.g., "Python", "React", not just "programming")
+- Categorize skills: programming languages → technical, frameworks → frameworks, tools → tools, databases → databases, cloud → cloud
+- Extract certifications separately (AWS, PMP, etc.)
+- Extract achievements/awards separately
+- If a headline/title is present (e.g., "Software Engineer"), include it
 - Return ONLY the JSON, no explanation`;
 
 /**
@@ -347,8 +367,16 @@ function buildRawTextFromParsed(parsed: any): string {
 
   if (parsed.skills) {
     if (parsed.skills.technical) parts.push(parsed.skills.technical.join(' '));
+    if (parsed.skills.frameworks) parts.push(parsed.skills.frameworks.join(' '));
+    if (parsed.skills.tools) parts.push(parsed.skills.tools.join(' '));
+    if (parsed.skills.databases) parts.push(parsed.skills.databases.join(' '));
+    if (parsed.skills.cloud) parts.push(parsed.skills.cloud.join(' '));
     if (parsed.skills.soft) parts.push(parsed.skills.soft.join(' '));
+    if (parsed.skills.languages) parts.push(parsed.skills.languages.join(' '));
   }
+
+  if (parsed.certifications) parts.push(parsed.certifications.join(' '));
+  if (parsed.achievements) parts.push(parsed.achievements.join(' '));
 
   if (parsed.projects) {
     for (const proj of parsed.projects) {

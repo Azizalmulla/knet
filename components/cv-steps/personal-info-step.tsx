@@ -239,6 +239,20 @@ export function PersonalInfoStep() {
         </div>
       </div>
 
+      {/* Headline / Professional Title */}
+      <div>
+        <Label htmlFor="headline">Professional Title (optional)</Label>
+        <Input
+          id="headline"
+          {...register('headline')}
+          placeholder="e.g., Software Engineer, Fresh Graduate, Marketing Specialist"
+          data-testid="field-headline"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          A brief title that appears below your name (e.g., "Software Engineer" or "Computer Science Student")
+        </p>
+      </div>
+
       <div>
         <Label htmlFor="summary">{t('label_summary')}</Label>
         <Textarea
