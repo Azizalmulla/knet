@@ -55,13 +55,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing recipient' }, { status: 400 });
     }
 
-    // Support both @wathefni.ai and @inbox.wathefni.ai
-    const match = recipientEmail.match(/^(.+)@(?:inbox\.)?wathefni\.ai$/i);
-    if (!match) {
-      console.error('[INBOX_WEBHOOK] Recipient domain not wathefni.ai or inbox.wathefni.ai:', recipientEmail);
+    // Support multiple inbound domains:
+    // - @wathefni.ai (custom domain)
+    // - @inbox.wathefni.ai (custom subdomain)
+    // - @fresh-antlion.resend.app (Resend's default inbound domain)
+    // - @*.resend.app (any Resend inbound domain)
+    const inboundDomain = process.env.RESEND_INBOUND_DOMAIN || 'wathefni.ai';
+    const patterns = [
+      /^(.+)@(?:inbox\.)?wathefni\.ai$/i,           // Custom domain
+      /^(.+)@fresh-antlion\.resend\.app$/i,         // Resend default
+      new RegExp(`^(.+)@${inboundDomain.replace(/\./g, '\\.')}$`, 'i'), // Env configured domain
+    ];
+    
+    let orgSlug: string | null = null;
+    for (const pattern of patterns) {
+      const match = recipientEmail.match(pattern);
+      if (match) {
+        orgSlug = match[1];
+        break;
+      }
+    }
+    
+    if (!orgSlug) {
+      console.error('[INBOX_WEBHOOK] Recipient domain not recognized:', recipientEmail);
+      console.error('[INBOX_WEBHOOK] Expected domains: wathefni.ai, inbox.wathefni.ai, or', inboundDomain);
       return NextResponse.json({ error: 'Recipient domain unsupported' }, { status: 400 });
     }
-    const orgSlug = match[1];
     console.log('[INBOX_WEBHOOK] Extracted org slug:', orgSlug);
 
     // Resolve organization

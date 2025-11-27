@@ -52,13 +52,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No recipient' }, { status: 400 });
     }
 
-    const match = recipientEmail.match(/^(.+)@wathefni\.ai$/);
-    if (!match) {
+    // Support multiple inbound domains
+    const inboundDomain = process.env.RESEND_INBOUND_DOMAIN || 'wathefni.ai';
+    const patterns = [
+      /^(.+)@(?:inbox\.)?wathefni\.ai$/i,
+      /^(.+)@fresh-antlion\.resend\.app$/i,
+      new RegExp(`^(.+)@${inboundDomain.replace(/\./g, '\\.')}$`, 'i'),
+    ];
+    
+    let orgSlug: string | null = null;
+    for (const pattern of patterns) {
+      const match = recipientEmail.match(pattern);
+      if (match) {
+        orgSlug = match[1];
+        break;
+      }
+    }
+    
+    if (!orgSlug) {
       console.error('Invalid recipient format:', recipientEmail);
       return NextResponse.json({ error: 'Invalid recipient' }, { status: 400 });
     }
-
-    const orgSlug = match[1];
 
     // Get organization
     const orgResult = await sql`
